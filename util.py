@@ -15,12 +15,12 @@ def create_secret(x : int, p : int, n : int):
 def post_url(data : dict, url : str):
     return requests.post(url, data)
 
-def post_secret_to_server(name : str, value : int, serverid):
-    return requests.post(baseurl + "/server" + str(serverid), data=dict(name=name, value=value))
+def post_secret_to_server(name : str, value : int, serverid : int):
+    return requests.post(baseurl + "server" + str(serverid), data=dict(name=name, value=value))
 
 
 
 print(post_secret_to_server("Christian", 7, 1).text)
 
-print(requests.get(baseurl + "/server" + str(1)).text)
+print(requests.get(baseurl + "server" + str(1)).text)
 
