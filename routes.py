@@ -7,7 +7,7 @@ from flask import Flask, render_template, request, redirect, url_for, send_from_
 app = Flask(__name__)
 app.url_map.strict_slashes = False
 
-numbers = defaultdict(list)
+numbers = defaultdict(set)
 round2 = defaultdict(list)
 
 
@@ -15,11 +15,11 @@ round2 = defaultdict(list)
 def home():
     return str(numbers)
 
-@app.route("/bp/server<int:id>", methods=["POST"])
+@app.route("/server<int:id>", methods=["POST"])
 def server(id):
     name = request.form.get("name")
     value = request.form.get("value")
-    numbers[id].append((value, name))
+    numbers[name].append((id, value))
     print(request.method)
     print(request.json)
     

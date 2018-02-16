@@ -2,6 +2,8 @@ import requests
 import json
 import random
 
+baseurl = "http://127.0.0.1:5000/"
+
 def create_secret(x : int, p : int, n : int):
     rng = random.Random()
     res = []
@@ -13,13 +15,12 @@ def create_secret(x : int, p : int, n : int):
 def post_url(data : dict, url : str):
     return requests.post(url, data)
 
-def get_url(url : str):
-    return requests.get(url)
+def post_secret_to_server(name : str, value : int, serverid):
+    return requests.post(baseurl + "/server" + str(serverid), data=dict(name=name, value=value))
 
 
-urltest = "http://127.0.0.1:5000/server1"
 
-data = {'name': 'a', 'value': 5}
+print(post_secret_to_server("Christian", 7, 1).text)
 
-print(post_url(data, urltest).text)
+print(requests.get(baseurl + "/server" + str(1)).text)
 
