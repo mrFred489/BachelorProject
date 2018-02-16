@@ -10,6 +10,22 @@ app.url_map.strict_slashes = False
 def home():
     return 'Hello, World!'
 
+@app.route("/bp/server<int:name>", methods=["POST"])
+def server1(name):
+    name1 = request.args.get("name")
+    value1 = request.args.get("value")
+
+    name1 = request.form.get("name")
+    value1 = request.form.get("value")
+    print(request.method)
+    print(request.json)
+
+    for i in request.json:
+        print(i, request.json.get(i))
+        
+    return render_template("bachelorprojekt/server.html", name=str(name), sum="hej")
+                                            
+
 if __name__ == '__main__':
     # app.run(port=80)
     app.run(debug=True)
