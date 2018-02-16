@@ -23,7 +23,7 @@ def server1(name):
     for i in request.json:
         print(i, request.json.get(i))
         
-    return render_template("bachelorprojekt/server.html", name=str(name), sum="hej")
+    return render_template("server.html", name=str(name), sum=value)
                                             
 
 if __name__ == '__main__':
