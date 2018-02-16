@@ -9,21 +9,24 @@ app.url_map.strict_slashes = False
 
 numbers = defaultdict(list)
 
-
 @app.route("/")
-def home():
+def sum():
+    sum = 0
+    for i in range(5):
+        for x in numbers[i]:
+            sum += int(x)
+    return str(sum)
+
+@app.route("/databases")
+def database():
     return str(numbers)
+
 
 @app.route("/server<int:id>", methods=["POST"])
 def server(id):
     name = request.form.get("name")
     value = request.form.get("value")
     numbers[id].append(value)
-    print(request.method)
-    print(request.json)
-    
-    for i in request.json:
-        print(i, request.json.get(i))
         
     return render_template("server.html", name=str(id), sum=value)
                                             

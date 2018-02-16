@@ -19,8 +19,14 @@ def post_secret_to_server(name : str, value : int, serverid : int):
     return requests.post(baseurl + "server" + str(serverid), data=dict(name=name, value=value))
 
 
+x = create_secret(22, 100, 3)
+y = create_secret(28, 100, 3)
 
-print(post_secret_to_server("Christian", 7, 1).text)
+for i in range(len(x)):
+    print(post_secret_to_server("x", x[i], i))
+    print(post_secret_to_server("y", y[i], i))
 
-print(requests.get(baseurl + "server" + str(1)).text)
+print(requests.get(baseurl).text)
+print(requests.get(baseurl+"databases").text)
+
 
