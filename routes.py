@@ -10,7 +10,7 @@ app.url_map.strict_slashes = False
 def home():
     return 'Hello, World!'
 
-@app.route("/bp/server<int:name>", methods=["POST"])
+@app.route("/server<int:name>", methods=["POST"])
 def server1(name):
     name1 = request.args.get("name")
     value1 = request.args.get("value")
@@ -23,7 +23,7 @@ def server1(name):
     for i in request.json:
         print(i, request.json.get(i))
         
-    return render_template("server.html", name=str(name), sum=value)
+    return render_template("server.html", name=str(name), sum=value1)
                                             
 
 if __name__ == '__main__':
