@@ -12,6 +12,7 @@ def home():
 
 @app.route("/server<int:name>", methods=["POST"])
 def server1(name):
+
     name1 = request.args.get("name")
     value1 = request.args.get("value")
 

@@ -16,8 +16,10 @@ def post_url(data : dict, url : str):
 def get_url(url : str):
     return requests.get(url)
 
+
 urltest = "http://127.0.0.1:5000/server1"
 
 data = {'name': 'a', 'value': 5}
 
 print(post_url(data, urltest).text)
+
