@@ -6,7 +6,13 @@
   </head>
   <body>
     <div class="container">
-      Jeg er server nummer {{name}}, og fik summen={{sum}}
+    {% for server in servers %}
+        Jeg er {{ server.num }} og har database: {{ server.data }}
+        <br>
+    {% endfor %}
+
+    total amount is: {{ total }}
+
     </div>
 
   </body>
