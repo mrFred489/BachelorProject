@@ -47,8 +47,7 @@ class test_communication(unittest.TestCase):
     def test_n_official_servers(self):
         servers = [server + "server0" for server in n_servers]
 
-        for server in n_servers:
-            requests.post(server + "reset")
+        reset_servers()
 
         util.create_and_post_secret_to_servers(28, 100, "x", servers)
         util.create_and_post_secret_to_servers(22, 100, "y", servers)
@@ -58,9 +57,12 @@ class test_communication(unittest.TestCase):
         for server in n_servers:
             total += int(requests.get(server + "total").text)
 
-        self.assertEqual(total, 50)
+        self.assertEqual(total % util.get_prime(servers[0]), 50)
 
 
+def reset_servers():
+    for server in n_servers:
+        requests.post(server + "reset")
 
 
 if __name__ == '__main__':

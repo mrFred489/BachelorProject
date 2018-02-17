@@ -21,10 +21,10 @@ def create_secret(x : int, n : int, server_url: str):
 def getTotal(urls: list):
     sum = 0
     for url in urls:
-        var = requests.get(url + '/total').text
+        var = requests.get(url + 'total').text
         print(var)
         sum += int(var)
-    return sum % int(get_prime(urls[0] + 'server1' + '/prime').text)
+    return sum % int(get_prime(urls[0] + 'server1'))
 
 def get_prime(url: str):
     print(url)
