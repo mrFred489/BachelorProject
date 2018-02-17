@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-from functools import wraps
-import werkzeug.contrib
 from collections import defaultdict
 from flask import Flask, render_template, request, redirect, url_for, send_from_directory
 
@@ -27,12 +25,11 @@ def server(id):
     name = request.form.get("name")
     value = request.form.get("value")
     numbers[id].append(value)
-        
     return render_template("server.html", name=str(id), sum=value)
                                             
 
 if __name__ == '__main__':
-    # app.run(port=80)
-    app.run(debug=True)
+    # Lav flere servere ved at ændre port nummeret og køre routes igen.
+    app.run(port=5000, debug=True)
 
-    
+
