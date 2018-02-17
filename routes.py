@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from collections import defaultdict
-from flask import Flask, render_template, request, redirect, url_for, send_from_directory
+from flask import Flask, render_template, request, redirect, url_for, send_from_directory, Response
 
 app = Flask(__name__)
 app.url_map.strict_slashes = False
@@ -23,6 +23,13 @@ def total():
         total += sum(numbers[i])
     return str(total)
 
+@app.route("/reset", methods=["POST"])
+def reset():
+    for i in numbers:
+        numbers[i] = []
+    return Response(status=200)
+
+
 @app.route("/databases")
 def database():
     return str(numbers)
@@ -33,7 +40,7 @@ def server(id):
     name = request.form.get("name")
     value = request.form.get("value")
     numbers[id].append(int(value))
-    return [200]
+    return Response(status=200)
 
 
 if __name__ == '__main__':
