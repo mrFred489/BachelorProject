@@ -20,7 +20,6 @@ official_server1 = "https://server1.cryptovoting.dk/"
 
 n_servers = [baseurl1, baseurl2, official_server, official_server1]
 
-class test_arithmetics(unittest.TestCase):
 
 
 
