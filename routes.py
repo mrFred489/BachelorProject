@@ -7,6 +7,8 @@ app.url_map.strict_slashes = False
 
 numbers = defaultdict(list)
 
+testing = False # variabel til at slå database fra hvis vi kører det lokalt
+
 @app.route("/")
 def home():
     servers = []
@@ -45,6 +47,7 @@ def server(id):
 
 if __name__ == '__main__':
     # Lav flere servere ved at ændre port nummeret og køre routes igen.
+    testing = True
     app.run(port=5000, debug=True)
 
 
