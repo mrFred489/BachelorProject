@@ -48,6 +48,7 @@ def server(id):
 if __name__ == '__main__':
     # Lav flere servere ved at ændre port nummeret og køre routes igen.
     testing = True
-    app.run(port=5000, debug=True)
+    port = input('Choose port for server')
+    app.run(port=int(port), debug=True, use_reloader=False)
 
 

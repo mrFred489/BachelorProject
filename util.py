@@ -32,29 +32,6 @@ def create_and_post_secret_to_servers(x: int, p: int, name: str, servers: list):
         print(requests.post(server_url, data=dict(name=name, value=secrets[num])))
 
 
-def test_multiple_servers():
-    # Husk at starte to servere, med hver deres port nummer.
-    servers = [baseurl1 + "server0", baseurl2 + "server0"]
-    create_and_post_secret_to_servers(28, 100, "x", servers)
-    create_and_post_secret_to_servers(22, 100, "x", servers)
-
-    num1 = requests.get(baseurl1 + "total").text
-    num2 = requests.get(baseurl2 + "total").text
-
-    print(num1, "+", num2, "=", int(num1) + int(num2))
-    print("database1:", requests.get(baseurl1 + "databases").text)
-    print("database2:", requests.get(baseurl2 + "databases").text)
-
-
-x = create_secret(22, 100, 3)
-y = create_secret(28, 100, 3)
-
-for i in range(len(x)):
-    print(post_secret_to_server("x", x[i], i))
-    print(post_secret_to_server("y", y[i], i))
-
-print(requests.get(work_url + "total").text)
-print(requests.get(work_url + "databases").text)
 
 
 

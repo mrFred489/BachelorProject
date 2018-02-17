@@ -17,16 +17,14 @@ class test_communication(unittest.TestCase):
 
     def test_multiple_servers(self):
         # Husk at starte to servere, med hver deres port nummer.
-        # Note that currently this test will fail if anything has already been submitted to the servers 'database' - e.g by running the tests twice
         servers = [baseurl1 + "server0", baseurl2 + "server0"]
         util.create_and_post_secret_to_servers(28, 100, "x", servers)
         util.create_and_post_secret_to_servers(22, 100, "x", servers)
 
-        num1 = requests.get(baseurl1).text
-        num2 = requests.get(baseurl2).text
-
+        num1 = requests.get(baseurl1 + "total").text
+        num2 = requests.get(baseurl2 + "total").text
+        self.assertEqual(int(num1)+int(num2), 50)
         # print(num1, "+", num2, "=", int(num1) + int(num2))
-        self.assertEqual(50, int(num1) + int(num2))
         # print("database1:", requests.get(baseurl1 + "databases").text)
         # print("database2:", requests.get(baseurl2 + "databases").text)
 
