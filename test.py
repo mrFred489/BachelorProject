@@ -5,6 +5,11 @@ import unittest
 baseurl1 = "http://127.0.0.1:5000/"
 baseurl2 = "http://127.0.0.1:5001/"
 
+official_server = "https://cryptovoting.dk/"
+official_server1 = "https://server1.cryptovoting.dk/"
+
+n_servers = [baseurl1, baseurl2, official_server, official_server1]
+
 class test_arithmetics(unittest.TestCase):
 
     def test_addition(self):
@@ -18,6 +23,10 @@ class test_communication(unittest.TestCase):
     def test_multiple_servers(self):
         # Husk at starte to servere, med hver deres port nummer.
         servers = [baseurl1 + "server0", baseurl2 + "server0"]
+
+        requests.post(baseurl1 + "reset")
+        requests.post(baseurl2 + "reset")
+
         util.create_and_post_secret_to_servers(28, 100, "x", servers)
         util.create_and_post_secret_to_servers(22, 100, "x", servers)
 
@@ -27,6 +36,24 @@ class test_communication(unittest.TestCase):
         # print(num1, "+", num2, "=", int(num1) + int(num2))
         # print("database1:", requests.get(baseurl1 + "databases").text)
         # print("database2:", requests.get(baseurl2 + "databases").text)
+
+    def test_n_official_servers(self):
+        servers = [server + "server0" for server in n_servers]
+
+        for server in n_servers:
+            requests.post(server + "reset")
+
+        util.create_and_post_secret_to_servers(28, 100, "x", servers)
+        util.create_and_post_secret_to_servers(22, 100, "y", servers)
+
+        total = 0
+
+        for server in n_servers:
+            total += int(requests.get(server + "total").text)
+
+        self.assertEqual(total, 50)
+
+
 
 
 if __name__ == '__main__':

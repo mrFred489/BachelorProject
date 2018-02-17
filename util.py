@@ -30,10 +30,3 @@ def create_and_post_secret_to_servers(x: int, p: int, name: str, servers: list):
     secrets = create_secret(x, p, len(servers))
     for num, server_url in enumerate(servers):
         print(requests.post(server_url, data=dict(name=name, value=secrets[num])))
-
-
-
-
-
-
-
