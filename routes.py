@@ -6,7 +6,7 @@ app = Flask(__name__)
 app.url_map.strict_slashes = False
 
 numbers = defaultdict(list)
-
+p = 4000001
 testing = False # variabel til at slå database fra hvis vi kører det lokalt
 
 @app.route("/")
@@ -16,14 +16,14 @@ def home():
     for index in numbers:
         servers.append({"num": index, "data": str(numbers[index])})
         total += sum(numbers[index])
-    return render_template("server.html", servers=servers, total=total)
+    return render_template("server.html", servers=servers, total=total % p)
 
 @app.route("/total")
 def total():
     total = 0
     for i in range(5):
         total += sum(numbers[i])
-    return str(total)
+    return str(total % p)
 
 @app.route("/reset", methods=["POST"])
 def reset():
@@ -41,14 +41,19 @@ def database():
 def server(id):
     name = request.form.get("name")
     value = request.form.get("value")
-    numbers[id].append(int(value))
+    numbers[id].append(int(value) % p)
     return Response(status=200)
+
+
+@app.route("/server<int:id>/prime", methods=['GET'])
+def prime(id):
+    return str(p)
 
 
 if __name__ == '__main__':
     # Lav flere servere ved at ændre port nummeret og køre routes igen.
     testing = True
-    port = input('Choose port for server')
+    port = input('Choose port for server: ')
     app.run(port=int(port), debug=True, use_reloader=False)
 
 
