@@ -32,8 +32,8 @@ class test_communication(unittest.TestCase):
         requests.post(baseurl1 + "reset")
         requests.post(baseurl2 + "reset")
 
-        util.create_and_post_secret_to_servers(28, 100, "x", servers)
-        util.create_and_post_secret_to_servers(22, 100, "x", servers)
+        util.create_and_post_secret_to_servers(28, "x", servers)
+        util.create_and_post_secret_to_servers(22, "x", servers)
 
         total = util.getTotal([baseurl1, baseurl2])
         # num1 = requests.get(baseurl1 + "total").text
@@ -49,8 +49,8 @@ class test_communication(unittest.TestCase):
 
         reset_servers()
 
-        util.create_and_post_secret_to_servers(28, 100, "x", servers)
-        util.create_and_post_secret_to_servers(22, 100, "y", servers)
+        util.create_and_post_secret_to_servers(28, "x", servers)
+        util.create_and_post_secret_to_servers(22, "y", servers)
 
         total = 0
 

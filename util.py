@@ -24,7 +24,7 @@ def getTotal(urls: list):
         var = requests.get(url + 'total').text
         print(var)
         sum += int(var)
-    return sum % int(get_prime(urls[0] + 'server1'))
+    return sum % int(get_prime(urls[0] + 'server0'))
 
 def get_prime(url: str):
     print(url)
@@ -41,7 +41,7 @@ def post_secret_to_server(name: str, value: int,  url: str):
     return requests.post(url, data=dict(name=name, value=value))
 
 
-def create_and_post_secret_to_servers(x: int, p: int, name: str, servers: list):
+def create_and_post_secret_to_servers(x: int, name: str, servers: list):
     secrets = create_secret(x, len(servers), servers[0])
     for num, server_url in enumerate(servers):
         # print(requests.post(server_url, data=dict(name=name, value=secrets[num])))

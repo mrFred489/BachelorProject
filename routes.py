@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 from collections import defaultdict
 from flask import Flask, render_template, request, redirect, url_for, send_from_directory, Response
+import database as db
 
 app = Flask(__name__)
 app.url_map.strict_slashes = False
 
-numbers = defaultdict(list)
+# numbers = defaultdict(list)
 p = 4000001
 testing = False # variabel til at slå database fra hvis vi kører det lokalt
 
@@ -13,35 +14,35 @@ testing = False # variabel til at slå database fra hvis vi kører det lokalt
 def home():
     servers = []
     total = 0
-    for index in numbers:
-        servers.append({"num": index, "data": str(numbers[index])})
-        total += sum(numbers[index])
+    numbers = db.get_numbers()
+
+    servers.append({"num": 0, "data": str(numbers)})
+    total += sum(numbers)
     return render_template("server.html", servers=servers, total=total % p)
 
 @app.route("/total")
 def total():
     total = 0
-    for i in range(5):
-        total += sum(numbers[i])
+    numbers = db.get_numbers()
+    total += sum(numbers)
     return str(total % p)
 
 @app.route("/reset", methods=["POST"])
 def reset():
-    for i in numbers:
-        numbers[i] = []
+    db.reset()
     return Response(status=200)
 
 
 @app.route("/databases")
 def database():
-    return str(numbers)
+    return db.get_numbers()
 
 
 @app.route("/server<int:id>", methods=["POST"])
 def server(id):
     name = request.form.get("name")
     value = request.form.get("value")
-    numbers[id].append(int(value) % p)
+    db.add_number(int(value) % p, name)
     return Response(status=200)
 
 
