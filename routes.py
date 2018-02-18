@@ -2,6 +2,7 @@
 from collections import defaultdict
 from flask import Flask, render_template, request, redirect, url_for, send_from_directory, Response
 import database as db
+import os
 
 app = Flask(__name__)
 app.url_map.strict_slashes = False
@@ -10,11 +11,17 @@ app.url_map.strict_slashes = False
 p = 4000001
 testing = False # variabel til at slå database fra hvis vi kører det lokalt
 
+try:
+    my_name = str(os.path.dirname(__file__).split("/")[3])
+except:
+    my_name = "test"
+
+
 @app.route("/")
 def home():
     servers = []
     total = 0
-    numbers = db.get_numbers()
+    numbers = db.get_numbers(my_name)
 
     servers.append({"num": 0, "data": str(numbers)})
     total += sum(numbers)
@@ -23,26 +30,26 @@ def home():
 @app.route("/total")
 def total():
     total = 0
-    numbers = db.get_numbers()
+    numbers = db.get_numbers(my_name)
     total += sum(numbers)
     return str(total % p)
 
 @app.route("/reset", methods=["POST"])
 def reset():
-    db.reset()
+    db.reset(my_name)
     return Response(status=200)
 
 
 @app.route("/databases")
 def database():
-    return db.get_numbers()
+    return db.get_numbers(my_name)
 
 
 @app.route("/server<int:id>", methods=["POST"])
 def server(id):
     name = request.form.get("name")
     value = request.form.get("value")
-    db.add_number(int(value) % p, name)
+    db.add_number(int(value) % p, name, my_name)
     return Response(status=200)
 
 

@@ -23,10 +23,10 @@ if not testing:
             cursor = conn.cursor()
         return cursor
 
-    def get_numbers():
+    def get_numbers(db_name):
         cur = get_cursor()
 
-        affected_count = cur.execute(u'select number from numbers')
+        affected_count = cur.execute(u'select `' + db_name + '` from numbers')
 
         res = []
         for i in cur:
@@ -35,17 +35,17 @@ if not testing:
         cur.close()
         return res
 
-    def add_number(num: int, name: str):
+    def add_number(num: int, name: str, db_name: str):
         cur = get_cursor()
-        affected_count = cur.execute(u'insert into numbers (number, name) values (' + str(num) + ', "' + name + '")')
+        affected_count = cur.execute(u'insert into `' + db_name + '` (number, name) values (' + str(num) + ', "' + name + '")')
         cur.close()
         conn.commit()
         return int(affected_count > 0)
 
-    def reset():
+    def reset(db_name: str):
         cur = get_cursor()
 
-        affected_count = cur.execute(u'delete from numbers')
+        affected_count = cur.execute(u'delete from `' + db_name + '`')
 
         cur.close()
         conn.commit()
@@ -56,16 +56,15 @@ else:
     db = []
     db_names = []
 
-    def get_numbers():
-        print("in here")
+    def get_numbers(_: str):
         return db
 
-    def add_number(num, name):
+    def add_number(num, name, _: str):
         db.append(num)
         db_names.append(name)
         return 1
 
-    def reset():
+    def reset(_: str):
         global db
         db = []
         db_names = []
