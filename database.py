@@ -30,7 +30,7 @@ if not testing:
 
         res = []
         for i in cur:
-            res.append(i)
+            res.append(i[0])
 
         cur.close()
         return res
