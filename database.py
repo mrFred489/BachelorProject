@@ -26,7 +26,7 @@ if not testing:
     def get_numbers(db_name):
         cur = get_cursor()
 
-        affected_count = cur.execute(u'select `' + db_name + '` from numbers')
+        affected_count = cur.execute(u'select number from `' + db_name + '`')
 
         res = []
         for i in cur:
