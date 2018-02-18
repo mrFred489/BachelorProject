@@ -17,8 +17,11 @@ p = 4000001
 
 official_server = "https://cryptovoting.dk/"
 official_server1 = "https://server1.cryptovoting.dk/"
+official_server2 = "https://server2.cryptovoting.dk/"
+official_server3 = "https://server3.cryptovoting.dk/"
+official_server4 = "https://server4.cryptovoting.dk/"
 
-n_servers = [baseurl1, baseurl2, official_server, official_server1]
+n_servers = [baseurl1, baseurl2, official_server, official_server1, official_server2, official_server3, official_server4]
 
 
 
