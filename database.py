@@ -1,9 +1,12 @@
+import os
 try:
     import MySQLdb as mdb
     testing = False
 except:
     testing = True
 
+if str(os.path.dirname(__file__).split("/")[-1]) != "flaskwebsite":
+    testing = True
 
 if not testing:
     conn = mdb.connect(host='localhost', user='bachelor', passwd='gruppen1234', db='bachelorprojekt', use_unicode=True, charset='utf8', init_command='SET NAMES UTF8')
