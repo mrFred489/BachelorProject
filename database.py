@@ -1,16 +1,16 @@
 import util
 import os
 import psycopg2 as psy
-
+testing = False
 if str(os.path.dirname(__file__).split("/")[-1]) != "flaskwebsite":
     testing = True
 
 if not testing:
-    conn = psy.connect(host='localhost', user='frederik', passwd='gruppen1234', dbname='bachelorprojekt')
+    conn = psy.connect(host='localhost', user='bachelor', password='gruppen1234', dbname='bachelorprojekt')
 
     def get_conn():
         global conn
-        conn = psy.connect(host='localhost', user='frederik', passwd='gruppen1234', dbname='bachelorprojekt')
+        conn = psy.connect(host='localhost', user='bachelor', passwd='gruppen1234', dbname='bachelorprojekt')
 
 
     def get_cursor():
@@ -26,7 +26,7 @@ if not testing:
     def get_numbers(db_name):
         cur = get_cursor()
 
-        affected_count = cur.execute(u'select number,name from `' + db_name + '` where name=r1')
+        affected_count = cur.execute(u'select number,name from "' + db_name + '" where name=r1')
 
         res = []
         for i in cur:
@@ -36,7 +36,7 @@ if not testing:
 
     def insert_number(num: int, name: str, db_name: str):
         cur = get_cursor()
-        affected_count = cur.execute(u'insert into `' + db_name + '` (number, name) values (' + str(num) + ', "' + name + '")')
+        affected_count = cur.execute(u'insert into "' + db_name + '" (number, name) values (' + str(num) + ', "' + name + '")')
         cur.close()
         conn.commit()
         return int(affected_count > 0)
@@ -44,7 +44,7 @@ if not testing:
     def reset(db_name: str):
         cur = get_cursor()
 
-        affected_count = cur.execute(u'delete from `' + db_name + '`')
+        affected_count = cur.execute(u'delete from "' + db_name + '"')
 
         cur.close()
         conn.commit()

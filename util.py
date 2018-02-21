@@ -6,20 +6,22 @@ baseurl1 = "http://127.0.0.1:5000/"
 baseurl2 = "http://127.0.0.1:5001/"
 baseurl3 = "http://127.0.0.1:5002/"
 
-servers = [baseurl1, baseurl2, baseurl3 ]
+servers = [baseurl1, baseurl2, baseurl3]
 
 official_url = "https://cryptovoting.dk/"
 
 work_url = baseurl1
 
-def create_secret(x : int, n : int, server_url: str):
+
+def create_secret(x: int, n: int, server_url: str):
     p = get_prime(server_url)
     rng = random.Random()
     res = []
-    for i in range(n-1):
-        res.append(rng.randrange(0, p-1, 1))
+    for i in range(n - 1):
+        res.append(rng.randrange(0, p - 1, 1))
     res.append(x - sum(res))
     return res
+
 
 def getTotal(urls: list):
     sum = 0
@@ -28,7 +30,6 @@ def getTotal(urls: list):
         print(var)
         sum += int(var)
     return sum % int(get_prime(urls[0] + 'server'))
-
 
 
 # Sieve of Eratosthenes
@@ -69,7 +70,9 @@ def gen_primes():
 
         q += 1
 
+
 primes = gen_primes()
+
 
 def get_prime(url: str):
     prime = requests.get(url + '/prime').text
@@ -80,7 +83,7 @@ def post_url(data: dict, url: str):
     return requests.post(url, data)
 
 
-def post_secret_to_server(name: list, value: list,  url: str):
+def post_secret_to_server(name: list, value: list, url: str):
     return requests.post(url, data=dict(name=name, value=value))
 
 
@@ -95,14 +98,10 @@ def create_and_post_secret_to_servers(x: int, name: str, servers: list):
         del names_c[num]
         print(post_secret_to_server(names_c, secrets_c, server_url))
 
-
-post_url(url=baseurl1 + "server", data={"name": ["a", "b", "c"], "value": [1,2,3]})
+# post_url(url=baseurl1 + "server", data={"name": ["a", "b", "c"], "value": [1,2,3]})
 
 
 # for num in primes:
 #     if num >= 4000001:
 #         print(num)
 #         break
-
-
-

@@ -9,7 +9,7 @@ app.url_map.strict_slashes = False
 
 # numbers = defaultdict(list)
 p = 4000037
-testing = False # variabel til at slå database fra hvis vi kører det lokalt
+testing = False  # variabel til at slå database fra hvis vi kører det lokalt
 
 try:
     my_name = str(os.path.dirname(__file__).split("/")[3])
@@ -27,12 +27,14 @@ def home():
     # total += sum(numbers)
     return render_template("server.html", servers=servers, total=total % p)
 
+
 @app.route("/total")
-def total():
+def total_sum():
     total = 0
     numbers = db.get_numbers(my_name)
     total += sum(numbers)
     return str(total % p)
+
 
 @app.route("/reset", methods=["POST"])
 def reset():
@@ -64,5 +66,3 @@ if __name__ == '__main__':
     port = input('Choose port for server: ')
     my_name = str(port)
     app.run(port=int(port), debug=True, use_reloader=False)
-
-
