@@ -1,19 +1,16 @@
+import util
 import os
-try:
-    import MySQLdb as mdb
-    testing = False
-except:
-    testing = True
+import psycopg2 as psy
 
 if str(os.path.dirname(__file__).split("/")[-1]) != "flaskwebsite":
     testing = True
 
 if not testing:
-    conn = mdb.connect(host='localhost', user='bachelor', passwd='gruppen1234', db='bachelorprojekt', use_unicode=True, charset='utf8', init_command='SET NAMES UTF8')
+    conn = psy.connect(host='localhost', user='frederik', passwd='gruppen1234', dbname='bachelorprojekt')
 
     def get_conn():
         global conn
-        conn = mdb.connect(host='localhost', user='bachelor', passwd='gruppen1234', db='bachelorprojekt', use_unicode=True, charset='utf8', init_command='SET NAMES UTF8')
+        conn = psy.connect(host='localhost', user='frederik', passwd='gruppen1234', dbname='bachelorprojekt')
 
 
     def get_cursor():
@@ -21,7 +18,7 @@ if not testing:
         try:
             cursor = conn.cursor()
             cursor.execute("select 1;")
-        except mdb.OperationalError:
+        except psy.OperationalError:
             get_conn()
             cursor = conn.cursor()
         return cursor
@@ -29,16 +26,15 @@ if not testing:
     def get_numbers(db_name):
         cur = get_cursor()
 
-        affected_count = cur.execute(u'select number from `' + db_name + '`')
+        affected_count = cur.execute(u'select number,name from `' + db_name + '` where name=r1')
 
         res = []
         for i in cur:
-            res.append(i[0])
-
+            res.append(i[0:-1])
         cur.close()
         return res
 
-    def add_number(num: int, name: str, db_name: str):
+    def insert_number(num: int, name: str, db_name: str):
         cur = get_cursor()
         affected_count = cur.execute(u'insert into `' + db_name + '` (number, name) values (' + str(num) + ', "' + name + '")')
         cur.close()
@@ -60,9 +56,13 @@ else:
     db_names = []
 
     def get_numbers(_: str):
-        return db
+        ret = []
+        for num, i in enumerate(db):
+            ret.append((db_names[num], i))
+        return ret
 
-    def add_number(num, name, _: str):
+    def insert_number(num, name, id: str):
+        util.servers.index(id)
         db.append(num)
         db_names.append(name)
         return 1
