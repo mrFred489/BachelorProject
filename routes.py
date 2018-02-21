@@ -22,9 +22,8 @@ def home():
     servers = []
     total = 0
     numbers = db.get_numbers(my_name)
-
-    servers.append({"num": 0, "data": str(numbers)})
-    # total += sum(numbers)
+    servers.append({"data": str(numbers)})
+    total += sum([x[0] for x in numbers])
     return render_template("server.html", servers=servers, total=total % p)
 
 
@@ -32,7 +31,7 @@ def home():
 def total_sum():
     total = 0
     numbers = db.get_numbers(my_name)
-    total += sum(numbers)
+    total += sum([x[0] for x in numbers])
     return str(total % p)
 
 

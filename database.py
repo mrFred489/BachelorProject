@@ -26,11 +26,11 @@ if not testing:
     def get_numbers(db_name):
         cur = get_cursor()
 
-        affected_count = cur.execute(u'select number,name from "' + db_name + '" where name=r1')
+        affected_count = cur.execute(u'select number,name from "' + db_name + '"')
 
         res = []
         for i in cur:
-            res.append(i[0:-1])
+            res.append(i)
         cur.close()
         return res
 
