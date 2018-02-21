@@ -54,22 +54,25 @@ if not testing:
 else:
     db = []
     db_names = []
+    db_total = []
 
     def get_numbers(_: str):
         ret = []
         for num, i in enumerate(db):
             ret.append((i, db_names[num]))
-        return ret
+        return db_total
 
     def insert_number(num, name, id: str):
         db.append(num)
         db_names.append(name)
+        db_total.append((num, name))
         return 1
 
     def reset(_: str):
-        global db
+        global db, db_names, db_total
         db = []
         db_names = []
+        db_total = []
         return 1
 
 

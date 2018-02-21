@@ -28,7 +28,7 @@ def getTotal(urls: list):
     sums_check = []
     for url in urls:
         var = eval(requests.get(url + 'total').text)
-        print(var)
+        print(url, var)
         sums.append(var)
         sums_check += var
     sums_check = set(sums_check)

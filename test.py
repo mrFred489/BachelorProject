@@ -1,6 +1,8 @@
 import util
 import requests
 import unittest
+import time
+
 
 p = 4000001
 baseurl1 = "http://127.0.0.1:5000/"
@@ -39,6 +41,8 @@ class test_communication(unittest.TestCase):
         util.create_and_post_secret_to_servers(12, "x", servers)
         util.create_and_post_secret_to_servers(18, "x", servers)
 
+
+
         total = util.getTotal([baseurl1, baseurl2, baseurl3])
         # num1 = requests.get(baseurl1 + "total").text
         # num2 = requests.get(baseurl2 + "total").text
@@ -55,6 +59,8 @@ class test_communication(unittest.TestCase):
 
         util.create_and_post_secret_to_servers(28, "x", servers)
         util.create_and_post_secret_to_servers(22, "y", servers)
+
+        time.sleep(0.1)
 
         total = util.getTotal(n_servers)
 
