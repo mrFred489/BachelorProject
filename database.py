@@ -58,11 +58,10 @@ else:
     def get_numbers(_: str):
         ret = []
         for num, i in enumerate(db):
-            ret.append((db_names[num], i))
+            ret.append((i, db_names[num]))
         return ret
 
     def insert_number(num, name, id: str):
-        util.servers.index(id)
         db.append(num)
         db_names.append(name)
         return 1

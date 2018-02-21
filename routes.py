@@ -29,10 +29,14 @@ def home():
 
 @app.route("/total")
 def total_sum():
-    total = 0
+    totals = []
+    names = set()
     numbers = db.get_numbers(my_name)
-    total += sum([x[0] for x in numbers])
-    return str(total % p)
+    for i in numbers:
+        if i[1] not in names:
+            totals.append((i[1].replace("r", "s"), sum([x[0] if x[1] == i[1] else 0 for x in numbers]) % p))
+            names.add(i[1])
+    return str(totals)
 
 
 @app.route("/reset", methods=["POST"])
@@ -63,5 +67,5 @@ if __name__ == '__main__':
     # Lav flere servere ved at ændre port nummeret og køre routes igen.
     testing = True
     port = input('Choose port for server: ')
-    my_name = str(port)
+    my_name = "http://127.0.0.1:" + str(port)
     app.run(port=int(port), debug=True, use_reloader=False)

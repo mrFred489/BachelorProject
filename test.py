@@ -56,10 +56,10 @@ class test_communication(unittest.TestCase):
         util.create_and_post_secret_to_servers(28, "x", servers)
         util.create_and_post_secret_to_servers(22, "y", servers)
 
-        total = 0
+        total = util.getTotal(n_servers)
 
-        for server in n_servers:
-            total += int(requests.get(server + "total").text)
+        # for server in n_servers:
+        #     total += int(requests.get(server + "total").text)
 
         self.assertEqual(total % util.get_prime(servers[0]), 50)
 

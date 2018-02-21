@@ -24,12 +24,25 @@ def create_secret(x: int, n: int, server_url: str):
 
 
 def getTotal(urls: list):
-    sum = 0
+    sums = []
+    sums_check = []
     for url in urls:
-        var = requests.get(url + 'total').text
+        var = eval(requests.get(url + 'total').text)
         print(var)
-        sum += int(var)
-    return sum % int(get_prime(urls[0] + 'server'))
+        sums.append(var)
+        sums_check += var
+    sums_check = set(sums_check)
+    total = 0
+    if len(set(sums_check)) == len(urls):
+        print("success")
+        for name, num in sums_check:
+            total += num
+    else:
+        print("something is wrong")
+
+    print(sums)
+    print(sums_check)
+    return total % int(get_prime(urls[0] + 'server'))
 
 
 # Sieve of Eratosthenes
