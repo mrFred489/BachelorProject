@@ -26,7 +26,7 @@ if not testing:
     def get_numbers(db_name):
         cur = get_cursor()
 
-        affected_count = cur.execute(u'select number,name from "' + db_name + '"')
+        cur.execute(u'select number,name from "' + db_name + '"')
 
         res = []
         for i in cur:
@@ -36,15 +36,15 @@ if not testing:
 
     def insert_number(num: int, name: str, db_name: str):
         cur = get_cursor()
-        affected_count = cur.execute(u'insert into "' + db_name + '" (number, name) values (' + str(num) + ', "' + name + '")')
+        cur.execute(u'insert into "' + db_name + '" (number, name) values (' + str(num) + ', \'' + name + '\')')
         cur.close()
         conn.commit()
-        return int(affected_count > 0)
+        return 1
 
     def reset(db_name: str):
         cur = get_cursor()
 
-        affected_count = cur.execute(u'delete from "' + db_name + '"')
+        cur.execute(u'delete from "' + db_name + '"')
 
         cur.close()
         conn.commit()
