@@ -67,7 +67,7 @@ class test_communication(unittest.TestCase):
         # for server in n_servers:
         #     total += int(requests.get(server + "total").text)
 
-        self.assertEqual(total % util.get_prime(servers[0]), 50)
+        self.assertEqual(50, total % util.get_prime(servers[0]))
 
 
 def reset_servers():
