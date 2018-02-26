@@ -5,7 +5,7 @@ import atexit
 
 
 test = False
-if str(os.path.dirname(__file__).split("/")[-1]) != "flaskwebsite":
+if str(os.path.dirname(__file__).split("/")[-2]) != "flaskwebsite":
     test = True
 
 if not test:
@@ -50,7 +50,6 @@ def get_cursor():
 
 def get_numbers(db_name):
     cur = get_cursor()
-
     cur.execute(u'SELECT number,name FROM "' + db_name + '"')
 
     res = []
