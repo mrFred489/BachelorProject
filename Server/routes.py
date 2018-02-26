@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
-from collections import defaultdict
-from flask import Flask, render_template, request, redirect, url_for, send_from_directory, Response
-import database as db
+from flask import Flask, render_template, request, Response
+from Server import database as db
 import os
+from Server import server_util
+import util
 
 app = Flask(__name__)
 app.url_map.strict_slashes = False
 
 # numbers = defaultdict(list)
-p = 4000037
 testing = False  # variabel til at slå database fra hvis vi kører det lokalt
 
 try:
@@ -19,12 +19,13 @@ except:
 
 @app.route("/")
 def home():
-    servers = []
-    total = 0
-    numbers = db.get_numbers(my_name)
-    servers.append({"data": str(numbers)})
-    total += sum([x[0] for x in numbers])
-    return render_template("server.html", servers=servers, total=total % p)
+    return server_util.home(db)
+    # servers = []
+    # total = 0
+    # numbers = db.get_numbers(my_name)
+    # servers.append({"data": str(numbers)})
+    # total += sum([x[0] for x in numbers])
+    # return render_template("server.html", servers=servers, total=total % util.get_prime())
 
 
 @app.route("/total")
@@ -34,7 +35,7 @@ def total_sum():
     numbers = db.get_numbers(my_name)
     for i in numbers:
         if i[1] not in names:
-            totals.append((i[1].replace("r", "s"), sum([x[0] if x[1] == i[1] else 0 for x in numbers]) % p))
+            totals.append((i[1].replace("r", "s"), sum([x[0] if x[1] == i[1] else 0 for x in numbers]) % util.get_prime()))
             names.add(i[1])
     return str(totals)
 
@@ -54,13 +55,9 @@ def database():
 def server():
     values = request.form.getlist("value")
     for num, n in enumerate(request.form.getlist("name")):
-        db.insert_number(int(values[num]) % p, n, my_name)
+        db.insert_number(int(values[num]) % util.get_prime(), n, my_name)
     return Response(status=200)
 
-
-@app.route("/server/prime", methods=['GET'])
-def prime():
-    return str(p)
 
 
 if __name__ == '__main__':
