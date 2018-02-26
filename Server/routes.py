@@ -19,7 +19,7 @@ except:
 
 @app.route("/")
 def home():
-    return server_util.home(db)
+    return server_util.home(db, my_name)
     # servers = []
     # total = 0
     # numbers = db.get_numbers(my_name)
@@ -57,7 +57,6 @@ def server():
     for num, n in enumerate(request.form.getlist("name")):
         db.insert_number(int(values[num]) % util.get_prime(), n, my_name)
     return Response(status=200)
-
 
 
 if __name__ == '__main__':
