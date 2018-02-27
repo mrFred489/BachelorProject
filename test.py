@@ -1,10 +1,13 @@
+import random
+import util
+
 import util
 import requests
 import unittest
 import time
 from Client import client_util
 
-p = 4000001
+p = util.get_prime()
 baseurl1 = "http://127.0.0.1:5000/"
 baseurl2 = "http://127.0.0.1:5001/"
 baseurl3 = "http://127.0.0.1:5002/"
@@ -36,6 +39,18 @@ class test_arithmetics(unittest.TestCase):
             for y in secrets_2:
                 res += x * y
         self.assertEqual(25, res)
+
+    def test_multiplication2(self):
+        num1 = random.randint(0, p)
+        num2 = random.randint(0, p)
+        secrets_1 = client_util.create_multiplication_secret(num1, 2)
+        secrets_2 = client_util.create_multiplication_secret(num2, 2)
+        res = 0
+        for x in secrets_1:
+            for y in secrets_2:
+                res += x * y
+        self.assertEqual(num1 * num2, res)
+
 
 
 class test_communication(unittest.TestCase):
