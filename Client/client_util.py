@@ -43,14 +43,14 @@ def create_arrays_of_servers_to_send_secret_to(n: int, cs: int):
         arrays.append(list(subset))
     return arrays
 
-def post_multiplication_secrets_to_servers(url: str, xs, arrays, name: str):
+def post_multiplication_secrets_to_servers(url: str, xs, arrays, name: str, client: str):
     lenx = len(xs)
     lenarrays = len(arrays)
     if(lenarrays!=lenx):
         return
     for xi in range(lenx):
         for ser in arrays[xi]:
-            post_url(url+str(ser), dict(name=name+str(xi), value=xs[xi]))
+            post_url(url+str(ser), dict(client=client ,name=name+str(xi), value=xs[xi]))
 
 def getTotal(urls: list):
     sums = []
