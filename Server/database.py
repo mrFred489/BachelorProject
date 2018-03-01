@@ -20,9 +20,9 @@ else:
     postgresql = testing.postgresql.Postgresql()
     conn = psy.connect(**postgresql.dsn())
     cursor = conn.cursor()
-    cursor.execute('create table "http://127.0.0.1:5000"(name text, number INTEGER)')
-    cursor.execute('create table "http://127.0.0.1:5001"(name text, number INTEGER)')
-    cursor.execute('create table "http://127.0.0.1:5002"(name text, number INTEGER)')
+    cursor.execute('create table "http://127.0.0.1:5000"(name text, number INTEGER, client text, server text)')
+    cursor.execute('create table "http://127.0.0.1:5001"(name text, number INTEGER, client text, server text)')
+    cursor.execute('create table "http://127.0.0.1:5002"(name text, number INTEGER, client text, server text)')
     cursor.close()
     conn.commit()
 
@@ -59,9 +59,13 @@ def get_numbers(db_name):
     return res
 
 
-def insert_number(num: int, name: str, db_name: str):
+def insert_number(num: int, name: str, client, server, db_name: str):
     cur = get_cursor()
-    cur.execute(u'INSERT INTO "' + db_name + '" (number, name) VALUES (' + str(num) + ', \'' + name + '\')')
+    cur.execute(u'INSERT INTO "' + db_name + '" (number, name, client, server) VALUES (' + str(num)
+                + ', \'' + name
+                + '\', \'' + client
+                + '\', \'' + server
+                + '\')')
     cur.close()
     conn.commit()
     return 1

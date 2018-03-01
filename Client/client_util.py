@@ -57,16 +57,17 @@ def post_url(data: dict, url: str):
     return requests.post(url, data)
 
 
-def post_secret_to_server(name: list, value: list, url: str):
-    return requests.post(url, data=dict(name=name, value=value))
+def post_secret_to_server(clients: list, servers: list, name: list, value: list, url: str):
+    return requests.post(url, data=dict(client=clients, server=servers, name=name, value=value))
 
 
 def create_and_post_secret_to_servers(x: int, name: str, servers: list):
     secrets = create_addition_secret(x, len(servers), servers[0])
+    clients = [name] * (len(secrets) - 1)
     names = ["r" + str(i) for i in range(len(secrets))]
     for num, server_url in enumerate(servers):
         secrets_c = secrets.copy()
         del secrets_c[num]
         names_c = names.copy()
         del names_c[num]
-        post_secret_to_server(names_c, secrets_c, server_url)
+        post_secret_to_server(clients, clients, names_c, secrets_c, server_url)

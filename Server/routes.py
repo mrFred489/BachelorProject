@@ -64,8 +64,10 @@ def database():
 @app.route("/server", methods=["POST"])
 def server():
     values = request.form.getlist("value")
+    clients = request.form.getlist("value")
+    servers = request.form.getlist("value")
     for num, n in enumerate(request.form.getlist("name")):
-        db.insert_number(int(values[num]) % util.get_prime(), n, my_name)
+        db.insert_number(int(values[num]) % util.get_prime(), n, clients[num], servers[num], my_name)
     return Response(status=200)
 
 
