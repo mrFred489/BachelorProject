@@ -58,7 +58,7 @@ def reset():
 
 @app.route("/databases")
 def database():
-    return db.get_numbers(my_name)
+    return str(db.get_numbers(my_name))
 
 
 @app.route("/server", methods=["POST"])

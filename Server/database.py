@@ -56,12 +56,14 @@ def get_numbers(db_name):
     for i in cur:
         res.append(i)
     cur.close()
+    conn.commit()
     return res
 
 
 def insert_number(num: int, name: str, client, server, db_name: str):
     cur = get_cursor()
-    cur.execute(u'INSERT INTO "' + db_name + '" (number, name, client, server) VALUES (' + str(num)
+    cur.execute(u'INSERT INTO "' + db_name + '" (number, name, client, server) VALUES ('
+                + str(num)
                 + ', \'' + name
                 + '\', \'' + client
                 + '\', \'' + server
