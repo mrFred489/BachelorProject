@@ -50,9 +50,6 @@ def getTotal(urls: list):
             total += num
     else:
         print("something is wrong")
-
-    print(sums)
-    print(sums_check)
     return total % int(util.get_prime())
 
 
