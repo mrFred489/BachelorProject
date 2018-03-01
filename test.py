@@ -1,11 +1,10 @@
-import random
-import util
-
 import util
 import requests
 import unittest
 import time
 from Client import client_util
+import subprocess
+import multiprocessing as mp
 
 p = util.get_prime()
 baseurl1 = "http://127.0.0.1:5000/"
@@ -18,8 +17,17 @@ official_server2 = "https://server2.cryptovoting.dk/"
 official_server3 = "https://server3.cryptovoting.dk/"
 official_server4 = "https://server4.cryptovoting.dk/"
 
-n_servers = [baseurl1, baseurl2, official_server, official_server1, official_server2, official_server3, official_server4]
+n_servers = [baseurl1, baseurl2,
+             official_server, official_server1,
+             official_server2, official_server3, official_server4]
 
+def create_server(port):
+    subprocess.run('python3 Server/routes.py ' + port, shell=True)
+
+
+def create_local_server(port):
+    pr = mp.Process(target=create_server, args=(str(port), ))
+    pr.start()
 
 
 class test_arithmetics(unittest.TestCase):
@@ -30,7 +38,6 @@ class test_arithmetics(unittest.TestCase):
         res = sum(secrets_1) + sum(secrets_2)
         self.assertEqual(25, res)
 
- ##TODO: make partitioning of numbers for multiplication (split the number into amount _of_servers parts)
     def test_multiplication(self):
         secrets_1 = client_util.create_multiplication_secret(5, 2)
         secrets_2 = client_util.create_multiplication_secret(5, 2)
@@ -41,23 +48,29 @@ class test_arithmetics(unittest.TestCase):
         self.assertEqual(25, res)
 
     def test_multiplication2(self):
-        num1 = random.randint(0, p)
-        num2 = random.randint(0, p)
-        secrets_1 = client_util.create_multiplication_secret(num1, 2)
-        secrets_2 = client_util.create_multiplication_secret(num2, 2)
+        secrets_1 = client_util.create_multiplication_secret(p - 1, 2)
+        secrets_2 = client_util.create_multiplication_secret(p - 1, 2)
         res = 0
         for x in secrets_1:
             for y in secrets_2:
                 res += x * y
-        self.assertEqual(num1 * num2, res)
-
+        self.assertEqual((p - 1) * (p - 1), res)
 
 
 class test_communication(unittest.TestCase):
 
+    def setUpClass():
+        create_local_server(5000)
+        create_local_server(5001)
+        create_local_server(5002)
+
+        time.sleep(5)
+
     def test_multiple_servers(self):
         # Husk at starte to servere, med hver deres port nummer.
-        servers = [baseurl1 + "server", baseurl2 + "server", baseurl3 + "server"]
+        servers = [baseurl1 + "server",
+                   baseurl2 + "server",
+                   baseurl3 + "server"]
 
         requests.post(baseurl1 + "reset")
         requests.post(baseurl2 + "reset")
@@ -85,6 +98,11 @@ class test_communication(unittest.TestCase):
 
         self.assertEqual(50, total % util.get_prime())
 
+    def tearDownClass():
+        requests.get(baseurl1 + "shutdown")
+        requests.get(baseurl2 + "shutdown")
+        requests.get(baseurl3 + "shutdown")
+
 
 def reset_servers():
     for server in n_servers:
@@ -93,3 +111,6 @@ def reset_servers():
 
 if __name__ == '__main__':
     unittest.main()
+
+
+

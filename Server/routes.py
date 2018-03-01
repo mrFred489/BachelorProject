@@ -4,6 +4,8 @@ from Server import database as db
 import os
 from Server import server_util
 import util
+import sys
+
 
 app = Flask(__name__)
 app.url_map.strict_slashes = False
@@ -15,6 +17,13 @@ try:
     my_name = str(os.path.dirname(__file__).split("/")[3])
 except:
     my_name = "test"
+
+
+def shutdown_server():
+    func = request.environ.get('werkzeug.server.shutdown')
+    if func is None:
+        raise RuntimeError('Not running with the Werkzeug Server')
+    func()
 
 
 @app.route("/")
@@ -61,7 +70,11 @@ def server():
 
 if __name__ == '__main__':
     # Lav flere servere ved at ændre port nummeret og køre routes igen.
+    @app.route("/shutdown")
+    def stop_server():
+        shutdown_server()
+        return 'Server shutting down...'
     testing = True
-    port = input('Choose port for server: ')
+    port = sys.argv[1]
     my_name = "http://127.0.0.1:" + str(port)
     app.run(port=int(port), debug=True, use_reloader=False)
