@@ -1,6 +1,7 @@
 import requests
 import random
 import util
+import scipy.special as ss
 baseurl1 = "http://127.0.0.1:5000/"
 baseurl2 = "http://127.0.0.1:5001/"
 baseurl3 = "http://127.0.0.1:5002/"
@@ -22,10 +23,11 @@ def create_addition_secret(x: int, n: int, server_url: str):
     return res
 
 
-def create_multiplication_secret(x: int, n: int):
+def create_multiplication_secret(x: int, n: int, cs: int):
     remaining = x
     rng = random.Random()
     res = []
+    n = ss.binom(n, cs)
     for i in range(n-1):
         secret = rng.randrange(0, remaining)
         res.append(secret)
