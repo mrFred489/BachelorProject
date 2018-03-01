@@ -51,7 +51,6 @@ def get_cursor():
 def get_numbers(db_name):
     cur = get_cursor()
     cur.execute(u'SELECT number,name,client,server FROM "' + db_name + '"')
-
     res = []
     for i in cur:
         res.append(i)
@@ -62,12 +61,9 @@ def get_numbers(db_name):
 
 def insert_number(num: int, name: str, client, server, db_name: str):
     cur = get_cursor()
-    cur.execute(u'INSERT INTO "' + db_name + '" (number, name, client, server) VALUES ('
-                + str(num)
-                + ', \'' + name
-                + '\', \'' + client
-                + '\', \'' + server
-                + '\')')
+    query = u'INSERT INTO "' + db_name + '" (number, name, client, server) VALUES (' \
+            + str(num) + ', \'' + name + '\', \'' + client + '\', \'' + server + '\')'
+    cur.execute(query)
     cur.close()
     conn.commit()
     return 1
