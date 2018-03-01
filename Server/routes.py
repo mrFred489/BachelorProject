@@ -69,13 +69,19 @@ def server():
     return Response(status=200)
 
 
-if __name__ == '__main__':
-    # Lav flere servere ved at ændre port nummeret og køre routes igen.
+def create_local(port):
+    global my_name, testing
     @app.route("/shutdown")
     def stop_server():
         shutdown_server()
         return 'Server shutting down...'
+
     testing = True
-    port = sys.argv[1]
     my_name = "http://127.0.0.1:" + str(port)
     app.run(port=int(port), debug=True, use_reloader=False)
+
+
+if __name__ == '__main__':
+    # Lav flere servere ved at ændre port nummeret og køre routes igen.
+    port = sys.argv[1]
+    create_local(port)

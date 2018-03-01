@@ -6,6 +6,7 @@ from Client import client_util
 import subprocess
 import multiprocessing as mp
 import os
+import Server.routes
 
 p = util.get_prime()
 baseurl1 = "http://127.0.0.1:5000/"
@@ -22,13 +23,8 @@ n_servers = [baseurl1, baseurl2,
              official_server, official_server1,
              official_server2, official_server3, official_server4]
 
-def create_server(port):
-    #subprocess.run('python3 Server/routes.py ' + port, shell=True)
-    os.system("Server/routes.py " + str(port))
-
-
 def create_local_server(port):
-    pr = mp.Process(target=create_server, args=(str(port), ))
+    pr = mp.Process(target=Server.routes.create_local, args=(str(port), ))
     pr.start()
 
 
