@@ -2,6 +2,7 @@ import requests
 import random
 import util
 import scipy.special as ss
+import itertools
 baseurl1 = "http://127.0.0.1:5000/"
 baseurl2 = "http://127.0.0.1:5001/"
 baseurl3 = "http://127.0.0.1:5002/"
@@ -28,13 +29,19 @@ def create_multiplication_secret(x: int, n: int, cs: int):
     rng = random.Random()
     res = []
     n = ss.binom(n, cs)
-    for i in range(n-1):
+    for i in range(int(n)-1):
         secret = rng.randrange(0, remaining)
         res.append(secret)
         remaining -= secret
     res.append(remaining)
     return res
 
+def create_arrays_of_multiplication_secrets_to_send(x, n: int, cs: int):
+    combs = itertools.combinations(range(1, 8), 3)
+    arrays = []
+    for subset in combs:
+        arrays.append([].append(subset))
+    return arrays
 
 def getTotal(urls: list):
     sums = []

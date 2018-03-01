@@ -37,8 +37,8 @@ class test_arithmetics(unittest.TestCase):
         self.assertEqual(25, res)
 
     def test_multiplication(self):
-        secrets_1 = client_util.create_multiplication_secret(5, 2)
-        secrets_2 = client_util.create_multiplication_secret(5, 2)
+        secrets_1 = client_util.create_multiplication_secret(5, 2, 1)
+        secrets_2 = client_util.create_multiplication_secret(5, 2, 1)
         res = 0
         for x in secrets_1:
             for y in secrets_2:
@@ -46,8 +46,8 @@ class test_arithmetics(unittest.TestCase):
         self.assertEqual(25, res)
 
     def test_multiplication2(self):
-        secrets_1 = client_util.create_multiplication_secret(p - 1, 2)
-        secrets_2 = client_util.create_multiplication_secret(p - 1, 2)
+        secrets_1 = client_util.create_multiplication_secret(p - 1, 2, 1)
+        secrets_2 = client_util.create_multiplication_secret(p - 1, 2, 1)
         res = 0
         for x in secrets_1:
             for y in secrets_2:
