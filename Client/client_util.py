@@ -3,15 +3,6 @@ import random
 import util
 import scipy.special as ss
 import itertools
-baseurl1 = "http://127.0.0.1:5000/"
-baseurl2 = "http://127.0.0.1:5001/"
-baseurl3 = "http://127.0.0.1:5002/"
-
-servers = [baseurl1, baseurl2, baseurl3]
-
-official_url = "https://cryptovoting.dk/"
-
-work_url = baseurl1
 
 
 def create_addition_secret(x: int, n: int, server_url: str):
@@ -29,28 +20,31 @@ def create_multiplication_secret(x: int, n: int, cs=1):
     rng = random.Random()
     res = []
     n = ss.binom(n, cs)
-    for i in range(int(n)-1):
+    for i in range(int(n) - 1):
         secret = rng.randrange(0, remaining)
         res.append(secret)
         remaining -= secret
     res.append(remaining)
     return res
 
+
 def create_arrays_of_servers_to_send_secret_to(n: int, cs: int):
-    combs = itertools.combinations(range(1, n+1), cs)
+    combs = itertools.combinations(range(1, n + 1), cs)
     arrays = []
     for subset in combs:
         arrays.append(list(subset))
     return arrays
 
+
 def post_multiplication_secrets_to_servers(url: str, xs, arrays, name: str, client: str):
     lenx = len(xs)
     lenarrays = len(arrays)
-    if(lenarrays!=lenx):
+    if (lenarrays != lenx):
         return
     for xi in range(lenx):
         for ser in arrays[xi]:
-            post_url(dict(client=client,  name=name+str(xi), value=xs[xi]), url+str(ser))
+            post_url(dict(client=client, server=client, name=name + str(xi), value=xs[xi]), url + str(ser))
+
 
 def getTotal(urls: list):
     sums = []
@@ -75,16 +69,17 @@ def post_url(data: dict, url: str):
     return requests.post(url, data)
 
 
-def post_secret_to_server(name: list, value: list, url: str):
-    return requests.post(url, data=dict(name=name, value=value))
+def post_secret_to_server(clients: list, servers: list, name: list, value: list, url: str):
+    return requests.post(url, data=dict(client=clients, server=servers, name=name, value=value))
 
 
 def create_and_post_secret_to_servers(x: int, name: str, servers: list):
     secrets = create_addition_secret(x, len(servers), servers[0])
     names = ["r" + str(i) for i in range(len(secrets))]
+    clients = [name] * (len(secrets) - 1)
     for num, server_url in enumerate(servers):
         secrets_c = secrets.copy()
         del secrets_c[num]
         names_c = names.copy()
         del names_c[num]
-        post_secret_to_server(names_c, secrets_c, server_url)
+        post_secret_to_server(clients, clients, names_c, secrets_c, server_url)

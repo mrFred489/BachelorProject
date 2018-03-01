@@ -3,9 +3,7 @@ import requests
 import unittest
 import time
 from Client import client_util
-import subprocess
 import multiprocessing as mp
-import os
 import Server.routes
 
 p = util.get_prime()
@@ -13,13 +11,15 @@ baseurl1 = "http://127.0.0.1:5000/"
 baseurl2 = "http://127.0.0.1:5001/"
 baseurl3 = "http://127.0.0.1:5002/"
 
+local_servers = [baseurl1, baseurl2, baseurl3]
+
 official_server = "https://cryptovoting.dk/"
 official_server1 = "https://server1.cryptovoting.dk/"
 official_server2 = "https://server2.cryptovoting.dk/"
 official_server3 = "https://server3.cryptovoting.dk/"
 official_server4 = "https://server4.cryptovoting.dk/"
 
-n_servers = [baseurl1, baseurl2,
+n_servers = [baseurl1, baseurl2, baseurl3,
              official_server, official_server1,
              official_server2, official_server3, official_server4]
 
@@ -96,9 +96,8 @@ class test_communication(unittest.TestCase):
         self.assertEqual(50, total % util.get_prime())
 
     def tearDownClass():
-        requests.get(baseurl1 + "shutdown")
-        requests.get(baseurl2 + "shutdown")
-        requests.get(baseurl3 + "shutdown")
+        for i in local_servers:
+            requests.get(i + "shutdown")
 
 
 def reset_servers():

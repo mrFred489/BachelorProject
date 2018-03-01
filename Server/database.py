@@ -50,7 +50,7 @@ def get_cursor():
 
 def get_numbers(db_name):
     cur = get_cursor()
-    cur.execute(u'SELECT number,name FROM "' + db_name + '"')
+    cur.execute(u'SELECT number,name,client,server FROM "' + db_name + '"')
 
     res = []
     for i in cur:
