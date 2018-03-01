@@ -1,6 +1,7 @@
 from flask import render_template
 import util
 
+
 def home(db, my_name):
     servers = []
     total = 0
