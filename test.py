@@ -58,9 +58,8 @@ class test_arithmetics(unittest.TestCase):
 class test_communication(unittest.TestCase):
 
     def setUpClass():
-        create_local_server(5000)
-        create_local_server(5001)
-        create_local_server(5002)
+        for i in range(3):
+            create_local_server(5000 + i)
 
         time.sleep(5)
 
