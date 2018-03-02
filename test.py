@@ -101,8 +101,8 @@ class test_communication(unittest.TestCase):
 
         client_util.create_and_post_secret_to_servers(28, "c3", servers)
         client_util.create_and_post_secret_to_servers(11, "c4", servers)
-        client_util.create_and_post_secret_to_servers(11, "c4", servers)
-
+        client_util.create_and_post_secret_to_servers(10, "c5", servers)
+        client_util.create_and_post_secret_to_servers(1, "c6", servers)
         requests.get(baseurl1 + 'add')
 
         requests.get(baseurl2 + 'add')

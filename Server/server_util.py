@@ -44,9 +44,12 @@ def calculate_s(votes, server_nr):
 
 
 def broadcast_values(values, servers, my_name):
+    server_nr = servers.index(my_name)
     for server in servers:
         for num, val in enumerate(values):
-            if server != my_name:
+            # Only r_i's with i different from server_nr should be sent
+            should_be_sent = num != server_nr
+            if (server != my_name) & should_be_sent:
                 send_value_to_server(val, 's', num, my_name, server + "/server")
 
 
