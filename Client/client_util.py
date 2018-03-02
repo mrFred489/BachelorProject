@@ -83,6 +83,6 @@ def create_and_post_secret_to_servers(x: int, name: str, servers: list):
         del secrets_c[num]
         names_c = names.copy()
         del names_c[num]
-        id_c = id
+        id_c = id.copy()
         del id_c[num]
         post_secret_to_server(clients, clients, names_c, id_c, secrets_c, server_url)
