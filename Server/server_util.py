@@ -35,9 +35,7 @@ def calculate_s(votes, server_nr):
     for s_i_partition in s_i_values:
         s_i_index = s_i_partition[2]
         s_i = s_i_partition[0]
-        print('S_'+ s_i_index +' IS: ' + s_i + ' For server ' + s_i_partition[4])
         if s_i_index not in used_indexes:
-            print('INDEX ' + str(s_i_index) + ' with value ' + str(s_i) + ' was used for calculation of s')
             s += int(s_i)
             used_indexes.append(s_i_index)
     return s
