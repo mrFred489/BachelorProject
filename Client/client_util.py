@@ -43,10 +43,10 @@ def post_multiplication_secrets_to_servers(url: str, xs, arrays, name: str, clie
         return
     for xi in range(lenx):
         for ser in arrays[xi]:
-            post_url(dict(client=client, server=client, name=name id=str(xi), value=xs[xi]), url + str(ser))
+            post_url(dict(client=client, server=client, name=name, id=str(xi), value=xs[xi]), url + str(ser))
 
 
-def getTotal(urls: list):
+def get_total(urls: list):
     sums = []
     sums_check = []
     for url in urls:

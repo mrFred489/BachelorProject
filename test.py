@@ -77,7 +77,7 @@ class test_communication(unittest.TestCase):
         client_util.create_and_post_secret_to_servers(12, "x", servers)
         client_util.create_and_post_secret_to_servers(18, "x", servers)
 
-        total = client_util.getTotal([baseurl1, baseurl2, baseurl3])
+        total = client_util.get_total([baseurl1, baseurl2, baseurl3])
 
         self.assertEqual(50, total)
 
@@ -91,7 +91,7 @@ class test_communication(unittest.TestCase):
 
         time.sleep(0.1)
 
-        total = client_util.getTotal(n_servers)
+        total = client_util.get_total(n_servers)
 
         self.assertEqual(50, total % util.get_prime())
 
