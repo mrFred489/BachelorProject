@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
-from flask import Flask, render_template, request, Response
+from flask import Flask, jsonify, render_template, request, Response
 from Server import database as db
 import os
 from Server import server_util
 import util
 import sys
-import requests
 
 
 app = Flask(__name__)
@@ -25,6 +24,29 @@ def shutdown_server():
     if func is None:
         raise RuntimeError('Not running with the Werkzeug Server')
     func()
+
+
+global servers
+
+test_servers = [
+    "http://127.0.0.1:5000",
+    "http://127.0.0.1:5001",
+    "http://127.0.0.1:5002",
+]
+
+official_servers = [
+    "https://cryptovoting.dk/",
+    "https://server1.cryptovoting.dk/",
+    "https://server2.cryptovoting.dk/",
+    "https://server3.cryptovoting.dk/",
+    # "https://server4.cryptovoting.dk/"
+    ]
+
+if not testing:
+    servers = test_servers
+else:
+    servers = official_servers
+
 
 
 @app.route("/")
@@ -63,6 +85,7 @@ def database():
 
 @app.route("/server", methods=["POST"])
 def server():
+    print("RECEIVED MESSAGE")
     values = request.form.getlist("value")
     clients = request.form.getlist("client")
     servers = request.form.getlist("server")
@@ -73,8 +96,37 @@ def server():
     return Response(status=200)
 
 
+
+@app.route("/add", methods=["GET"])
+def add():
+    votes = db.get_numbers(my_name)
+
+    server_nr = servers.index(my_name)
+    s = server_util.sum_r_values(votes, servers, server_nr)
+    for num, value in enumerate(s):
+        if num != server_nr:
+            db.insert_number(value, 's', num , my_name, my_name, my_name)
+    server_util.broadcast_values(s, servers, my_name)
+    all_votes = db.get_numbers(my_name)
+    # s = server_util.calculate_s(all_votes, server_nr)
+    return jsonify({'s': s})
+
+@app.route("/compute_result", methods=["GET"])
+def compute_result():
+    all_votes = db.get_numbers(my_name)
+    server_nr = servers.index(my_name)
+    s = server_util.calculate_s(all_votes, server_nr)
+    return jsonify({'s': s})
+
+
+@app.route("/multiply", methods=["GET"])
+def multiply():
+    all_values = db.get_numbers(my_name)
+
+
+
 def create_local(port):
-    global my_name, testing
+    global my_name, testing, server_nr
     @app.route("/shutdown")
     def stop_server():
         shutdown_server()
@@ -82,6 +134,7 @@ def create_local(port):
 
     testing = True
     my_name = "http://127.0.0.1:" + str(port)
+    server_nr = int(port) - 5000
     app.run(port=int(port), debug=True, use_reloader=False)
 
 

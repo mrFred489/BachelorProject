@@ -65,12 +65,8 @@ def get_total(urls: list):
     return total % int(util.get_prime())
 
 
-def post_url(data: dict, url: str):
-    return requests.post(url, data)
-
-
 def post_secret_to_server(clients: list, servers: list, name: list, id: list, value: list, url: str):
-    return requests.post(url, data=dict(client=clients, server=servers, name=name, id=id, value=value))
+    return util.post_url(data=dict(client=clients, server=servers, name=name, id=id, value=value), url=url)
 
 
 def create_and_post_secret_to_servers(x: int, name: str, servers: list):

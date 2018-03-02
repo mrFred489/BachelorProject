@@ -5,7 +5,7 @@ import time
 from Client import client_util
 import multiprocessing as mp
 import Server.routes
-
+from time import sleep
 p = util.get_prime()
 baseurl1 = "http://127.0.0.1:5000/"
 baseurl2 = "http://127.0.0.1:5001/"
@@ -69,13 +69,11 @@ class test_communication(unittest.TestCase):
                    baseurl2 + "server",
                    baseurl3 + "server"]
 
-        requests.post(baseurl1 + "reset")
-        requests.post(baseurl2 + "reset")
-        requests.post(baseurl3 + "reset")
+        reset_servers()
 
-        client_util.create_and_post_secret_to_servers(20, "x", servers)
-        client_util.create_and_post_secret_to_servers(12, "x", servers)
-        client_util.create_and_post_secret_to_servers(18, "x", servers)
+        client_util.create_and_post_secret_to_servers(20, "c1", servers)
+        client_util.create_and_post_secret_to_servers(12, "c2", servers)
+        client_util.create_and_post_secret_to_servers(18, "c3", servers)
 
         total = client_util.get_total([baseurl1, baseurl2, baseurl3])
 
@@ -85,15 +83,39 @@ class test_communication(unittest.TestCase):
         servers = [server + "server" for server in n_servers]
 
         reset_servers()
-
-        client_util.create_and_post_secret_to_servers(28, "x", servers)
-        client_util.create_and_post_secret_to_servers(22, "y", servers)
+        client_util.create_and_post_secret_to_servers(28, "c1", servers)
+        client_util.create_and_post_secret_to_servers(22, "c2", servers)
 
         time.sleep(0.1)
 
         total = client_util.get_total(n_servers)
 
         self.assertEqual(50, total % util.get_prime())
+
+
+    def test_server_calculation_of_sum(self):
+        reset_servers()
+        servers = [baseurl1 + "server",
+                   baseurl2 + "server",
+                   baseurl3 + "server"]
+
+        client_util.create_and_post_secret_to_servers(28, "c3", servers)
+        client_util.create_and_post_secret_to_servers(11, "c4", servers)
+        client_util.create_and_post_secret_to_servers(11, "c4", servers)
+
+        requests.get(baseurl1 + 'add')
+
+        requests.get(baseurl2 + 'add')
+        requests.get(baseurl3 + 'add')
+        req_res = requests.get(baseurl1 + 'compute_result')
+        res = req_res.json()
+        res = res['s']
+        s = res % util.get_prime()
+
+        self.assertEqual(50, s)
+
+
+
 
     def tearDownClass():
         for i in local_servers:
