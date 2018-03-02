@@ -66,8 +66,10 @@ def server():
     values = request.form.getlist("value")
     clients = request.form.getlist("client")
     servers = request.form.getlist("server")
-    for num, n in enumerate(request.form.getlist("name")):
-        db.insert_number(int(values[num]) % util.get_prime(), n, clients[num], servers[num], my_name)
+    name = request.form.getlist("name")
+    id = request.form.getlist("id")
+    for num, n in enumerate(name):
+        db.insert_number(int(values[num]) % util.get_prime(), n, id[num], clients[num], servers[num], my_name)
     return Response(status=200)
 
 

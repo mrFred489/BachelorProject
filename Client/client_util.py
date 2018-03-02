@@ -43,7 +43,7 @@ def post_multiplication_secrets_to_servers(url: str, xs, arrays, name: str, clie
         return
     for xi in range(lenx):
         for ser in arrays[xi]:
-            post_url(dict(client=client, server=client, name=name + str(xi), value=xs[xi]), url + str(ser))
+            post_url(dict(client=client, server=client, name=name id=str(xi), value=xs[xi]), url + str(ser))
 
 
 def getTotal(urls: list):
@@ -69,17 +69,20 @@ def post_url(data: dict, url: str):
     return requests.post(url, data)
 
 
-def post_secret_to_server(clients: list, servers: list, name: list, value: list, url: str):
-    return requests.post(url, data=dict(client=clients, server=servers, name=name, value=value))
+def post_secret_to_server(clients: list, servers: list, name: list, id: list, value: list, url: str):
+    return requests.post(url, data=dict(client=clients, server=servers, name=name, id=id, value=value))
 
 
 def create_and_post_secret_to_servers(x: int, name: str, servers: list):
     secrets = create_addition_secret(x, len(servers), servers[0])
-    names = ["r" + str(i) for i in range(len(secrets))]
+    names = ["r" for i in range(len(secrets))]
+    id = [str(i) for i in range(len(secrets))]
     clients = [name] * (len(secrets) - 1)
     for num, server_url in enumerate(servers):
         secrets_c = secrets.copy()
         del secrets_c[num]
         names_c = names.copy()
         del names_c[num]
-        post_secret_to_server(clients, clients, names_c, secrets_c, server_url)
+        id_c = id
+        del id_c[num]
+        post_secret_to_server(clients, clients, names_c, id_c, secrets_c, server_url)
