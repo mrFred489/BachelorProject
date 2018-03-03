@@ -6,6 +6,7 @@ from Client import client_util
 import multiprocessing as mp
 import Server.routes
 from time import sleep
+
 p = util.get_prime()
 baseurl1 = "http://127.0.0.1:5000/"
 baseurl2 = "http://127.0.0.1:5001/"
@@ -23,12 +24,13 @@ n_servers = [baseurl1, baseurl2, baseurl3,
              official_server, official_server1,
              official_server2, official_server3, official_server4]
 
+
 def create_local_server(port):
-    pr = mp.Process(target=Server.routes.create_local, args=(str(port), ))
+    pr = mp.Process(target=Server.routes.create_local, args=(str(port),))
     pr.start()
 
 
-class test_arithmetics(unittest.TestCase):
+class TestArithmetics(unittest.TestCase):
 
     def test_addition(self):
         secrets_1 = client_util.create_addition_secret(10, 2, baseurl1 + 'server')
@@ -55,13 +57,14 @@ class test_arithmetics(unittest.TestCase):
         self.assertEqual((p - 1) * (p - 1), res)
 
 
-class test_communication(unittest.TestCase):
+class TestCommunication(unittest.TestCase):
 
-    def setUpClass():
+    @classmethod
+    def setUpClass(cls):
         for i in range(3):
             create_local_server(5000 + i)
 
-        time.sleep(5)
+        time.sleep(3)
 
     def test_multiple_servers(self):
         # Husk at starte to servere, med hver deres port nummer.
@@ -89,7 +92,6 @@ class test_communication(unittest.TestCase):
 
         self.assertEqual(50, total % util.get_prime())
 
-
     def test_server_calculation_of_sum(self):
         reset_servers()
 
@@ -103,10 +105,8 @@ class test_communication(unittest.TestCase):
 
         self.assertEqual(50, s)
 
-
-
-
-    def tearDownClass():
+    @classmethod
+    def tearDownClass(cls):
         for i in local_servers:
             requests.get(i + "shutdown")
 
@@ -118,6 +118,3 @@ def reset_servers():
 
 if __name__ == '__main__':
     unittest.main()
-
-
-

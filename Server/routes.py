@@ -60,7 +60,7 @@ def total_sum():
     numbers = db.get_numbers(my_name)
     for i in numbers:
         if i[2] not in names:
-            totals.append(("s" + i[2], sum([x[0] if x[2] == i[2] else 0 for x in numbers]) % util.get_prime()))
+            totals.append(("s" + str(i[2]), sum([x[0] if x[2] == i[2] else 0 for x in numbers]) % util.get_prime()))
             names.add(i[2])
     return str(totals)
 

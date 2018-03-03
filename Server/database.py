@@ -20,9 +20,9 @@ else:
     postgresql = testing.postgresql.Postgresql()
     conn = psy.connect(**postgresql.dsn())
     cursor = conn.cursor()
-    cursor.execute('create table "http://127.0.0.1:5000"(name text, number INTEGER, client text, server text, id text)')
-    cursor.execute('create table "http://127.0.0.1:5001"(name text, number INTEGER, client text, server text, id text)')
-    cursor.execute('create table "http://127.0.0.1:5002"(name text, number INTEGER, client text, server text, id text)')
+    cursor.execute('create table "http://127.0.0.1:5000"(name text, number INTEGER, client text, server text, id INTEGER )')
+    cursor.execute('create table "http://127.0.0.1:5001"(name text, number INTEGER, client text, server text, id INTEGER)')
+    cursor.execute('create table "http://127.0.0.1:5002"(name text, number INTEGER, client text, server text, id INTEGER)')
     cursor.close()
     conn.commit()
 
@@ -54,6 +54,7 @@ def get_numbers(db_name):
     res = []
     for i in cur:
         res.append(i)
+        print(i)
     cur.close()
     conn.commit()
     return res
