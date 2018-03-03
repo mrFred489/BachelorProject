@@ -59,9 +59,10 @@ def check_received_values(values, participants):
     # amount of participants are the amount of shares a secret is divided into
     for j in range(len(participants)):
         for i in range(len(values)):
-            # TODO: find out why x[2] is str
             curr_indexes = [x for x in values if x[2] == j]
-            print('CURR_INDEX IS: ' + str(curr_indexes) + ' In round: ' + str(i))
+            if len(curr_indexes) != len(participants)-1:
+                print('All values have not yet been received')
+                is_correct = False
             first_value = curr_indexes[0]
             for value in curr_indexes:
                 if value[0] != first_value[0]:

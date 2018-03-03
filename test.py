@@ -121,7 +121,6 @@ class TestCommunication(unittest.TestCase):
 
         s = requests.get(baseurl1 + 'compute_result').json()['s']
 
-        print('CHECK OF SI VALUES IS: ' + str(s))
         self.assertEqual('Database corrupted', s)
 
     @classmethod
