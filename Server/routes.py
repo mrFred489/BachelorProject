@@ -110,7 +110,7 @@ def add():
 def compute_result():
     all_votes = db.get_numbers(my_name)
     server_nr = servers.index(my_name)
-    s = server_util.calculate_s(all_votes, server_nr)
+    s = server_util.calculate_s(all_votes, servers)
     return jsonify({'s': s})
 
 

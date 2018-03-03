@@ -27,16 +27,17 @@ def sum_r_values(votes, servers, server_nr):
     return S
 
 
-def calculate_s(votes, server_nr):
+def calculate_s(votes, participants):
     used_indexes = []
     s = 0
     s_i_values = [x for x in np.asarray(votes) if x[1] == 's']
-    for s_i_partition in s_i_values:
-        s_i_id = s_i_partition[2]
-        s_i = s_i_partition[0]
-        if s_i_id not in used_indexes:
-            s += int(s_i)
-            used_indexes.append(s_i_id)
+    if check_received_values(s_i_values, participants):
+        for s_i_partition in s_i_values:
+            s_i_id = s_i_partition[2]
+            s_i = s_i_partition[0]
+            if s_i_id not in used_indexes:
+                s += int(s_i)
+                used_indexes.append(s_i_id)
     return s
 
 
@@ -49,9 +50,21 @@ def broadcast_values(values, servers, my_name):
             if should_be_sent:
                 send_value_to_server(val, 's', num, my_name, server + "/server")
 
+# Inefficient check of received values
+def check_received_values(values, participants):
+    is_correct = True
+    print('VALUES ARE: ' + str(values))
+    for j in range(len(participants)):
+        for i in range(len(values)):
+            # TODO: find out why x[2] is str
+            curr_indexes = [x for x in values if x[2] == str(j)]
+            print('CURR_INDEX IS: ' + str(curr_indexes) + ' In round: ' + str(i))
+            first_value = curr_indexes[0]
+            for value in curr_indexes:
+                if value[0] != first_value[0]:
+                    is_correct = False
+    return is_correct
 
-def check_received_values(values):
-    pass
 
 
 def send_value_to_server(value, name, id, sender, server_url):

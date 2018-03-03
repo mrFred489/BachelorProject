@@ -99,7 +99,6 @@ class test_communication(unittest.TestCase):
         client_util.create_and_post_secret_to_servers(1, "c6", local_servers)
 
         client_util.voting_done(local_servers)
-
         s = requests.get(baseurl1 + 'compute_result').json()['s'] % util.get_prime()
 
         self.assertEqual(50, s)
