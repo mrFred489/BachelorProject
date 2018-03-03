@@ -54,7 +54,6 @@ def get_numbers(db_name):
     res = []
     for i in cur:
         res.append(i)
-        print(i)
     cur.close()
     conn.commit()
     return res

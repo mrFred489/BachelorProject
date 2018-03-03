@@ -30,9 +30,7 @@ def sum_r_values(votes, servers, server_nr):
 def calculate_s(votes, participants):
     used_indexes = []
     s = 0
-    print("votes", votes)
     s_i_values = [x for x in list(votes) if x[1] == 's']
-    print("s_i_values", s_i_values)
     if check_received_values(s_i_values, participants):
         for s_i_partition in s_i_values:
             s_i_id = s_i_partition[2]
@@ -60,7 +58,6 @@ def check_received_values(values, participants):
     for j in range(len(participants)):
         for i in range(len(values)):
             # TODO: find out why x[2] is str
-            print("her", j, values)
             curr_indexes = [x for x in values if x[2] == j]
             print('CURR_INDEX IS: ' + str(curr_indexes) + ' In round: ' + str(i))
             first_value = curr_indexes[0]
