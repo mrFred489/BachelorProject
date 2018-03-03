@@ -15,13 +15,13 @@ def home(db, my_name):
 
 def sum_r_values(votes, servers, server_nr):
     S = [0] * len(servers)
-    votes = np.asarray(votes)
+    votes = [x for x in np.asarray(votes) if x[1] == 'r']
     for vote_partition in votes:
-        is_sent_by_server = vote_partition[4] in servers
-        if not is_sent_by_server:
-            partition_nr = int(vote_partition[2])
+        sent_by_server = vote_partition[4] in servers
+        if not sent_by_server:
+            partition_id = int(vote_partition[2])
             r_i = int(vote_partition[0])
-            S[partition_nr] += r_i
+            S[partition_id] += r_i
     for num, val in enumerate(S):
         S[num] = val % util.get_prime()
     return S
@@ -30,14 +30,13 @@ def sum_r_values(votes, servers, server_nr):
 def calculate_s(votes, server_nr):
     used_indexes = []
     s = 0
-    votes = np.asarray(votes)
-    s_i_values = [x for x in votes if x[1] == 's']
+    s_i_values = [x for x in np.asarray(votes) if x[1] == 's']
     for s_i_partition in s_i_values:
-        s_i_index = s_i_partition[2]
+        s_i_id = s_i_partition[2]
         s_i = s_i_partition[0]
-        if s_i_index not in used_indexes:
+        if s_i_id not in used_indexes:
             s += int(s_i)
-            used_indexes.append(s_i_index)
+            used_indexes.append(s_i_id)
     return s
 
 
@@ -45,10 +44,14 @@ def broadcast_values(values, servers, my_name):
     server_nr = servers.index(my_name)
     for server in servers:
         for num, val in enumerate(values):
-            # Only r_i's with i different from server_nr should be sent
-            should_be_sent = num != server_nr
-            if (server != my_name) & should_be_sent:
+            # Only r_i's with i different from server_nr should be sent and not to oneself
+            should_be_sent = (num != server_nr) & (server != my_name)
+            if should_be_sent:
                 send_value_to_server(val, 's', num, my_name, server + "/server")
+
+
+def check_received_values(values):
+    pass
 
 
 def send_value_to_server(value, name, id, sender, server_url):

@@ -66,7 +66,7 @@ def get_total(urls: list):
 
 
 def post_secret_to_server(clients: list, servers: list, name: list, id: list, value: list, url: str):
-    return util.post_url(data=dict(client=clients, server=servers, name=name, id=id, value=value), url=url)
+    return util.post_url(data=dict(client=clients, server=servers, name=name, id=id, value=value), url=url + 'server')
 
 
 def create_and_post_secret_to_servers(x: int, name: str, servers: list):
@@ -82,3 +82,12 @@ def create_and_post_secret_to_servers(x: int, name: str, servers: list):
         id_c = id.copy()
         del id_c[num]
         post_secret_to_server(clients, clients, names_c, id_c, secrets_c, server_url)
+
+
+def voting_done(servers):
+    for server in servers:
+        util.get_url(server + 'add')
+
+def calculate_vote_result(servers):
+    for server in servers:
+        util.post_url(server + 'compute_result')

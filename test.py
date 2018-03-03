@@ -65,26 +65,23 @@ class test_communication(unittest.TestCase):
 
     def test_multiple_servers(self):
         # Husk at starte to servere, med hver deres port nummer.
-        servers = [baseurl1 + "server",
-                   baseurl2 + "server",
-                   baseurl3 + "server"]
 
         reset_servers()
 
-        client_util.create_and_post_secret_to_servers(20, "c1", servers)
-        client_util.create_and_post_secret_to_servers(12, "c2", servers)
-        client_util.create_and_post_secret_to_servers(18, "c3", servers)
+        client_util.create_and_post_secret_to_servers(20, "c1", local_servers)
+        client_util.create_and_post_secret_to_servers(12, "c2", local_servers)
+        client_util.create_and_post_secret_to_servers(18, "c3", local_servers)
 
-        total = client_util.get_total([baseurl1, baseurl2, baseurl3])
+        total = client_util.get_total(local_servers)
 
         self.assertEqual(50, total)
 
     def test_n_official_servers(self):
-        servers = [server + "server" for server in n_servers]
+        # servers = [server + "server" for server in n_servers]
 
         reset_servers()
-        client_util.create_and_post_secret_to_servers(28, "c1", servers)
-        client_util.create_and_post_secret_to_servers(22, "c2", servers)
+        client_util.create_and_post_secret_to_servers(28, "c1", n_servers)
+        client_util.create_and_post_secret_to_servers(22, "c2", n_servers)
 
         time.sleep(0.1)
 
@@ -95,22 +92,15 @@ class test_communication(unittest.TestCase):
 
     def test_server_calculation_of_sum(self):
         reset_servers()
-        servers = [baseurl1 + "server",
-                   baseurl2 + "server",
-                   baseurl3 + "server"]
 
-        client_util.create_and_post_secret_to_servers(28, "c3", servers)
-        client_util.create_and_post_secret_to_servers(11, "c4", servers)
-        client_util.create_and_post_secret_to_servers(10, "c5", servers)
-        client_util.create_and_post_secret_to_servers(1, "c6", servers)
-        requests.get(baseurl1 + 'add')
+        client_util.create_and_post_secret_to_servers(28, "c3", local_servers)
+        client_util.create_and_post_secret_to_servers(11, "c4", local_servers)
+        client_util.create_and_post_secret_to_servers(10, "c5", local_servers)
+        client_util.create_and_post_secret_to_servers(1, "c6", local_servers)
 
-        requests.get(baseurl2 + 'add')
-        requests.get(baseurl3 + 'add')
-        req_res = requests.get(baseurl1 + 'compute_result')
-        res = req_res.json()
-        res = res['s']
-        s = res % util.get_prime()
+        client_util.voting_done(local_servers)
+
+        s = requests.get(baseurl1 + 'compute_result').json()['s'] % util.get_prime()
 
         self.assertEqual(50, s)
 

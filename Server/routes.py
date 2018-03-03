@@ -31,7 +31,7 @@ global servers
 test_servers = [
     "http://127.0.0.1:5000",
     "http://127.0.0.1:5001",
-    "http://127.0.0.1:5002",
+    "http://127.0.0.1:5002"
 ]
 
 official_servers = [
@@ -78,7 +78,6 @@ def database():
 
 @app.route("/server", methods=["POST"])
 def server():
-    print("RECEIVED MESSAGE")
     values = request.form.getlist("value")
     clients = request.form.getlist("client")
     servers = request.form.getlist("server")
@@ -93,16 +92,19 @@ def server():
 @app.route("/add", methods=["GET"])
 def add():
     votes = db.get_numbers(my_name)
-
     server_nr = servers.index(my_name)
-    s = server_util.sum_r_values(votes, servers, server_nr)
-    for num, value in enumerate(s):
+
+    s_array = server_util.sum_r_values(votes, servers, server_nr)
+
+    for num, value in enumerate(s_array):
         if num != server_nr:
+            # my_name my_name my_name
             db.insert_number(value, 's', num , my_name, my_name, my_name)
-    server_util.broadcast_values(s, servers, my_name)
-    all_votes = db.get_numbers(my_name)
-    # s = server_util.calculate_s(all_votes, server_nr)
-    return jsonify({'s': s})
+    server_util.broadcast_values(s_array, servers, my_name)
+
+    # return value is never used
+    return jsonify({'s': s_array})
+
 
 @app.route("/compute_result", methods=["GET"])
 def compute_result():
@@ -115,7 +117,6 @@ def compute_result():
 @app.route("/multiply", methods=["GET"])
 def multiply():
     all_values = db.get_numbers(my_name)
-
 
 
 def create_local(port):
