@@ -38,7 +38,9 @@ def calculate_s(votes, participants):
             if s_i_id not in used_indexes:
                 s += int(s_i)
                 used_indexes.append(s_i_id)
-    return s
+        return s
+    else:
+        return 'Database corrupted'
 
 
 def broadcast_values(values, servers, my_name):
@@ -54,7 +56,7 @@ def broadcast_values(values, servers, my_name):
 # Inefficient check of received values
 def check_received_values(values, participants):
     is_correct = True
-    print('VALUES ARE: ' + str(values))
+    # amount of participants are the amount of shares a secret is divided into
     for j in range(len(participants)):
         for i in range(len(values)):
             # TODO: find out why x[2] is str
@@ -67,5 +69,5 @@ def check_received_values(values, participants):
     return is_correct
 
 
-def send_value_to_server(value, name, id, sender, server_url):
-    return util.post_url(data=dict(client=sender, server=sender, name=name, id=id, value=value), url=server_url)
+def send_value_to_server(value, name, id, sender, receiver):
+    return util.post_url(data=dict(client=sender, server=sender, name=name, id=id, value=value), url=receiver)

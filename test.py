@@ -5,6 +5,7 @@ import time
 from Client import client_util
 import multiprocessing as mp
 import Server.routes
+from Server import server_util
 from time import sleep
 
 p = util.get_prime()
@@ -92,6 +93,7 @@ class TestCommunication(unittest.TestCase):
 
         self.assertEqual(50, total % util.get_prime())
 
+
     def test_server_calculation_of_sum(self):
         reset_servers()
 
@@ -105,10 +107,28 @@ class TestCommunication(unittest.TestCase):
 
         self.assertEqual(50, s)
 
+    def test_check_of_si_values(self):
+        reset_servers()
+
+        client_util.create_and_post_secret_to_servers(28, "c3", local_servers)
+        client_util.create_and_post_secret_to_servers(11, "c4", local_servers)
+        client_util.create_and_post_secret_to_servers(10, "c5", local_servers)
+        client_util.create_and_post_secret_to_servers(1, "c6", local_servers)
+
+        server_util.send_value_to_server(5, 's', 1, baseurl2, baseurl1 + 'server')
+
+        client_util.voting_done(local_servers)
+
+        s = requests.get(baseurl1 + 'compute_result').json()['s']
+
+        print('CHECK OF SI VALUES IS: ' + str(s))
+        self.assertEqual('Database corrupted', s)
+
     @classmethod
     def tearDownClass(cls):
         for i in local_servers:
             requests.get(i + "shutdown")
+
 
 
 def reset_servers():
