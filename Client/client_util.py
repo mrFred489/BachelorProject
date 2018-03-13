@@ -5,45 +5,57 @@ import scipy.special as ss
 import itertools
 
 
-def create_addition_secret(x: int, n: int, server_url: str):
-    p = util.get_prime()
-    rng = random.Random()
-    res = []
-    for i in range(n - 1):
-        res.append(rng.randrange(0, p - 1, 1))
-    res.append(x - sum(res))
-    return res
+
+def create_vote(client_name: str, priorities: list):
+
+### client_name: unique identifier for client
+### priorities: list of length #candidates with values ranging from 0 to #candidates-1
+
+### Returns:
+### a matrix consisting of rows in which the entries are 0  if the i'th index is different from the value of priorities[i], else 1
+    priority_matrix = []
+    for i in range(len(priorities)):
+        row = [0] * len(priorities)
+        priority_matrix.append(row)
+    for num, row in enumerate(priority_matrix):
+        row[priorities[num]-1] = 1
+    print(str(priority_matrix))
+    return priority_matrix
 
 
-def create_multiplication_secret(x: int, n: int, cs=1):
-    remaining = x
-    rng = random.Random()
-    res = []
-    n = ss.binom(n, cs)
-    for i in range(int(n) - 1):
-        secret = rng.randrange(0, remaining)
-        res.append(secret)
-        remaining -= secret
-    res.append(remaining)
-    return res
+def send_matrix_vote(client_name: str, vote: list, servers: list):
+    ### Parameters:
+    ### client_name: unique identifier for client
+    ### vote: a matrix consisting of rows in which the entries are 0  if the i'th index is different from the value of priorities[i], else 1
+    ### servers: a list with all servers which the secrets should be distributed to
+
+    ### Returns: void. The purpose of the method is to distribute the shares of the entries in the vote matrix between all servers.
+
+    for row_nr, row in enumerate(vote):
+        for col_nr, val in enumerate(row):
+            secret = util.create_addition_secret(val, len(servers))
+            for server_nr, server_url in enumerate(servers):
+                for i, r_i in enumerate(secret):
+                    if i != server_nr:
+                        id = 'r_'+ str(i)
+                        message = dict(val=r_i, index=i, col=col_nr, row=row_nr, client=client_name, server=server_url)
+                        post_matrix_secret_to_server(message, server_url)
 
 
-def create_arrays_of_servers_to_send_secret_to(n: int, cs: int):
-    combs = itertools.combinations(range(1, n + 1), cs)
+def post_matrix_secret_to_server(message: dict, server_url: str):
+    return util.post_url(data=message, url=server_url + 'vote')
+
+
+def post_secret_to_server(clients: list, servers: list, name: list, id: list, value: list, url: str):
+    return util.post_url(data=dict(client=clients, server=servers, name=name, id=id, value=value), url=url + 'server')
+
+
+def create_arrays_of_servers_to_send_secret_to(n: int, cs=1):
+    combs = itertools.combinations(range(0, n), n-cs)
     arrays = []
     for subset in combs:
         arrays.append(list(subset))
-    return arrays
-
-
-def post_multiplication_secrets_to_servers(url: str, xs, arrays, name: str, client: str):
-    lenx = len(xs)
-    lenarrays = len(arrays)
-    if (lenarrays != lenx):
-        return
-    for xi in range(lenx):
-        for ser in arrays[xi]:
-            util.post_url(dict(client=client, server=client, name=name, id=str(xi), value=xs[xi]), url + str(ser))
+    return list(reversed(arrays))
 
 
 def get_total(urls: list):
@@ -65,29 +77,24 @@ def get_total(urls: list):
     return total % int(util.get_prime())
 
 
-def post_secret_to_server(clients: list, servers: list, name: list, id: list, value: list, url: str):
-    return util.post_url(data=dict(client=clients, server=servers, name=name, id=id, value=value), url=url + 'server')
-
-
-def create_and_post_secret_to_servers(x: int, name: str, servers: list):
-    secrets = create_addition_secret(x, len(servers), servers[0])
-    names = ["r" for i in range(len(secrets))]
-    id = [str(i) for i in range(len(secrets))]
-    clients = [name] * (len(secrets) - 1)
-    for num, server_url in enumerate(servers):
-        secrets_c = secrets.copy()
-        del secrets_c[num]
-        names_c = names.copy()
-        del names_c[num]
-        id_c = id.copy()
-        del id_c[num]
-        post_secret_to_server(clients, clients, names_c, id_c, secrets_c, server_url)
-
-
 def voting_done(servers):
     for server in servers:
         util.get_url(server + 'add')
 
+
 def calculate_vote_result(servers):
     for server in servers:
         util.post_url(server + 'compute_result')
+
+
+def create_multiplication_secret(x: int, n: int, cs=1):
+    remaining = x
+    rng = random.Random()
+    res = []
+    n = ss.binom(n, cs)
+    for i in range(int(n) - 1):
+        secret = rng.randrange(0, remaining)
+        res.append(secret)
+        remaining -= secret
+    res.append(remaining)
+    return res

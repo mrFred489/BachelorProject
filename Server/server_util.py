@@ -1,8 +1,8 @@
 from flask import render_template
 import numpy as np
 import util
-import time
-
+from operator import mul
+from functools import reduce
 
 def home(db, my_name):
     servers = []
@@ -68,6 +68,45 @@ def check_received_values(values, participants):
                 if value[0] != first_value[0]:
                     is_correct = False
     return is_correct
+
+
+def multiply(values, participants: list, my_name: str):
+    values = list(values)
+    amount_of_servers = len(participants)
+    res = [1]*(amount_of_servers)
+    client_values = {}
+
+    for vote_partition in values:
+        curr_client = vote_partition[3]
+        value_index = vote_partition[2]
+        value = vote_partition[0]
+        if not curr_client in client_values.keys():
+            client_values[curr_client] = {}
+        client_values[curr_client][str(value_index)] = value
+    print(str(client_values))
+    server_nr = participants.index(my_name)
+    a_i_plus_one = 1
+    a_i_plus_two = 1
+    for key, client in client_values.items():
+        b_i_plus_one = client[str((server_nr+1) % amount_of_servers)]
+        b_i_plus_two = client[str((server_nr+2) % amount_of_servers)]
+        res[0] *= b_i_plus_one
+        res[1] *= a_i_plus_one * b_i_plus_two
+        res[2] *= a_i_plus_two * b_i_plus_one
+        a_i_plus_one = b_i_plus_one
+        a_i_plus_two = b_i_plus_two
+    return sum(res)
+
+
+def sort_values_according_to_client(values):
+    client_mapping = {}
+    for val in values:
+        client = val[4]
+        secret = val[0]
+        if client not in client_mapping:
+            client_mapping[client] = []
+        client_mapping[client].append(secret)
+    return client_mapping
 
 
 def send_value_to_server(value, name, id, sender, receiver):

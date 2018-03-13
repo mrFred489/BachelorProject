@@ -76,6 +76,19 @@ def database():
     return str(db.get_numbers(my_name))
 
 
+@app.route("/vote", methods=["POST"])
+def receive_vote():
+    r_i = request.form['val']
+    i = request.form['index']
+    col = request.form['col']
+    row = request.form['row']
+    client = request.form['client']
+    server_name = request.form['server']
+    db.insert_r_i(r_i, i, col, row, client, server_name, my_name)
+    print("Values inserted")
+    return Response(status=200)
+
+
 @app.route("/server", methods=["POST"])
 def server():
     values = request.form.getlist("value")
@@ -117,6 +130,10 @@ def compute_result():
 @app.route("/multiply", methods=["GET"])
 def multiply():
     all_values = db.get_numbers(my_name)
+    multiplication_values = [x for x in all_values if x[1] == 'm']
+    print(str(multiplication_values))
+    res = server_util.multiply(multiplication_values, servers, my_name)
+    return jsonify({'res': res})
 
 
 def create_local(port):
