@@ -19,28 +19,34 @@ def create_vote(client_name: str, priorities: list):
         priority_matrix.append(row)
     for num, row in enumerate(priority_matrix):
         row[priorities[num]-1] = 1
-    print(str(priority_matrix))
+    # print(str(priority_matrix))
     return priority_matrix
+
+
+def secret_share_priority_matrix(priority_matrix: list, servers: list):
+    r_i_matrices = []
+    amount_of_servers = len(servers)
+    for i in range(amount_of_servers):
+        r_i_matrices.append([])
+        for row in priority_matrix:
+            r_i_matrices[i].append([])
+    for i, row in enumerate(priority_matrix):
+        for value in row:
+            curr_secret = util.create_addition_secret(value, amount_of_servers)
+            for j, s in enumerate(curr_secret):
+                r_i_matrices[j][i].append(s)
+    print(r_i_matrices)
+    return r_i_matrices
 
 
 def send_matrix_vote(client_name: str, vote: list, servers: list):
     ### Parameters:
     ### client_name: unique identifier for client
-    ### vote: a matrix consisting of rows in which the entries are 0  if the i'th index is different from the value of priorities[i], else 1
+    ### vote: a matrix consisting of matrices containing the different secret shared r_i-elements of the vote
     ### servers: a list with all servers which the secrets should be distributed to
 
-    ### Returns: void. The purpose of the method is to distribute the shares of the entries in the vote matrix between all servers.
-
-    for row_nr, row in enumerate(vote):
-        for col_nr, val in enumerate(row):
-            secret = util.create_addition_secret(val, len(servers))
-            for server_nr, server_url in enumerate(servers):
-                for i, r_i in enumerate(secret):
-                    if i != server_nr:
-                        id = 'r_'+ str(i)
-                        message = dict(val=r_i, index=i, col=col_nr, row=row_nr, client=client_name, server=server_url)
-                        post_matrix_secret_to_server(message, server_url)
-
+    ### Returns: void. The purpose of the method is to distribute the matrix-shares between clients
+    pass
 
 def post_matrix_secret_to_server(message: dict, server_url: str):
     return util.post_url(data=message, url=server_url + 'vote')

@@ -54,9 +54,22 @@ class TestCommunication(unittest.TestCase):
         vote = client_util.create_vote('c1', [4, 2, 1, 3])
         self.assertEqual(1, vote[0][3])
 
-    def test_sending_votes(self):
+    def test_r_i_matrices(self):
         vote = client_util.create_vote('c1', [4, 2, 1, 3])
-        client_util.send_matrix_vote('c1', vote, local_servers)
+        secret_shared_matrices = client_util.secret_share_priority_matrix(vote, local_servers)
+        res = [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
+        for matrix in secret_shared_matrices:
+            for i, row in enumerate(matrix):
+                for j, value in enumerate(row):
+                    res[i][j] += value
+                    res[i][j] %= util.get_prime()
+        print("VOTE IS: ", vote)
+        print("RESS IS: ", res)
+        self.assertListEqual(vote,res)
+
+    # def test_sending_votes(self):
+    #     vote = client_util.create_vote('c1', [4, 2, 1, 3])
+    #     client_util.send_matrix_vote('c1', vote, local_servers)
 
     def test_retrieving_votes_from_database(self):
         pass
