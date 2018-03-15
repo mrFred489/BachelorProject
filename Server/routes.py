@@ -5,6 +5,9 @@ import os
 from Server import server_util
 import util
 import sys
+import pickle
+import numpy as np
+import codecs
 
 
 app = Flask(__name__)
@@ -78,12 +81,21 @@ def database():
 
 @app.route("/vote", methods=["POST"])
 def receive_vote():
-    vote = request.form['vote']
-    id = request.form['id']
-    client = request.form['client']
-    server_name = request.form['server']
-    # TODO: Insert values into database
-    # db.insert_r_i(r_i, i, col, row, client, server_name, my_name)
+    try:
+        vote_ = request.form['vote']
+        vote = pickle.loads(codecs.decode(vote_.encode(), "base64"))
+        print(type(vote), vote)
+        assert type(vote) == np.ndarray
+        id = request.form['id']
+        client = request.form['client']
+        server_name = request.form['server']
+        # TODO: Insert values into database
+        db.insert_vote(vote, id, client, server_name, my_name)
+    except TypeError as e:
+        print(vote_)
+        print(e)
+        return Response(status=400)
+
     # print("Values inserted")
     return Response(status=200)
 

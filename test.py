@@ -7,6 +7,8 @@ import multiprocessing as mp
 import Server.routes
 from Server import server_util
 from time import sleep
+import numpy as np
+
 
 p = util.get_prime()
 baseurl1 = "http://127.0.0.1:5000/"
@@ -63,7 +65,7 @@ class TestCommunication(unittest.TestCase):
                 for j, value in enumerate(row):
                     res[i][j] += value
                     res[i][j] %= util.get_prime()
-        self.assertListEqual(vote, res)
+        self.assertTrue(np.array_equal(vote, np.array(res)))
 
     def test_check_vote(self):
         vote = client_util.create_vote('c1', [4, 2, 1, 3])
@@ -79,6 +81,7 @@ class TestCommunication(unittest.TestCase):
 
     def test_sending_vote(self):
         vote = client_util.create_vote('c1', [4, 2, 1, 3])
+        vote = client_util.partition_and_secret_share_vote(vote, local_servers)
         res = client_util.vote('c1', vote, local_servers)
         print("RESULT OF SENDING VOTE: ", res)
 

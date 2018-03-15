@@ -3,6 +3,9 @@ import random
 import util
 import scipy.special as ss
 import itertools
+import pickle
+import codecs
+import numpy as np
 
 
 
@@ -13,10 +16,7 @@ def create_vote(client_name: str, priorities: list):
 
 ### Returns:
 ### a matrix consisting of rows in which the entries are 0  if the i'th index is different from the value of priorities[i], else 1
-    priority_matrix = []
-    for i in range(len(priorities)):
-        row = [0] * len(priorities)
-        priority_matrix.append(row)
+    priority_matrix = np.zeros((len(priorities), len(priorities)))
     for num, row in enumerate(priority_matrix):
         row[priorities[num]-1] = 1
     return priority_matrix
@@ -35,7 +35,10 @@ def partition_and_secret_share_vote(vote: list, servers: list):
             curr_secret = util.create_addition_secret(value, amount_of_servers)
             for j, s in enumerate(curr_secret):
                 r_i_matrices[j][i].append(s)
-    return r_i_matrices
+    temp = []
+    for i in r_i_matrices:
+        temp.append(np.array(i))
+    return temp
 
 
 def vote(client_name: str, vote: list, servers: list):
@@ -48,8 +51,9 @@ def vote(client_name: str, vote: list, servers: list):
     for i, receiving_server in enumerate(servers):
         for j, vote_partition in enumerate(vote):
             if i != j:
-                m = dict(client=client_name, id=j, server=receiving_server, vote=vote_partition)
-                print(receiving_server)
+                m = dict(client=client_name, id=j, server=receiving_server,
+                         vote=codecs.encode(pickle.dumps(vote_partition), "base64").decode())
+                print(receiving_server, type(vote_partition), vote_partition)
                 send_vote_partition(m, receiving_server)
 
 

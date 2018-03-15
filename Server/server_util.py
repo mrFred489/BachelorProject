@@ -3,6 +3,7 @@ import numpy as np
 import util
 from operator import mul
 from functools import reduce
+import pickle
 
 def home(db, my_name):
     servers = []
