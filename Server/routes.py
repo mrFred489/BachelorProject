@@ -78,14 +78,13 @@ def database():
 
 @app.route("/vote", methods=["POST"])
 def receive_vote():
-    r_i = request.form['val']
-    i = request.form['index']
-    col = request.form['col']
-    row = request.form['row']
+    vote = request.form['vote']
+    id = request.form['id']
     client = request.form['client']
     server_name = request.form['server']
-    db.insert_vote(r_i, i, col, row, client, server_name, my_name)
-    print("Values inserted")
+    # TODO: Insert values into database
+    # db.insert_r_i(r_i, i, col, row, client, server_name, my_name)
+    # print("Values inserted")
     return Response(status=200)
 
 

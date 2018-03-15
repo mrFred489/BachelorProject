@@ -38,16 +38,22 @@ def partition_and_secret_share_vote(vote: list, servers: list):
     return r_i_matrices
 
 
-def send_vote(client_name: str, vote: list, servers: list):
+def vote(client_name: str, vote: list, servers: list):
     ### Parameters:
     ### client_name: unique identifier for client
     ### vote: a matrix consisting of matrices containing the different secret shared r_i-elements of the vote
     ### servers: a list with all servers which the secrets should be distributed to
 
     ### Returns: void. The purpose of the method is to distribute the matrix-shares between clients
-    pass
+    for i, receiving_server in enumerate(servers):
+        for j, vote_partition in enumerate(vote):
+            if i != j:
+                m = dict(client=client_name, id=j, server=receiving_server, vote=vote_partition)
+                print(receiving_server)
+                send_vote_partition(m, receiving_server)
 
-def post_matrix_secret_to_server(message: dict, server_url: str):
+
+def send_vote_partition(message: dict, server_url: str):
     return util.post_url(data=message, url=server_url + 'vote')
 
 

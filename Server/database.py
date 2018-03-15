@@ -110,6 +110,7 @@ def insert_vote(matrix: np.ndarray, id: int, client_name: str, server: str, db_n
     conn.commit()
     return 1
 
+
 def reset(db_name: str):
     cur = get_cursor()
 

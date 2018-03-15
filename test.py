@@ -71,11 +71,18 @@ class TestCommunication(unittest.TestCase):
 
     def neg_test_check_vote(self):
         vote = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [1, 0, 0, 1]]
-        self.assertFalse(server_util.check_row(vote))
+        self.asertFalse(server_util.check_row(vote))
 
     # def test_sending_votes(self):
     #     vote = client_util.create_vote('c1', [4, 2, 1, 3])
     #     client_util.send_matrix_vote('c1', vote, local_servers)
+
+    def test_sending_vote(self):
+        vote = client_util.create_vote('c1', [4, 2, 1, 3])
+        res = client_util.vote('c1', vote, local_servers)
+        print("RESULT OF SENDING VOTE: ", res)
+
+
 
     def test_retrieving_votes_from_database(self):
         pass

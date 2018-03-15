@@ -21,7 +21,9 @@ def check_row(vote):
 
 
 def check_column(vote):
-    pass
+    for i, row in enumerate(vote):
+        for j, value in enumerate(row):
+            pass
 
 
 def sum_r_values(votes, servers, server_nr):
