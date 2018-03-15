@@ -74,9 +74,9 @@ def get_cursor():
         cursor = conn.cursor()
     return cursor
 
-def get_numbers(db_name):
+def get_votes(db_name):
     cur = get_cursor()
-    cur.execute(u'SELECT number,name,id,client,server FROM "' + db_name + '"')
+    cur.execute(u'SELECT matrix, id, client, server FROM "' + db_name + '"')
     res = []
     for i in cur:
         res.append(i)
@@ -97,16 +97,15 @@ def get_numbers(db_name):
 
 def get_ri_values(db_name):
     cur = get_cursor()
-    query = u'SELECT val, index, col, row, id,client,server FROM "' + db_name + '"'
+    query = u'SELECT matrix, id,client,server FROM "' + db_name + '"'
     cur.execute(query)
     cur.close()
     conn.commit()
 
-def insert_r_i(r_i: int, index: int, col: int, row: int, client_name: str, server: str, db_name: str):
+
+def insert_vote(matrix: np.ndarray, id: int, client_name: str, server: str, db_name: str):
     cur = get_cursor()
-    query = u'INSERT INTO "' + db_name + '" (val, index, col, row, id, client, server) VALUES (' \
-            + str(r_i) + ', \'' + str(index) + '\', \'' + str(col) + '\', \'' + str(row) + '\', \'' + client_name + '\', \'' + server + '\')'
-    cur.execute(query)
+    cur.execute('INSERT INTO "' + db_name + '" (matrix, id, client, server) VALUES (%s, %s, %s, %s)', (matrix, id, client_name, server))
     cur.close()
     conn.commit()
     return 1

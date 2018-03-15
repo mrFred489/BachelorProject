@@ -57,7 +57,7 @@ def home():
 def total_sum():
     totals = []
     names = set()
-    numbers = db.get_numbers(my_name)
+    numbers = db.get_votes(my_name)
     for i in numbers:
         if i[2] not in names:
             totals.append(("s" + str(i[2]), sum([x[0] if x[2] == i[2] else 0 for x in numbers]) % util.get_prime()))
@@ -73,7 +73,7 @@ def reset():
 
 @app.route("/databases")
 def database():
-    return str(db.get_numbers(my_name))
+    return str(db.get_votes(my_name))
 
 
 @app.route("/vote", methods=["POST"])
@@ -84,7 +84,7 @@ def receive_vote():
     row = request.form['row']
     client = request.form['client']
     server_name = request.form['server']
-    db.insert_r_i(r_i, i, col, row, client, server_name, my_name)
+    db.insert_vote(r_i, i, col, row, client, server_name, my_name)
     print("Values inserted")
     return Response(status=200)
 
@@ -104,7 +104,7 @@ def server():
 
 @app.route("/add", methods=["GET"])
 def add():
-    votes = db.get_numbers(my_name)
+    votes = db.get_votes(my_name)
     server_nr = servers.index(my_name)
 
     s_array = server_util.sum_r_values(votes, servers, server_nr)
@@ -121,7 +121,7 @@ def add():
 
 @app.route("/compute_result", methods=["GET"])
 def compute_result():
-    all_votes = db.get_numbers(my_name)
+    all_votes = db.get_votes(my_name)
     server_nr = servers.index(my_name)
     s = server_util.calculate_s(all_votes, servers)
     return jsonify({'s': s})
@@ -129,7 +129,7 @@ def compute_result():
 
 @app.route("/multiply", methods=["GET"])
 def multiply():
-    all_values = db.get_numbers(my_name)
+    all_values = db.get_votes(my_name)
     multiplication_values = [x for x in all_values if x[1] == 'm']
     print(str(multiplication_values))
     res = server_util.multiply(multiplication_values, servers, my_name)
