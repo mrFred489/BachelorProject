@@ -87,10 +87,11 @@ def receive_vote():
         print(type(vote), vote)
         assert type(vote) == np.ndarray
         id = request.form['id']
+        round = request.form['round']
         client = request.form['client']
         server_name = request.form['server']
         # TODO: Insert values into database
-        db.insert_vote(vote, id, client, server_name, my_name)
+        db.insert_vote(vote, id, round, client, server_name, my_name)
     except TypeError as e:
         print(vote_)
         print(e)

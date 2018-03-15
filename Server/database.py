@@ -46,9 +46,9 @@ else:
     # cursor.execute('create table "http://127.0.0.1:5000"(name text, number INTEGER, client text, server text, id INTEGER )')
     # cursor.execute('create table "http://127.0.0.1:5001"(name text, number INTEGER, client text, server text, id INTEGER)')
     # cursor.execute('create table "http://127.0.0.1:5002"(name text, number INTEGER, client text, server text, id INTEGER)')
-    cursor.execute('create table "http://127.0.0.1:5000"(matrix bytea, id INTEGER, client text, server text)')
-    cursor.execute('create table "http://127.0.0.1:5001"(matrix bytea, id INTEGER, client text, server text)')
-    cursor.execute('create table "http://127.0.0.1:5002"(matrix bytea, id INTEGER, client text, server text)')
+    cursor.execute('create table "http://127.0.0.1:5000"(matrix bytea, id INTEGER, round INTEGER, client text, server text)')
+    cursor.execute('create table "http://127.0.0.1:5001"(matrix bytea, id INTEGER, round INTEGER, client text, server text)')
+    cursor.execute('create table "http://127.0.0.1:5002"(matrix bytea, id INTEGER, round INTEGER, client text, server text)')
     cursor.close()
     conn.commit()
     print("DATABASES UP AND RUNNING")
@@ -103,9 +103,9 @@ def get_ri_values(db_name):
     conn.commit()
 
 
-def insert_vote(matrix: np.ndarray, id: int, client_name: str, server: str, db_name: str):
+def insert_vote(matrix: np.ndarray, id: int, round, client_name: str, server: str, db_name: str):
     cur = get_cursor()
-    cur.execute('INSERT INTO "' + db_name + '" (matrix, id, client, server) VALUES (%s, %s, %s, %s)', (matrix, id, client_name, server))
+    cur.execute('INSERT INTO "' + db_name + '" (matrix, id, round, client, server) VALUES (%s, %s, %s, %s, %s)', (matrix, id, round, client_name, server))
     cur.close()
     conn.commit()
     return 1
