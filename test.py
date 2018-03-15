@@ -56,16 +56,22 @@ class TestCommunication(unittest.TestCase):
 
     def test_r_i_matrices(self):
         vote = client_util.create_vote('c1', [4, 2, 1, 3])
-        secret_shared_matrices = client_util.secret_share_priority_matrix(vote, local_servers)
-        res = [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
+        secret_shared_matrices = client_util.partition_and_secret_share_vote(vote, local_servers)
+        res = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]
         for matrix in secret_shared_matrices:
             for i, row in enumerate(matrix):
                 for j, value in enumerate(row):
                     res[i][j] += value
                     res[i][j] %= util.get_prime()
-        print("VOTE IS: ", vote)
-        print("RESS IS: ", res)
-        self.assertListEqual(vote,res)
+        self.assertListEqual(vote, res)
+
+    def test_check_vote(self):
+        vote = client_util.create_vote('c1', [4, 2, 1, 3])
+        self.assertTrue(server_util.check_row(vote))
+
+    def neg_test_check_vote(self):
+        vote = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [1, 0, 0, 1]]
+        self.assertFalse(server_util.check_row(vote))
 
     # def test_sending_votes(self):
     #     vote = client_util.create_vote('c1', [4, 2, 1, 3])

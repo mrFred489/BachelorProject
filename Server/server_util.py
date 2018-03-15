@@ -13,6 +13,17 @@ def home(db, my_name):
     return render_template("server.html", servers=servers, total=total % util.get_prime())
 
 
+def check_row(vote):
+    for row in vote:
+        if sum(row) != 1:
+            return False
+    return True
+
+
+def check_column(vote):
+    pass
+
+
 def sum_r_values(votes, servers, server_nr):
     S = [0] * len(servers)
     votes = [x for x in np.asarray(votes) if x[1] == 'r']

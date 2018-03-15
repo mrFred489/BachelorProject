@@ -19,27 +19,26 @@ def create_vote(client_name: str, priorities: list):
         priority_matrix.append(row)
     for num, row in enumerate(priority_matrix):
         row[priorities[num]-1] = 1
-    # print(str(priority_matrix))
     return priority_matrix
 
 
-def secret_share_priority_matrix(priority_matrix: list, servers: list):
+def partition_and_secret_share_vote(vote: list, servers: list):
+    ###
     r_i_matrices = []
     amount_of_servers = len(servers)
     for i in range(amount_of_servers):
         r_i_matrices.append([])
-        for row in priority_matrix:
+        for row in vote:
             r_i_matrices[i].append([])
-    for i, row in enumerate(priority_matrix):
+    for i, row in enumerate(vote):
         for value in row:
             curr_secret = util.create_addition_secret(value, amount_of_servers)
             for j, s in enumerate(curr_secret):
                 r_i_matrices[j][i].append(s)
-    print(r_i_matrices)
     return r_i_matrices
 
 
-def send_matrix_vote(client_name: str, vote: list, servers: list):
+def send_vote(client_name: str, vote: list, servers: list):
     ### Parameters:
     ### client_name: unique identifier for client
     ### vote: a matrix consisting of matrices containing the different secret shared r_i-elements of the vote
