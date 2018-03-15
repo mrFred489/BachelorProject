@@ -2,11 +2,34 @@ import os
 import psycopg2 as psy
 import testing.postgresql
 import atexit
+import numpy as np
 
 
 test = False
 if str(os.path.dirname(__file__).split("/")[-2]) != "flaskwebsite":
     test = True
+
+
+def adapt_array(a):
+    return psy.Binary(a)
+
+
+psy.extensions.register_adapter(np.ndarray, adapt_array)
+
+
+def typecast_array(data, cur):
+    if data is None:
+        return None
+    buf = psy.BINARY(data, cur)
+    return np.frombuffer(buf)
+
+
+ARRAY = psy.extensions.new_type(psy.BINARY.values,
+'ARRAY', typecast_array)
+
+
+psy.extensions.register_type(ARRAY)
+
 
 if not test:
     conn = psy.connect(host='localhost', user='bachelor', password='gruppen1234', dbname='bachelorprojekt')
@@ -23,9 +46,9 @@ else:
     # cursor.execute('create table "http://127.0.0.1:5000"(name text, number INTEGER, client text, server text, id INTEGER )')
     # cursor.execute('create table "http://127.0.0.1:5001"(name text, number INTEGER, client text, server text, id INTEGER)')
     # cursor.execute('create table "http://127.0.0.1:5002"(name text, number INTEGER, client text, server text, id INTEGER)')
-    cursor.execute('create table "http://127.0.0.1:5000"(val INTEGER , index INTEGER, col INTEGER , row INTEGER , id INTEGER, client text, server text)')
-    cursor.execute('create table "http://127.0.0.1:5001"(val INTEGER , index INTEGER, col INTEGER , row INTEGER , id INTEGER, client text, server text)')
-    cursor.execute('create table "http://127.0.0.1:5002"(val INTEGER , index INTEGER, col INTEGER , row INTEGER , id INTEGER, client text, server text)')
+    cursor.execute('create table "http://127.0.0.1:5000"(matrix bytea, id INTEGER, client text, server text)')
+    cursor.execute('create table "http://127.0.0.1:5001"(matrix bytea, id INTEGER, client text, server text)')
+    cursor.execute('create table "http://127.0.0.1:5002"(matrix bytea, id INTEGER, client text, server text)')
     cursor.close()
     conn.commit()
     print("DATABASES UP AND RUNNING")
@@ -97,3 +120,16 @@ def reset(db_name: str):
     conn.commit()
 
     return 1
+
+
+if __name__ == "__main__":
+    temp = np.zeros((3,4))
+    cur = get_cursor()
+    cur.execute('insert into "http://127.0.0.1:5000" values (%s, %s, %s, %s)', (temp, 1, "c", "s"))
+    cur.close()
+    conn.commit()
+    cur = get_cursor()
+    cur.execute('select * from "http://127.0.0.1:5000"')
+    for i in cur:
+        print(i)
+    cur.close()
