@@ -38,7 +38,7 @@ class TestArithmetics(unittest.TestCase):
     def test_addition(self):
         secrets_1 = util.create_addition_secret(10, 2)
         secrets_2 = util.create_addition_secret(15, 2)
-        res = sum(secrets_1) + sum(secrets_2)
+        res = (sum(secrets_1) + sum(secrets_2)) % util.get_prime()
         self.assertEqual(25, res)
 
 
@@ -69,11 +69,11 @@ class TestCommunication(unittest.TestCase):
 
     def test_check_vote(self):
         vote = client_util.create_vote('c1', [4, 2, 1, 3])
-        self.assertTrue(server_util.check_row(vote))
+        self.assertTrue(server_util.check_rows_and_columns(vote))
 
     def neg_test_check_vote(self):
         vote = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [1, 0, 0, 1]]
-        self.asertFalse(server_util.check_row(vote))
+        self.asertFalse(server_util.check_rows_and_columns(vote))
 
     # def test_sending_votes(self):
     #     vote = client_util.create_vote('c1', [4, 2, 1, 3])
@@ -83,9 +83,17 @@ class TestCommunication(unittest.TestCase):
         vote = client_util.create_vote('c1', [4, 2, 1, 3])
         vote = client_util.partition_and_secret_share_vote(vote, local_servers)
         res = client_util.vote('c1', vote, local_servers)
-        print("RESULT OF SENDING VOTE: ", res)
 
+    def test_adding_votes(self):
+        reset_servers()
+        vote = client_util.create_vote('c1', [4, 2, 1, 3])
+        vote = client_util.partition_and_secret_share_vote(vote, local_servers)
+        client_util.vote('c1', vote, local_servers)
+        for server in local_servers:
+            util.get_url(server + 'add')
 
+        sleep(3)
+        util.get_url(local_servers[0] + 'compute_result')
 
     def test_retrieving_votes_from_database(self):
         pass

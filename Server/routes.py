@@ -60,7 +60,7 @@ def home():
 def total_sum():
     totals = []
     names = set()
-    numbers = db.get_votes(my_name)
+    numbers = db.round_one(my_name)
     for i in numbers:
         if i[2] not in names:
             totals.append(("s" + str(i[2]), sum([x[0] if x[2] == i[2] else 0 for x in numbers]) % util.get_prime()))
@@ -76,7 +76,7 @@ def reset():
 
 @app.route("/databases")
 def database():
-    return str(db.get_votes(my_name))
+    return str(db.round_one(my_name))
 
 
 @app.route("/vote", methods=["POST"])
@@ -84,13 +84,13 @@ def receive_vote():
     try:
         vote_ = request.form['vote']
         vote = pickle.loads(codecs.decode(vote_.encode(), "base64"))
-        print(type(vote), vote)
+        # print(type(vote), vote)
         assert type(vote) == np.ndarray
         id = request.form['id']
         round = request.form['round']
         client = request.form['client']
+        print("RECEIVED VOTE IS: ", vote, " IN ROUND ", round, " FROM CLIENT ", client, " WITH ID: ", id)
         server_name = request.form['server']
-        # TODO: Insert values into database
         db.insert_vote(vote, id, round, client, server_name, my_name)
     except TypeError as e:
         print(vote_)
@@ -101,51 +101,32 @@ def receive_vote():
     return Response(status=200)
 
 
-@app.route("/server", methods=["POST"])
-def server():
-    values = request.form.getlist("value")
-    clients = request.form.getlist("client")
-    servers = request.form.getlist("server")
-    name = request.form.getlist("name")
-    id = request.form.getlist("id")
-    for num, n in enumerate(name):
-        db.insert_number(int(values[num]) % util.get_prime(), n, id[num], clients[num], servers[num], my_name)
-    return Response(status=200)
-
-
-
 @app.route("/add", methods=["GET"])
 def add():
-    votes = db.get_votes(my_name)
-    server_nr = servers.index(my_name)
-
-    s_array = server_util.sum_r_values(votes, servers, server_nr)
-
-    for num, value in enumerate(s_array):
-        if num != server_nr:
-            # my_name my_name my_name
-            db.insert_number(value, 's', num , my_name, my_name, my_name)
-    server_util.broadcast_values(s_array, servers, my_name)
-
-    # return value is never used
-    return jsonify({'s': s_array})
+    votes = db.round_one(my_name)
+    print("server: ", my_name)
+    summed_votes = server_util.sum_votes(votes, servers, my_name)
+    # TODO: Secret share summed votes
+    server_util.broadcast_values(summed_votes, servers, my_name)
+    return Response(status=200)
 
 
 @app.route("/compute_result", methods=["GET"])
 def compute_result():
-    all_votes = db.get_votes(my_name)
+    #TODO: check that all received values from round two match each other and make
+    all_votes = db.round_two(my_name)
     server_nr = servers.index(my_name)
     s = server_util.calculate_s(all_votes, servers)
-    return jsonify({'s': s})
+    return Response(status=200)
 
 
 @app.route("/multiply", methods=["GET"])
 def multiply():
-    all_values = db.get_votes(my_name)
+    all_values = db.round_one(my_name)
     multiplication_values = [x for x in all_values if x[1] == 'm']
     print(str(multiplication_values))
     res = server_util.multiply(multiplication_values, servers, my_name)
-    return jsonify({'res': res})
+    return Response(status=200)
 
 
 def create_local(port):
@@ -160,6 +141,17 @@ def create_local(port):
     server_nr = int(port) - 5000
     app.run(port=int(port), debug=True, use_reloader=False)
 
+
+@app.route("/server", methods=["POST"])
+def server():
+    values = request.form.getlist("value")
+    clients = request.form.getlist("client")
+    servers = request.form.getlist("server")
+    name = request.form.getlist("name")
+    id = request.form.getlist("id")
+    for num, n in enumerate(name):
+        db.insert_number(int(values[num]) % util.get_prime(), n, id[num], clients[num], servers[num], my_name)
+    return Response(status=200)
 
 if __name__ == '__main__':
     # Lav flere servere ved at ændre port nummeret og køre routes igen.

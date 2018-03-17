@@ -51,9 +51,8 @@ def vote(client_name: str, vote: list, servers: list):
     for i, receiving_server in enumerate(servers):
         for j, vote_partition in enumerate(vote):
             if i != j:
-                m = dict(client=client_name, id=j,round=1, server=receiving_server,
+                m = dict(client=client_name, id=j, round=1, server=receiving_server,
                          vote=codecs.encode(pickle.dumps(vote_partition), "base64").decode())
-                print(receiving_server, type(vote_partition), vote_partition)
                 send_vote_partition(m, receiving_server)
 
 

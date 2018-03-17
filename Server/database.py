@@ -74,9 +74,23 @@ def get_cursor():
         cursor = conn.cursor()
     return cursor
 
-def get_votes(db_name):
+def round_one(db_name):
     cur = get_cursor()
-    cur.execute(u'SELECT matrix, id, client, server FROM "' + db_name + '"')
+    cur.execute(u'SELECT matrix, id, round, client, server '
+                u'FROM "' + db_name + '" WHERE round = 1')
+    res = []
+    for i in cur:
+        print("VOTE TAKEN DIRECTLY FROM DATABASE: ", i)
+        res.append(i)
+    cur.close()
+    conn.commit()
+    return res
+
+
+def round_two(db_name):
+    cur = get_cursor()
+    cur.execute(u'SELECT matrix, id, round, client, server '
+                u'FROM "' + db_name + '" WHERE round = 2')
     res = []
     for i in cur:
         res.append(i)
@@ -84,26 +98,8 @@ def get_votes(db_name):
     conn.commit()
     return res
 
-#
-# def insert_number(num: int, name: str, id: int, client, server, db_name: str):
-#     cur = get_cursor()
-#     query = u'INSERT INTO "' + db_name + '" (number, name, id, client, server) VALUES (' \
-#             + str(num) + ', \'' + name + '\', \'' + str(id) + '\', \'' + client + '\', \'' + server + '\')'
-#     cur.execute(query)
-#     cur.close()
-#     conn.commit()
-#     return 1
 
-
-def get_ri_values(db_name):
-    cur = get_cursor()
-    query = u'SELECT matrix, id,client,server FROM "' + db_name + '"'
-    cur.execute(query)
-    cur.close()
-    conn.commit()
-
-
-def insert_vote(matrix: np.ndarray, id: int, round, client_name: str, server: str, db_name: str):
+def insert_vote(matrix: np.ndarray, id: int, round: int, client_name: str, server: str, db_name: str):
     cur = get_cursor()
     cur.execute('INSERT INTO "' + db_name + '" (matrix, id, round, client, server) VALUES (%s, %s, %s, %s, %s)', (matrix, id, round, client_name, server))
     cur.close()
@@ -125,7 +121,7 @@ def reset(db_name: str):
 if __name__ == "__main__":
     temp = np.zeros((3,4))
     cur = get_cursor()
-    cur.execute('insert into "http://127.0.0.1:5000" values (%s, %s, %s, %s)', (temp, 1, "c", "s"))
+    cur.execute('insert into "http://127.0.0.1:5000" values (%s, %s, %s, %s, %s)', (temp, 1, 1, "c", "s"))
     cur.close()
     conn.commit()
     cur = get_cursor()
