@@ -19,5 +19,5 @@ def create_addition_secret(x: int, n: int):
     res = []
     for i in range(n - 1):
         res.append(rng.randrange(0, p - 1, 1))
-    res.append(int((x - sum(res)) % get_prime()))
+    res.append((x - sum(res)) % get_prime())
     return res

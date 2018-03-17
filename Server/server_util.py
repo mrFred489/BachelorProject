@@ -47,7 +47,6 @@ def sum_votes(votes, servers, my_name):
         # TODO: It seems that the votes retrieved from the database sometimes are changed to values very close to zero,
         # find out why. I believe it happens when the values are saved to the database.
         # They look fine when being received, but when retrieved for use in sum_votes, some matrices consist of values close to zero
-
         vote_partition = reshape_vote(vote)
         if len([x for x in summed_votes if x['id'] == vote_id]) > 0:
             for dict in summed_votes:

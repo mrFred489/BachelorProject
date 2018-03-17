@@ -17,7 +17,7 @@ def create_vote(client_name: str, priorities: list):
 
 ### Returns:
 ### a matrix consisting of rows in which the entries are 0  if the i'th index is different from the value of priorities[i], else 1
-    priority_matrix = np.zeros((len(priorities), len(priorities)))
+    priority_matrix = np.zeros((len(priorities), len(priorities)), dtype=int)
     for num, row in enumerate(priority_matrix):
         row[priorities[num]-1] = 1
     return priority_matrix
