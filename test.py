@@ -89,6 +89,7 @@ class TestCommunication(unittest.TestCase):
         vote = client_util.create_vote('c1', [4, 2, 1, 3])
         vote = client_util.partition_and_secret_share_vote(vote, local_servers)
         client_util.vote('c1', vote, local_servers)
+        client_util.vote('c2', vote, local_servers)
         for server in local_servers:
             util.get_url(server + 'add')
 
