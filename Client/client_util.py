@@ -3,10 +3,7 @@ import random
 import util
 import scipy.special as ss
 import itertools
-import pickle
-import codecs
 import numpy as np
-from time import sleep
 
 
 
@@ -53,7 +50,7 @@ def vote(client_name: str, vote: list, servers: list):
         for j, vote_partition in enumerate(vote):
             if i != j:
                 m = dict(client=client_name, id=j, round=1, server=receiving_server,
-                         vote=codecs.encode(pickle.dumps(vote_partition), "base64").decode())
+                         vote=util.vote_to_string(vote_partition))
                 send_vote_partition(m, receiving_server)
 
 

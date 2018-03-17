@@ -1,10 +1,6 @@
 from flask import render_template
 import numpy as np
 import util
-from operator import mul
-from functools import reduce
-import pickle
-import codecs
 
 
 def home(db, my_name):
@@ -33,7 +29,7 @@ def broadcast_values(values, servers, my_name):
             for j, vote_partition in enumerate(values):
                 # print("Broadcasted value is: ", vote_partition['vote_partition'], " with ID: ", vote_partition['id'])
                 send_value_to_server(
-                    (codecs.encode(pickle.dumps(vote_partition['vote_partition']), "base64").decode()),
+                    (util.vote_to_string(vote_partition['vote_partition'])),
                     vote_partition['id'], 2, my_name, server)
 
 
@@ -84,7 +80,8 @@ def calculate_s(votes, participants):
         if (vote_id not in used_votes) & (round == 2):
             used_votes.append(vote_id)
             res += vote[0]
-    print("S IS: ", reshape_vote(res % util.get_prime()))
+    res = reshape_vote(res)
+    print("S IS: ", res % util.get_prime())
     print("Result consists of :", used_votes, " votes put together ")
     return res % util.get_prime()
 

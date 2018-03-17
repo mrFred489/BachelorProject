@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
-from flask import Flask, jsonify, render_template, request, Response
+from flask import Flask, jsonify, render_template, request, Response, make_response
 from Server import database as db
 import os
 from Server import server_util
 import util
 import sys
-import pickle
 import numpy as np
-import codecs
 
 
 app = Flask(__name__)
@@ -83,7 +81,7 @@ def database():
 def receive_vote():
     try:
         vote_ = request.form['vote']
-        vote = pickle.loads(codecs.decode(vote_.encode(), "base64"))
+        vote = util.string_to_vote(vote_)
         assert type(vote) == np.ndarray
         id = request.form['id']
         round = request.form['round']
@@ -118,7 +116,7 @@ def compute_result():
     if not server_util.verify_vote_consistency(all_votes):
         return Response(status=400)
     s = server_util.calculate_s(all_votes, servers)
-    return Response(status=200)
+    return make_response(util.vote_to_string(s))  # Response(util.vote_to_string(s), status=200, mimetype='text/text')
 
 
 @app.route("/multiply", methods=["GET"])
