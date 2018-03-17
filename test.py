@@ -92,7 +92,6 @@ class TestCommunication(unittest.TestCase):
         for server in local_servers:
             util.get_url(server + 'add')
 
-        sleep(3)
         util.get_url(local_servers[0] + 'compute_result')
 
     def test_retrieving_votes_from_database(self):

@@ -84,7 +84,6 @@ def receive_vote():
     try:
         vote_ = request.form['vote']
         vote = pickle.loads(codecs.decode(vote_.encode(), "base64"))
-        # print(type(vote), vote)
         assert type(vote) == np.ndarray
         id = request.form['id']
         round = request.form['round']

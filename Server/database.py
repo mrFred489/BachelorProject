@@ -21,7 +21,8 @@ def typecast_array(data, cur):
     if data is None:
         return None
     buf = psy.BINARY(data, cur)
-    return np.frombuffer(buf)
+    res = np.frombuffer(buf, dtype='int')
+    return res
 
 
 ARRAY = psy.extensions.new_type(psy.BINARY.values,
@@ -101,6 +102,8 @@ def round_two(db_name):
 
 def insert_vote(matrix: np.ndarray, id: int, round: int, client_name: str, server: str, db_name: str):
     cur = get_cursor()
+    print("DTYPE IS: ", matrix.dtype)
+    matrix.dtype = np.int64
     cur.execute('INSERT INTO "' + db_name + '" (matrix, id, round, client, server) VALUES (%s, %s, %s, %s, %s)', (matrix, id, round, client_name, server))
     cur.close()
     conn.commit()
