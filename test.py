@@ -72,8 +72,8 @@ class TestCommunication(unittest.TestCase):
         self.assertTrue(server_util.check_rows_and_columns(vote))
 
     def neg_test_check_vote(self):
-        vote = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [1, 0, 0, 1]]
-        self.asertFalse(server_util.check_rows_and_columns(vote))
+        vote = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [1, 0, 0, 1]])
+        self.assertFalse(server_util.check_rows_and_columns(vote))
 
     # def test_sending_votes(self):
     #     vote = client_util.create_vote('c1', [4, 2, 1, 3])
@@ -93,7 +93,7 @@ class TestCommunication(unittest.TestCase):
         for server in local_servers:
             util.get_url(server + 'add')
 
-        util.get_url(local_servers[0] + 'compute_result')
+        self.assertTrue(util.get_url(local_servers[0] + 'compute_result').ok)
 
     def test_retrieving_votes_from_database(self):
         pass

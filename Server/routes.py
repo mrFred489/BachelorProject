@@ -88,7 +88,7 @@ def receive_vote():
         id = request.form['id']
         round = request.form['round']
         client = request.form['client']
-        print("RECEIVED VOTE IS: ", vote, " IN ROUND ", round, " FROM CLIENT ", client, " WITH ID: ", id)
+        # print("RECEIVED VOTE IS: ", vote, " IN ROUND ", round, " FROM CLIENT ", client, " WITH ID: ", id)
         server_name = request.form['server']
         db.insert_vote(vote, id, round, client, server_name, my_name)
     except TypeError as e:
@@ -103,7 +103,7 @@ def receive_vote():
 @app.route("/add", methods=["GET"])
 def add():
     votes = db.round_one(my_name)
-    print("server: ", my_name)
+    # print("server: ", my_name)
     summed_votes = server_util.sum_votes(votes, servers, my_name)
     # TODO: Secret share summed votes
     server_util.broadcast_values(summed_votes, servers, my_name)
@@ -115,6 +115,8 @@ def compute_result():
     #TODO: check that all received values from round two match each other and make
     all_votes = db.round_two(my_name)
     server_nr = servers.index(my_name)
+    if not server_util.verify_vote_consistency(all_votes):
+        return Response(status=400)
     s = server_util.calculate_s(all_votes, servers)
     return Response(status=200)
 

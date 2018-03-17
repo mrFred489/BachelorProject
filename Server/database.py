@@ -81,7 +81,7 @@ def round_one(db_name):
                 u'FROM "' + db_name + '" WHERE round = 1')
     res = []
     for i in cur:
-        print("VOTE TAKEN DIRECTLY FROM DATABASE: ", i)
+        # print("VOTE TAKEN DIRECTLY FROM DATABASE: ", i)
         res.append(i)
     cur.close()
     conn.commit()
