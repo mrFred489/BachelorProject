@@ -1,15 +1,7 @@
 from flask import render_template
 import numpy as np
 import util
-
-
-def home(db, my_name):
-    servers = []
-    total = 0
-    numbers = db.get_numbers(my_name)
-    servers.append({"data": str(numbers)})
-    total += sum([x[0] for x in numbers])
-    return render_template("server.html", servers=servers, total=total % util.get_prime())
+from Server import database as db
 
 
 def check_rows_and_columns(vote: np.ndarray):
@@ -22,15 +14,14 @@ def check_rows_and_columns(vote: np.ndarray):
     return True
 
 
-def broadcast_values(values, servers, my_name):
+def broadcast_values(values, round, servers, my_name):
     server_nr = servers.index(my_name)
     for i, server in enumerate(servers):
-        if i != server_nr:
-            for j, vote_partition in enumerate(values):
-                # print("Broadcasted value is: ", vote_partition['vote_partition'], " with ID: ", vote_partition['id'])
+        for j, vote_partition in enumerate(values):
+            if i != server_nr:
                 send_value_to_server(
                     (util.vote_to_string(vote_partition['vote_partition'])),
-                    vote_partition['id'], 2, my_name, server)
+                    vote_partition['id'], round, my_name, server)
 
 
 def reshape_vote(vote):
@@ -38,13 +29,17 @@ def reshape_vote(vote):
     return np.reshape(vote, (shape, shape))
 
 
-def sum_votes(votes, servers, my_name):
+def secret_share(votes, servers):
+    ss_votes = []
+    for vote in votes:
+        ss_vote = util.partition_and_secret_share_vote(vote['vote_partition'], servers)
+        ss_votes.append(ss_vote)
+    return ss_votes
+
+def sum_votes(votes):
     summed_votes = []
     for vote in votes:
         vote_id = vote[1]
-        # TODO: It seems that the votes retrieved from the database sometimes are changed to values very close to zero,
-        # find out why. I believe it happens when the values are saved to the database.
-        # They look fine when being received, but when retrieved for use in sum_votes, some matrices consist of values close to zero
         vote_partition = reshape_vote(vote[0])
         if len([x for x in summed_votes if x['id'] == vote_id]) > 0:
             for dict in summed_votes:
@@ -57,7 +52,7 @@ def sum_votes(votes, servers, my_name):
 
 
 def send_value_to_server(value, id,  round, sender, receiver):
-    return util.post_url(data=dict(client=sender, server=sender, vote=value, id=id, round=round), url=receiver + '/vote')
+    return util.post_url(data=dict(client=sender, server=sender, vote=value, id=id, round=round), url=receiver + '/submit')
 
 
 def verify_vote_consistency(votes):
@@ -75,40 +70,13 @@ def calculate_s(votes, participants):
     used_votes = []
     res = 0
     for vote in votes:
-        round = vote[2]
         vote_id = vote[1]
+        round = vote[2]
         if (vote_id not in used_votes) & (round == 2):
             used_votes.append(vote_id)
             res += vote[0]
     res = reshape_vote(res)
-    print("S IS: ", res % util.get_prime())
-    print("Result consists of :", used_votes, " votes put together ")
     return res % util.get_prime()
-
-
-# def sum_r_values(votes, servers, server_nr):
-#     S = [0] * len(servers)
-#     votes = [x for x in np.asarray(votes) if x[2] == 1]
-#     for vote_partition in votes:
-#         sent_by_server = vote_partition[4] in servers
-#         if not sent_by_server:
-#             partition_id = int(vote_partition[2])
-#             r_i = int(vote_partition[0])
-#             S[partition_id] += r_i
-#     for num, val in enumerate(S):
-#         S[num] = val % util.get_prime()
-#     return S
-
-
-# def sort_values_according_to_client(values):
-#     client_mapping = {}
-#     for val in values:
-#         client = val[4]
-#         secret = val[0]
-#         if client not in client_mapping:
-#             client_mapping[client] = []
-#         client_mapping[client].append(secret)
-#     return client_mapping
 
 
 

@@ -53,12 +53,12 @@ class TestCommunication(unittest.TestCase):
         time.sleep(3)
 
     def test_vote_format(self):
-        vote = client_util.create_vote('c1', [4, 2, 1, 3])
+        vote = client_util.create_vote([4, 2, 1, 3])
         self.assertEqual(1, vote[0][3])
 
     def test_r_i_matrices(self):
-        vote = client_util.create_vote('c1', [4, 2, 1, 3])
-        secret_shared_matrices = client_util.partition_and_secret_share_vote(vote, local_servers)
+        vote = client_util.create_vote([4, 2, 1, 3])
+        secret_shared_matrices = util.partition_and_secret_share_vote(vote, local_servers)
         res = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]
         for matrix in secret_shared_matrices:
             for i, row in enumerate(matrix):
@@ -68,30 +68,18 @@ class TestCommunication(unittest.TestCase):
         self.assertTrue(np.array_equal(vote, np.array(res)))
 
     def test_check_vote(self):
-        vote = client_util.create_vote('c1', [4, 2, 1, 3])
+        vote = client_util.create_vote([4, 2, 1, 3])
         self.assertTrue(server_util.check_rows_and_columns(vote))
 
     def neg_test_check_vote(self):
         vote = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [1, 0, 0, 1]])
         self.assertFalse(server_util.check_rows_and_columns(vote))
 
-    # def test_sending_votes(self):
-    #     vote = client_util.create_vote('c1', [4, 2, 1, 3])
-    #     client_util.send_matrix_vote('c1', vote, local_servers)
-
-    def test_sending_vote(self):
-        vote = client_util.create_vote('c1', [4, 2, 1, 3])
-        vote = client_util.partition_and_secret_share_vote(vote, local_servers)
-        res = client_util.vote('c1', vote, local_servers)
 
     def test_adding_votes(self):
         reset_servers()
-        vote1 = client_util.create_vote('c1', [4, 2, 1, 3])
-        vote2 = client_util.create_vote('c2', [1, 2, 3, 4])
-        vote1 = client_util.partition_and_secret_share_vote(vote1, local_servers)
-        vote2 = client_util.partition_and_secret_share_vote(vote2, local_servers)
-        client_util.vote('c1', vote1, local_servers)
-        client_util.vote('c2', vote2, local_servers)
+        client_util.send_vote([4, 2, 1, 3], 'c1', local_servers)
+        client_util.send_vote([1, 2, 3, 4], 'c2', local_servers)
         for server in local_servers:
             util.get_url(server + 'add')
         for s in local_servers:

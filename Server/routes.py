@@ -77,7 +77,7 @@ def database():
     return str(db.round_one(my_name))
 
 
-@app.route("/vote", methods=["POST"])
+@app.route("/submit", methods=["POST"])
 def receive_vote():
     try:
         vote_ = request.form['vote']
@@ -86,7 +86,6 @@ def receive_vote():
         id = request.form['id']
         round = request.form['round']
         client = request.form['client']
-        # print("RECEIVED VOTE IS: ", vote, " IN ROUND ", round, " FROM CLIENT ", client, " WITH ID: ", id)
         server_name = request.form['server']
         db.insert_vote(vote, id, round, client, server_name, my_name)
     except TypeError as e:
@@ -101,18 +100,16 @@ def receive_vote():
 @app.route("/add", methods=["GET"])
 def add():
     votes = db.round_one(my_name)
-    # print("server: ", my_name)
-    summed_votes = server_util.sum_votes(votes, servers, my_name)
+    summed_votes = server_util.sum_votes(votes)
     # TODO: Secret share summed votes
-    server_util.broadcast_values(summed_votes, servers, my_name)
+    # ss_summed_votes = server_util.secret_share(summed_votes, servers)
+    server_util.broadcast_values(summed_votes, 2, servers, my_name)
     return Response(status=200)
 
 
 @app.route("/compute_result", methods=["GET"])
 def compute_result():
-    #TODO: check that all received values from round two match each other and make
     all_votes = db.round_two(my_name)
-    server_nr = servers.index(my_name)
     if not server_util.verify_vote_consistency(all_votes):
         return Response(status=400)
     s = server_util.calculate_s(all_votes, servers)
@@ -121,11 +118,7 @@ def compute_result():
 
 @app.route("/multiply", methods=["GET"])
 def multiply():
-    all_values = db.round_one(my_name)
-    multiplication_values = [x for x in all_values if x[1] == 'm']
-    print(str(multiplication_values))
-    res = server_util.multiply(multiplication_values, servers, my_name)
-    return Response(status=200)
+    pass
 
 
 def create_local(port):
