@@ -113,7 +113,12 @@ class TestCommunication(unittest.TestCase):
 
     def test_division_of_secret_shares(self):
         to_send_to = client_util.divide_secret_shares(len(local_servers))
-        print(to_send_to)
+        # print(to_send_to)
+        for i in range(len(local_servers)):
+            partition_for_server = to_send_to[i]
+            print(i, partition_for_server)
+            self.assertTrue((i not in partition_for_server))
+
 
     @classmethod
     def tearDownClass(cls):

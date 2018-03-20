@@ -42,7 +42,7 @@ def submit(client_name: str, vote: list, servers: list):
             util.post_url(m, recipient + 'submit')
 
 
-def divide_secret_shares(n: int, cs=2):
+def divide_secret_shares(n: int, cs=1):
     combs = itertools.combinations(range(0, n), n-cs)
     arrays = []
     for subset in combs:
