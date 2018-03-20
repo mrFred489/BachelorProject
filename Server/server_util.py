@@ -6,12 +6,19 @@ from Server import database as db
 
 def check_rows_and_columns(vote: np.ndarray):
     for row in vote:
-        if sum(row) != 1:
+        if np.sum(row) != 1:
             return False
     for col in vote.T:
-        if sum(col) != 1:
+        if np.sum(col) != 1:
             return False
     return True
+
+
+def create_sum_of_row(vote):
+    res = []
+    for row in vote:
+        res.append(np.sum(row))
+    return np.array(res)
 
 
 def broadcast_values(values, round, servers, my_name):
@@ -27,13 +34,6 @@ def broadcast_values(values, round, servers, my_name):
 def reshape_vote(vote):
     shape = int(np.sqrt(len(vote)))
     return np.reshape(vote, (shape, shape))
-
-
-def create_sum_of_row(vote):
-    res = []
-    for row in vote:
-        res.append(np.sum(row))
-    return np.array(res)
 
 
 def secret_share(votes, servers):

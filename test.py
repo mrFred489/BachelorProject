@@ -69,11 +69,19 @@ class TestCommunication(unittest.TestCase):
 
     def test_check_vote(self):
         vote = client_util.create_vote([4, 2, 1, 3])
-        self.assertTrue(server_util.check_rows_and_columns(vote))
+        ss_vote_partitions = util.partition_and_secret_share_vote(vote, local_servers)
+        res = 0
+        for ss_partition in ss_vote_partitions:
+            res =(res + server_util.create_sum_of_row(ss_partition)) % util.get_prime()
+        self.assertTrue(server_util.check_rows_and_columns(res))
 
     def test_check_vote_neg(self):
         vote = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [1, 0, 0, 1]])
-        self.assertFalse(server_util.check_rows_and_columns(vote))
+        ss_vote_partitions = util.partition_and_secret_share_vote(vote, local_servers)
+        res = 0
+        for ss_partition in ss_vote_partitions:
+            res = (res + server_util.create_sum_of_row(ss_partition)) % util.get_prime()
+        self.assertFalse(server_util.check_rows_and_columns(res))
 
     def test_adding_votes(self):
         reset_servers()
