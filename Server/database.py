@@ -50,6 +50,8 @@ else:
     cursor.execute('create table "http://127.0.0.1:5000"(matrix bytea, id INTEGER, round INTEGER, client text, server text)')
     cursor.execute('create table "http://127.0.0.1:5001"(matrix bytea, id INTEGER, round INTEGER, client text, server text)')
     cursor.execute('create table "http://127.0.0.1:5002"(matrix bytea, id INTEGER, round INTEGER, client text, server text)')
+    cursor.execute('create table "http://127.0.0.1:5003"(matrix bytea, id INTEGER, round INTEGER, client text, server text)')
+    cursor.execute('create table "http://127.0.0.1:5004"(matrix bytea, id INTEGER, round INTEGER, client text, server text)')
     cursor.close()
     conn.commit()
     print("DATABASES UP AND RUNNING")

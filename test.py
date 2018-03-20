@@ -14,8 +14,10 @@ p = util.get_prime()
 baseurl1 = "http://127.0.0.1:5000/"
 baseurl2 = "http://127.0.0.1:5001/"
 baseurl3 = "http://127.0.0.1:5002/"
+baseurl4 = "http://127.0.0.1:5003/"
+baseurl5 = "http://127.0.0.1:5004/"
 
-local_servers = [baseurl1, baseurl2, baseurl3]
+local_servers = [baseurl1, baseurl2, baseurl3,baseurl4, baseurl5]
 
 official_server = "https://cryptovoting.dk/"
 official_server1 = "https://server1.cryptovoting.dk/"
@@ -47,7 +49,7 @@ class TestCommunication(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        for i in range(3):
+        for i in range(5):
             create_local_server(5000 + i)
 
         time.sleep(3)
@@ -108,6 +110,10 @@ class TestCommunication(unittest.TestCase):
         summed_rows = server_util.create_sum_of_row(vote.T)
         self.assertNotEqual(1, summed_rows[0])
         self.assertEqual(2, summed_rows[0])
+
+    def test_division_of_secret_shares(self):
+        to_send_to = client_util.divide_secret_shares(len(local_servers))
+        print(to_send_to)
 
     @classmethod
     def tearDownClass(cls):

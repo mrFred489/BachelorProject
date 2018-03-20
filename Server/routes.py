@@ -6,7 +6,7 @@ from Server import server_util
 import util
 import sys
 import numpy as np
-
+from time import sleep
 
 app = Flask(__name__)
 app.url_map.strict_slashes = False
@@ -32,7 +32,9 @@ global servers
 test_servers = [
     "http://127.0.0.1:5000",
     "http://127.0.0.1:5001",
-    "http://127.0.0.1:5002"
+    "http://127.0.0.1:5002",
+    "http://127.0.0.1:5003",
+    "http://127.0.0.1:5004",
 ]
 
 official_servers = [
@@ -83,11 +85,21 @@ def receive_vote():
         vote_ = request.form['vote']
         vote = util.string_to_vote(vote_)
         assert type(vote) == np.ndarray
-        id = request.form['id']
+        id_ = request.form['id']
         round = request.form['round']
         client = request.form['client']
         server_name = request.form['server']
-        db.insert_vote(vote, id, round, client, server_name, my_name)
+        db.insert_vote(vote, id_, round, client, server_name, my_name)
+
+        # TODO: figure out under which id sums of rows and columns should be saved
+        row_sum = server_util.create_sum_of_row(vote)
+        col_sum = server_util.create_sum_of_row(vote.T)
+
+        # TODO: send rows and cols without the server blocking/looping
+        # server_util.broadcast_rows_and_cols(row_sum,col_sum, id_,servers, my_name)
+
+        db.insert_vote(row_sum, id_, 7, client, server_name, my_name)
+        db.insert_vote(col_sum, id_, 8, client, server_name, my_name)
     except TypeError as e:
         print(vote_)
         print(e)
@@ -112,7 +124,7 @@ def compute_result():
     all_votes = db.round_two(my_name)
     if not server_util.verify_vote_consistency(all_votes):
         return Response(status=400)
-    s = server_util.calculate_s(all_votes, servers)
+    s = server_util.calculate_result(all_votes, servers)
     return make_response(util.vote_to_string(s))  # Response(util.vote_to_string(s), status=200, mimetype='text/text')
 
 

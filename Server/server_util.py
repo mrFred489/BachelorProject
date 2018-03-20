@@ -1,7 +1,5 @@
-from flask import render_template
 import numpy as np
 import util
-from Server import database as db
 
 
 def check_rows_and_columns(vote: np.ndarray):
@@ -21,14 +19,28 @@ def create_sum_of_row(vote):
     return np.array(res)
 
 
-def broadcast_values(values, round, servers, my_name):
+def broadcast_rows_and_cols(row, col, id_, servers, my_name):
+    own_address = servers.index(my_name)
+    for i, server in enumerate(servers):
+        if i != own_address:
+            print(i)
+            send_value_to_server(
+                (util.vote_to_string(row)),
+                id_, 7, my_name, server)
+
+            send_value_to_server(
+                (util.vote_to_string(col)),
+                id_, 8, my_name, server)
+
+
+def broadcast_values(values, round_, servers, my_name):
     server_nr = servers.index(my_name)
     for i, server in enumerate(servers):
         for j, vote_partition in enumerate(values):
             if i != server_nr:
                 send_value_to_server(
                     (util.vote_to_string(vote_partition['vote_partition'])),
-                    vote_partition['id'], round, my_name, server)
+                    vote_partition['id'], round_, my_name, server)
 
 
 def reshape_vote(vote):
@@ -73,7 +85,7 @@ def verify_vote_consistency(votes):
     return True
 
 
-def calculate_s(votes, participants):
+def calculate_result(votes, participants):
     used_votes = []
     res = 0
     for vote in votes:

@@ -32,15 +32,17 @@ def submit(client_name: str, vote: list, servers: list):
     ### servers: a list with all servers which the secrets should be distributed to
 
     ### Returns: void. The purpose of the method is to distribute the matrix-shares between clients
-    for i, receiving_server in enumerate(servers):
-        for j, vote_partition in enumerate(vote):
-            if i != j:
-                m = dict(client=client_name, id=j, round=1, server=receiving_server,
-                         vote=util.vote_to_string(vote_partition))
-                util.post_url(m, receiving_server + 'submit')
+
+    secret_share_division = divide_secret_shares(len(servers))
+    for j, (division, vote_partition) in enumerate(zip(secret_share_division, vote)):
+        for server_index in division:
+            recipient = servers[server_index]
+            m = dict(client=client_name, id=j, round=1, server=recipient,
+                     vote=util.vote_to_string(vote_partition))
+            util.post_url(m, recipient + 'submit')
 
 
-def create_arrays_of_servers_to_send_secret_to(n: int, cs=1):
+def divide_secret_shares(n: int, cs=2):
     combs = itertools.combinations(range(0, n), n-cs)
     arrays = []
     for subset in combs:
