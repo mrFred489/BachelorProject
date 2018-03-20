@@ -71,10 +71,9 @@ class TestCommunication(unittest.TestCase):
         vote = client_util.create_vote([4, 2, 1, 3])
         self.assertTrue(server_util.check_rows_and_columns(vote))
 
-    def neg_test_check_vote(self):
+    def test_check_vote_neg(self):
         vote = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [1, 0, 0, 1]])
         self.assertFalse(server_util.check_rows_and_columns(vote))
-
 
     def test_adding_votes(self):
         reset_servers()
@@ -90,8 +89,17 @@ class TestCommunication(unittest.TestCase):
                                                                                             [0, 0, 1, 1]])))
             self.assertTrue(response.ok)
 
-    def test_retrieving_votes_from_database(self):
-        pass
+    def test_create_sum_of_row(self):
+        vote = client_util.create_vote([2,1,3,4])
+        summed_rows = server_util.create_sum_of_row(vote)
+        for sum in summed_rows:
+            self.assertEqual(1, sum)
+
+    def test_create_sum_of_col_neg(self):
+        vote = client_util.create_vote([1, 1, 3, 4])
+        summed_rows = server_util.create_sum_of_row(vote.T)
+        self.assertNotEqual(1, summed_rows[0])
+        self.assertEqual(2, summed_rows[0])
 
     @classmethod
     def tearDownClass(cls):

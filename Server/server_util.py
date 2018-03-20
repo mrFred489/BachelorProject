@@ -29,6 +29,13 @@ def reshape_vote(vote):
     return np.reshape(vote, (shape, shape))
 
 
+def create_sum_of_row(vote):
+    res = []
+    for row in vote:
+        res.append(np.sum(row))
+    return np.array(res)
+
+
 def secret_share(votes, servers):
     ss_votes = []
     for vote in votes:
