@@ -19,18 +19,16 @@ def create_sum_of_row(vote):
     return np.array(res)
 
 
-def broadcast_rows_and_cols(row, col, id_, servers, my_name):
-    own_address = servers.index(my_name)
+def broadcast_rows_and_cols(row, col, id_, servers, my_name, client_name):
     for i, server in enumerate(servers):
         if servers[i] != my_name:
-            print(my_name, server, servers)
             send_value_to_server(
                 (util.vote_to_string(row)),
-                id_, 7, my_name, server, '/server_comm')
+                id_, 7, client_name, server, '/server_comm')
 
             send_value_to_server(
                 (util.vote_to_string(col)),
-                id_, 8, my_name, server, '/server_comm')
+                id_, 8, client_name, server, '/server_comm')
 
 
 def broadcast_values(values, round_, servers, my_name):

@@ -81,22 +81,21 @@ def receive_vote():
         vote = util.string_to_vote(vote_)
         assert type(vote) == np.ndarray
         id_ = request.form['id']
-        round = request.form['round']
+        round_ = request.form['round']
         client = request.form['client']
         server_name = request.form['server']
-        db.insert_vote(vote, id_, round, client, server_name, my_name)
-
+        db.insert_vote(vote, id_, round_, client, server_name, my_name)
         # TODO: figure out under which round sums of rows and columns should be saved
-        row_sum = server_util.create_sum_of_row(vote)
-        col_sum = server_util.create_sum_of_row(vote.T)
+        if int(round_) == 1:
+            row_sum = server_util.create_sum_of_row(vote)
+            col_sum = server_util.create_sum_of_row(vote.T)
+            db.insert_vote(row_sum, id_, 7, client, server_name, my_name)
+            db.insert_vote(col_sum, id_, 8, client, server_name, my_name)
 
-        db.insert_vote(row_sum, id_, 7, client, server_name, my_name)
-        db.insert_vote(col_sum, id_, 8, client, server_name, my_name)
+            # TODO: send rows and cols without the server blocking/looping
+            server_util.broadcast_rows_and_cols(row_sum, col_sum, id_, servers, my_name, client)
 
-        # TODO: send rows and cols without the server blocking/looping
-        server_util.broadcast_rows_and_cols(row_sum, col_sum, id_, servers, my_name)
-
-        #TODO: send values for mult in order to ensure that all votes only contain zeroes and ones
+            #TODO: send values for mult in order to ensure that all votes only contain zeroes and ones
 
     except TypeError as e:
         print(vote_)
@@ -112,15 +111,11 @@ def receive_broadcasted_value():
     vote = util.string_to_vote(vote_)
     assert type(vote) == np.ndarray
     id_ = request.form['id']
-    round = request.form['round']
+    round_ = request.form['round']
     client = request.form['client']
     server_name = request.form['server']
-    db.insert_vote(vote, id_, round, client, server_name, my_name)
-
+    db.insert_vote(vote, id_, round_, client, server_name, my_name)
     return Response(status=200)
-
-
-
 
 
 @app.route("/add", methods=["GET"])
@@ -135,6 +130,10 @@ def add():
 
 @app.route("/compute_result", methods=["GET"])
 def compute_result():
+
+    cols = db.get_cols(my_name)
+    rows = db.get_rows(my_name)
+    print("ROWS ARE: ", rows)
     all_votes = db.round_two(my_name)
     if not server_util.verify_vote_consistency(all_votes):
         return Response(status=400)

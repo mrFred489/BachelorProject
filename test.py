@@ -100,7 +100,7 @@ class TestCommunication(unittest.TestCase):
             self.assertTrue(response.ok)
 
     def test_create_sum_of_row(self):
-        vote = client_util.create_vote([2,1,3,4])
+        vote = client_util.create_vote([2, 1, 3, 4])
         summed_rows = server_util.create_sum_of_row(vote)
         for sum in summed_rows:
             self.assertEqual(1, sum)

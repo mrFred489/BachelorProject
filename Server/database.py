@@ -77,23 +77,10 @@ def get_cursor():
         cursor = conn.cursor()
     return cursor
 
-def round_one(db_name):
+def round_one(db_name: str):
     cur = get_cursor()
-    cur.execute(u'SELECT matrix, id, round, client, server '
-                u'FROM "' + db_name + '" WHERE round = 1')
-    res = []
-    for i in cur:
-        # print("VOTE TAKEN DIRECTLY FROM DATABASE: ", i)
-        res.append(i)
-    cur.close()
-    conn.commit()
-    return res
-
-
-def round_two(db_name):
-    cur = get_cursor()
-    cur.execute(u'SELECT matrix, id, round, client, server '
-                u'FROM "' + db_name + '" WHERE round = 2')
+    cur.execute('SELECT matrix, id, round, client, server '
+                'FROM "' + db_name + '" WHERE round = 1')
     res = []
     for i in cur:
         res.append(i)
@@ -101,6 +88,41 @@ def round_two(db_name):
     conn.commit()
     return res
 
+
+def round_two(db_name: str):
+    cur = get_cursor()
+    cur.execute('SELECT matrix, id, round, client, server '
+                'FROM "' + db_name + '" WHERE round = 2')
+    res = []
+    for i in cur:
+        res.append(i)
+    cur.close()
+    conn.commit()
+    return res
+
+
+def get_rows(db_name: str):
+    cur = get_cursor()
+    cur.execute('SELECT matrix, id, round, client, server '
+                'FROM "' + db_name + '" WHERE round = 7')
+    res = []
+    for i in cur:
+        res.append(i)
+    cur.close()
+    conn.commit()
+    return res
+
+
+def get_cols(db_name: str):
+    cur = get_cursor()
+    cur.execute('SELECT matrix, id, round, client, server '
+                'FROM "' + db_name + '" WHERE round = 8')
+    res = []
+    for i in cur:
+        res.append(i)
+    cur.close()
+    conn.commit()
+    return res
 
 def insert_vote(matrix: np.ndarray, id: int, round: int, client_name: str, server: str, db_name: str):
     cur = get_cursor()
