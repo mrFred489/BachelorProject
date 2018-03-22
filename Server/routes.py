@@ -86,7 +86,7 @@ def receive_vote():
         server_name = request.form['server']
         db.insert_vote(vote, id_, round, client, server_name, my_name)
 
-        # TODO: figure out under which id sums of rows and columns should be saved
+        # TODO: figure out under which round sums of rows and columns should be saved
         row_sum = server_util.create_sum_of_row(vote)
         col_sum = server_util.create_sum_of_row(vote.T)
 
@@ -94,7 +94,8 @@ def receive_vote():
         db.insert_vote(col_sum, id_, 8, client, server_name, my_name)
 
         # TODO: send rows and cols without the server blocking/looping
-        # server_util.broadcast_rows_and_cols(row_sum,col_sum, id_,servers, my_name)
+        print('Sending cols')
+        server_util.broadcast_rows_and_cols(row_sum, col_sum, id_, servers, my_name)
 
         #TODO: send values for mult in order to ensure that all votes only contain zeroes and ones
 
@@ -105,6 +106,15 @@ def receive_vote():
 
     # print("Values inserted")
     return Response(status=200)
+
+
+@app.route("/server_comm",methods=["POST"])
+def receive_broadcasted_value():
+    print('Received col or row')
+    return Response(status=200)
+
+
+
 
 
 @app.route("/add", methods=["GET"])
@@ -122,7 +132,7 @@ def compute_result():
     all_votes = db.round_two(my_name)
     if not server_util.verify_vote_consistency(all_votes):
         return Response(status=400)
-    s = server_util.calculate_result(all_votes, servers)
+    s = server_util.calculate_result(all_votes)
     return make_response(util.vote_to_string(s))  # Response(util.vote_to_string(s), status=200, mimetype='text/text')
 
 
@@ -141,7 +151,7 @@ def create_local(port):
     testing = True
     my_name = "http://127.0.0.1:" + str(port)
     server_nr = int(port) - 5000
-    app.run(port=int(port), debug=True, use_reloader=False)
+    app.run(port=int(port), debug=True, use_reloader=False, threaded=True)
 
 
 if __name__ == '__main__':

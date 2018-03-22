@@ -22,15 +22,15 @@ def create_sum_of_row(vote):
 def broadcast_rows_and_cols(row, col, id_, servers, my_name):
     own_address = servers.index(my_name)
     for i, server in enumerate(servers):
-        if i != own_address:
-            print(i)
+        if servers[i] != my_name:
+            print(my_name, server, servers)
             send_value_to_server(
                 (util.vote_to_string(row)),
-                id_, 7, my_name, server)
+                id_, 7, my_name, server, '/server_comm')
 
             send_value_to_server(
                 (util.vote_to_string(col)),
-                id_, 8, my_name, server)
+                id_, 8, my_name, server, '/server_comm')
 
 
 def broadcast_values(values, round_, servers, my_name):
@@ -40,7 +40,7 @@ def broadcast_values(values, round_, servers, my_name):
             if i != server_nr:
                 send_value_to_server(
                     (util.vote_to_string(vote_partition['vote_partition'])),
-                    vote_partition['id'], round_, my_name, server)
+                    vote_partition['id'], round_, my_name, server, '/submit')
 
 
 def reshape_vote(vote):
@@ -54,6 +54,7 @@ def secret_share(votes, servers):
         ss_vote = util.partition_and_secret_share_vote(vote['vote_partition'], servers)
         ss_votes.append(ss_vote)
     return ss_votes
+
 
 def sum_votes(votes):
     summed_votes = []
@@ -70,8 +71,8 @@ def sum_votes(votes):
     return summed_votes
 
 
-def send_value_to_server(value, id,  round, sender, receiver):
-    return util.post_url(data=dict(client=sender, server=sender, vote=value, id=id, round=round), url=receiver + '/submit')
+def send_value_to_server(value, id,  round, sender, receiver, url):
+    return util.post_url(data=dict(client=sender, server=sender, vote=value, id=id, round=round), url=receiver + url)
 
 
 def verify_vote_consistency(votes):
@@ -85,7 +86,7 @@ def verify_vote_consistency(votes):
     return True
 
 
-def calculate_result(votes, participants):
+def calculate_result(votes):
     used_votes = []
     res = 0
     for vote in votes:
