@@ -88,7 +88,7 @@ def receive_vote():
         if int(round_) == 1:
             row_sum = server_util.create_sum_of_row(vote)
             col_sum = server_util.create_sum_of_row(vote.T)
-            # TODO: figure out under which round sums of rows and columns should be saved
+
             db.insert_row(row_sum, id_, 'row', client, server_name, my_name)
             db.insert_col(col_sum, id_, 'column', client, server_name, my_name)
 
@@ -104,14 +104,13 @@ def receive_vote():
     return Response(status=200)
 
 
-@app.route("/server_comm",methods=["POST"])
+@app.route("/server_comm", methods=["POST"])
 def receive_broadcasted_value():
     vote_ = request.form['vote']
     vote = util.string_to_vote(vote_)
-    print(vote)
     assert type(vote) == np.ndarray
     id_ = request.form['id']
-    type_ = request.form['type_']
+    type_ = request.form['round']
     client = request.form['client']
     server_name = request.form['server']
     if type_ == 'row':
@@ -136,11 +135,13 @@ def compute_result():
 
     cols = db.get_cols(my_name)
     rows = db.get_rows(my_name)
-    print("ROWS ARE: ", rows)
+
+    illegal_votes = server_util.verify_sums(rows)
+    illegal_votes.append(server_util.verify_sums(cols))
     all_votes = db.round_two(my_name)
-    if not server_util.verify_vote_consistency(all_votes):
+    if not server_util.verify_consistency(all_votes):
         return Response(status=400)
-    s = server_util.calculate_result(all_votes)
+    s = server_util.calculate_result(all_votes, illegal_votes)
     return make_response(util.vote_to_string(s))  # Response(util.vote_to_string(s), status=200, mimetype='text/text')
 
 

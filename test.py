@@ -93,11 +93,22 @@ class TestCommunication(unittest.TestCase):
             util.get_url(server + 'add')
         for s in local_servers:
             response = util.get_url(s + 'compute_result')
-            self.assertTrue(np.array_equal(util.string_to_vote(response.text), np.array([[1, 0, 0, 1],
+            self.assertTrue(np.array_equal(util.string_to_vote(response.text), np.array([
+                                                                                            [1, 0, 0, 1],
                                                                                             [0, 2, 0, 0],
                                                                                             [1, 0, 1, 0],
                                                                                             [0, 0, 1, 1]])))
             self.assertTrue(response.ok)
+
+    def test_neg_row_sum(self):
+        r1 = (np.array([1,1,1,1]),0,"row", 'c1')
+        r2 = (np.array([0,0,0,1]),1,"row", 'c1')
+        r3 = (np.array([1,1,1,1]),2,"row", 'c1')
+        illegal_votes = server_util.verify_sums([r1,r2,r3])
+        self.assertTrue('c1' in illegal_votes)
+
+
+    # TODO: add test that checks that server actually sorts away illegal votes
 
     def test_create_sum_of_row(self):
         vote = client_util.create_vote([2, 1, 3, 4])
@@ -113,11 +124,23 @@ class TestCommunication(unittest.TestCase):
 
     def test_division_of_secret_shares(self):
         to_send_to = client_util.divide_secret_shares(len(local_servers))
-        # print(to_send_to)
         for i in range(len(local_servers)):
             partition_for_server = to_send_to[i]
-            print(i, partition_for_server)
             self.assertTrue((i not in partition_for_server))
+
+    # def test_many_votes(self):
+    #     reset_servers()
+    #     for i in range(1000):
+    #         client = 'c' + str(i)
+    #         client_util.send_vote([4, 2, 1, 3], client, local_servers)
+    #         # client_util.send_vote([1, 2, 3, 4], 'c2', local_servers)
+    #     for server in local_servers:
+    #         util.get_url(server + 'add')
+    #     for s in local_servers:
+    #         response = util.get_url(s + 'compute_result')
+    #         print("RES IS: ", util.string_to_vote(response.text))
+
+
 
 
     @classmethod

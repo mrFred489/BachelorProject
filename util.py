@@ -12,6 +12,7 @@ def get_prime():
 def post_url(data: dict, url: str):
     return requests.post(url, data)
 
+
 def get_url(url):
     response = requests.get(url)
     return response

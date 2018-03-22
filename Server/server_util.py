@@ -73,7 +73,7 @@ def send_value_to_server(value, id,  round, sender, receiver, url):
     return util.post_url(data=dict(client=sender, server=sender, vote=value, id=id, round=round), url=receiver + url)
 
 
-def verify_vote_consistency(votes):
+def verify_consistency(votes):
     votes_sorted = sorted(votes, key=lambda x: x[1])
     prev = votes_sorted[0]
     for vote in votes_sorted:
@@ -83,14 +83,38 @@ def verify_vote_consistency(votes):
         prev = vote
     return True
 
+def verify_sums(rows):
+    illegal_votes = []
+    sorted(rows, key=lambda x: x[3])
+    diff_clients = []
+    for x in rows:
+        if x[3] not in diff_clients:
+            diff_clients.append(x[3])
+    for client in diff_clients:
+        client_rows = [x for x in rows if x[3] == client]
+        if verify_consistency(client_rows):
+            res = 0
+            used_rows = []
+            for row in client_rows:
+                row_id = row[1]
+                if row_id not in used_rows:
+                    used_rows.append(row_id)
+                    res += row[0]
+            sums = res % util.get_prime()
+            for sum in sums:
+                if (sum != 1) & (client not in illegal_votes):
+                    illegal_votes.append(client)
+    return illegal_votes
 
-def calculate_result(votes):
+
+
+def calculate_result(votes, illegal_votes):
     used_votes = []
     res = 0
     for vote in votes:
         vote_id = vote[1]
         round = vote[2]
-        if (vote_id not in used_votes) & (round == 2):
+        if (vote_id not in used_votes) & (round == 2) & (vote_id not in illegal_votes):
             used_votes.append(vote_id)
             res += vote[0]
     res = reshape_vote(res)
