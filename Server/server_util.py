@@ -42,9 +42,11 @@ def broadcast_values(values, round_, servers, my_name):
 
 
 def reshape_vote(vote):
-    shape = int(np.sqrt(len(vote)))
-    return np.reshape(vote, (shape, shape))
-
+    if type(vote) == np.ndarray:
+        shape = int(np.sqrt(len(vote)))
+        return np.reshape(vote, (shape, shape))
+    else:
+        return 0
 
 def secret_share(votes, servers):
     ss_votes = []
@@ -114,7 +116,8 @@ def calculate_result(votes, illegal_votes):
     for vote in votes:
         vote_id = vote[1]
         round = vote[2]
-        if (vote_id not in used_votes) & (round == 2) & (vote_id not in illegal_votes):
+        client_name = vote[3]
+        if (vote_id not in used_votes) & (round == 2) & (client_name not in illegal_votes):
             used_votes.append(vote_id)
             res += vote[0]
     res = reshape_vote(res)

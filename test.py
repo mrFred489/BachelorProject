@@ -104,8 +104,10 @@ class TestCommunication(unittest.TestCase):
         r1 = (np.array([1,1,1,1]),0,"row", 'c1')
         r2 = (np.array([0,0,0,1]),1,"row", 'c1')
         r3 = (np.array([1,1,1,1]),2,"row", 'c1')
+        v1 = [(np.array([1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4]),0,2,'c1')]
         illegal_votes = server_util.verify_sums([r1,r2,r3])
-        self.assertTrue('c1' in illegal_votes)
+        res = server_util.calculate_result(v1, illegal_votes)
+        self.assertEqual(0,res)
 
 
     # TODO: add test that checks that server actually sorts away illegal votes
