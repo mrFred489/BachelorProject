@@ -94,7 +94,6 @@ def receive_vote():
         db.insert_vote(col_sum, id_, 8, client, server_name, my_name)
 
         # TODO: send rows and cols without the server blocking/looping
-        print('Sending cols')
         server_util.broadcast_rows_and_cols(row_sum, col_sum, id_, servers, my_name)
 
         #TODO: send values for mult in order to ensure that all votes only contain zeroes and ones
@@ -104,13 +103,20 @@ def receive_vote():
         print(e)
         return Response(status=400)
 
-    # print("Values inserted")
     return Response(status=200)
 
 
 @app.route("/server_comm",methods=["POST"])
 def receive_broadcasted_value():
-    print('Received col or row')
+    vote_ = request.form['vote']
+    vote = util.string_to_vote(vote_)
+    assert type(vote) == np.ndarray
+    id_ = request.form['id']
+    round = request.form['round']
+    client = request.form['client']
+    server_name = request.form['server']
+    db.insert_vote(vote, id_, round, client, server_name, my_name)
+
     return Response(status=200)
 
 
