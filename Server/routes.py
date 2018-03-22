@@ -51,11 +51,6 @@ else:
     servers = official_servers
 
 
-
-@app.route("/")
-def home():
-    return server_util.home(db, my_name)
-
 @app.route("/total")
 def total_sum():
     totals = []
@@ -95,11 +90,14 @@ def receive_vote():
         row_sum = server_util.create_sum_of_row(vote)
         col_sum = server_util.create_sum_of_row(vote.T)
 
+        db.insert_vote(row_sum, id_, 7, client, server_name, my_name)
+        db.insert_vote(col_sum, id_, 8, client, server_name, my_name)
+
         # TODO: send rows and cols without the server blocking/looping
         # server_util.broadcast_rows_and_cols(row_sum,col_sum, id_,servers, my_name)
 
-        db.insert_vote(row_sum, id_, 7, client, server_name, my_name)
-        db.insert_vote(col_sum, id_, 8, client, server_name, my_name)
+        #TODO: send values for mult in order to ensure that all votes only contain zeroes and ones
+
     except TypeError as e:
         print(vote_)
         print(e)
@@ -145,17 +143,6 @@ def create_local(port):
     server_nr = int(port) - 5000
     app.run(port=int(port), debug=True, use_reloader=False)
 
-
-@app.route("/server", methods=["POST"])
-def server():
-    values = request.form.getlist("value")
-    clients = request.form.getlist("client")
-    servers = request.form.getlist("server")
-    name = request.form.getlist("name")
-    id = request.form.getlist("id")
-    for num, n in enumerate(name):
-        db.insert_number(int(values[num]) % util.get_prime(), n, id[num], clients[num], servers[num], my_name)
-    return Response(status=200)
 
 if __name__ == '__main__':
     # Lav flere servere ved at ændre port nummeret og køre routes igen.
