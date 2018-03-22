@@ -85,14 +85,13 @@ def receive_vote():
         client = request.form['client']
         server_name = request.form['server']
         db.insert_vote(vote, id_, round_, client, server_name, my_name)
-        # TODO: figure out under which round sums of rows and columns should be saved
         if int(round_) == 1:
             row_sum = server_util.create_sum_of_row(vote)
             col_sum = server_util.create_sum_of_row(vote.T)
-            db.insert_vote(row_sum, id_, 7, client, server_name, my_name)
-            db.insert_vote(col_sum, id_, 8, client, server_name, my_name)
+            # TODO: figure out under which round sums of rows and columns should be saved
+            db.insert_row(row_sum, id_, 'row', client, server_name, my_name)
+            db.insert_col(col_sum, id_, 'column', client, server_name, my_name)
 
-            # TODO: send rows and cols without the server blocking/looping
             server_util.broadcast_rows_and_cols(row_sum, col_sum, id_, servers, my_name, client)
 
             #TODO: send values for mult in order to ensure that all votes only contain zeroes and ones
@@ -109,12 +108,16 @@ def receive_vote():
 def receive_broadcasted_value():
     vote_ = request.form['vote']
     vote = util.string_to_vote(vote_)
+    print(vote)
     assert type(vote) == np.ndarray
     id_ = request.form['id']
-    round_ = request.form['round']
+    type_ = request.form['type_']
     client = request.form['client']
     server_name = request.form['server']
-    db.insert_vote(vote, id_, round_, client, server_name, my_name)
+    if type_ == 'row':
+        db.insert_row(vote, id_, type_, client, server_name, my_name)
+    elif type_ == 'column':
+        db.insert_col(vote, id_, type_, client, server_name, my_name)
     return Response(status=200)
 
 

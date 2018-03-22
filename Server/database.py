@@ -44,14 +44,31 @@ else:
     postgresql = testing.postgresql.Postgresql()
     conn = psy.connect(**postgresql.dsn())
     cursor = conn.cursor()
-    # cursor.execute('create table "http://127.0.0.1:5000"(name text, number INTEGER, client text, server text, id INTEGER )')
-    # cursor.execute('create table "http://127.0.0.1:5001"(name text, number INTEGER, client text, server text, id INTEGER)')
-    # cursor.execute('create table "http://127.0.0.1:5002"(name text, number INTEGER, client text, server text, id INTEGER)')
+
+    # Create table for votes
     cursor.execute('create table "http://127.0.0.1:5000"(matrix bytea, id INTEGER, round INTEGER, client text, server text)')
     cursor.execute('create table "http://127.0.0.1:5001"(matrix bytea, id INTEGER, round INTEGER, client text, server text)')
     cursor.execute('create table "http://127.0.0.1:5002"(matrix bytea, id INTEGER, round INTEGER, client text, server text)')
     cursor.execute('create table "http://127.0.0.1:5003"(matrix bytea, id INTEGER, round INTEGER, client text, server text)')
     cursor.execute('create table "http://127.0.0.1:5004"(matrix bytea, id INTEGER, round INTEGER, client text, server text)')
+
+    # Create table for sums of rows
+    cursor.execute('create table "http://127.0.0.1:5000/rows"(matrix bytea, id INTEGER, type_ text, client text, server text)')
+    cursor.execute('create table "http://127.0.0.1:5001/rows"(matrix bytea, id INTEGER, type_ text, client text, server text)')
+    cursor.execute('create table "http://127.0.0.1:5002/rows"(matrix bytea, id INTEGER, type_ text, client text, server text)')
+    cursor.execute('create table "http://127.0.0.1:5003/rows"(matrix bytea, id INTEGER, type_ text, client text, server text)')
+    cursor.execute('create table "http://127.0.0.1:5004/rows"(matrix bytea, id INTEGER, type_ text, client text, server text)')
+
+    # Create table for sums of columns
+    cursor.execute('create table "http://127.0.0.1:5000/columns"(matrix bytea, id INTEGER, type_ text, client text, server text)')
+    cursor.execute('create table "http://127.0.0.1:5001/columns"(matrix bytea, id INTEGER, type_ text, client text, server text)')
+    cursor.execute('create table "http://127.0.0.1:5002/columns"(matrix bytea, id INTEGER, type_ text, client text, server text)')
+    cursor.execute('create table "http://127.0.0.1:5003/columns"(matrix bytea, id INTEGER, type_ text, client text, server text)')
+    cursor.execute('create table "http://127.0.0.1:5004/columns"(matrix bytea, id INTEGER, type_ text, client text, server text)')
+
+
+
+
     cursor.close()
     conn.commit()
     print("DATABASES UP AND RUNNING")
@@ -103,8 +120,8 @@ def round_two(db_name: str):
 
 def get_rows(db_name: str):
     cur = get_cursor()
-    cur.execute('SELECT matrix, id, round, client, server '
-                'FROM "' + db_name + '" WHERE round = 7')
+    cur.execute('SELECT matrix, id, type_, client, server '
+                'FROM "' + db_name + '/rows' + '"')
     res = []
     for i in cur:
         res.append(i)
@@ -113,16 +130,34 @@ def get_rows(db_name: str):
     return res
 
 
-def get_cols(db_name: str):
+def get_cols(table_name: str):
     cur = get_cursor()
-    cur.execute('SELECT matrix, id, round, client, server '
-                'FROM "' + db_name + '" WHERE round = 8')
+    cur.execute('SELECT matrix, id, type_, client, server '
+                'FROM "' + table_name + '/columns' + '"')
     res = []
     for i in cur:
         res.append(i)
     cur.close()
     conn.commit()
     return res
+
+
+def insert_row(col: np.ndarray, id: int, type_: str, client_name, server, my_name):
+    cur = get_cursor()
+    cur.execute('INSERT INTO "' + my_name + '/rows' + '" (matrix, id, type_, client, server) VALUES (%s, %s, %s, %s, %s)',
+                (col, id, type_, client_name, server))
+    cur.close()
+    conn.commit()
+    return 1
+
+
+def insert_col(col: np.ndarray, id: int, type_: str, client_name, server, my_name):
+    cur = get_cursor()
+    cur.execute('INSERT INTO "' + my_name + '/columns' + '" (matrix, id, type_, client, server) VALUES (%s, %s, %s, %s, %s)',
+                (col, id, type_, client_name, server))
+    cur.close()
+    conn.commit()
+    return 1
 
 def insert_vote(matrix: np.ndarray, id: int, round: int, client_name: str, server: str, db_name: str):
     cur = get_cursor()
@@ -135,7 +170,7 @@ def insert_vote(matrix: np.ndarray, id: int, round: int, client_name: str, serve
 def reset(db_name: str):
     cur = get_cursor()
 
-    cur.execute(u'DELETE FROM "' + db_name + '"')
+    cur.execute('DELETE FROM "' + db_name + '"')
 
     cur.close()
     conn.commit()

@@ -24,11 +24,11 @@ def broadcast_rows_and_cols(row, col, id_, servers, my_name, client_name):
         if servers[i] != my_name:
             send_value_to_server(
                 (util.vote_to_string(row)),
-                id_, 7, client_name, server, '/server_comm')
+                id_, 'row', client_name, server, '/server_comm')
 
             send_value_to_server(
                 (util.vote_to_string(col)),
-                id_, 8, client_name, server, '/server_comm')
+                id_, 'column', client_name, server, '/server_comm')
 
 
 def broadcast_values(values, round_, servers, my_name):
