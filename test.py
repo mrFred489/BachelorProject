@@ -43,6 +43,17 @@ class TestArithmetics(unittest.TestCase):
         res = (sum(secrets_1) + sum(secrets_2)) % util.get_prime()
         self.assertEqual(25, res)
 
+    def test_multiplication_x_minus_one(self):
+        secret = [np.array([[20]]), np.array([[1]]), np.array([[91]]), np.array([[13]]), np.array([[4]]), np.array([[2]]), np.array([[27]])]
+        dict = {0: secret[0], 1: secret[1], 2: secret[2], 3: secret[3], 4: secret[4], 5: secret[5], 6: secret[6]}
+        secret_real_sum = np.outer(np.sum(secret), np.sum(secret) - np.array([[1]]))
+        secret_share_sums = []
+        for id in range(7):
+            secret_share_sums.append(server_util.local_zero_one_check(id, 7, dict))
+        print(np.round(sum(secret_share_sums)), secret_real_sum)
+        self.assertEqual(np.round(sum(secret_share_sums)), secret_real_sum)
+
+
 
 
 class TestCommunication(unittest.TestCase):

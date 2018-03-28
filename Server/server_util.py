@@ -2,6 +2,7 @@ import numpy as np
 import util
 from collections import defaultdict
 
+import math
 
 
 def check_rows_and_columns(vote: np.ndarray):
@@ -129,18 +130,19 @@ def calculate_result(votes, illegal_votes):
     return res % util.get_prime()
 
 
-def to_mult_and_sum(id, num_servers):
-    return (((id + 2) % num_servers, (id + 2) % num_servers),
-            ((id + 2) % num_servers, (id + 3) % num_servers),
-            ((id + 3) % num_servers, (id + 2) % num_servers),
-            ((id + 2) % num_servers, (id + 4) % num_servers),
-            ((id + 4) % num_servers, (id + 2) % num_servers))
+def to_mult(id, num_servers):
+    res = []
+    res.append(((id + 2) % num_servers, (id + 2) % num_servers))
+    for i in range(int(num_servers/2)):
+        res.append(((id + 2) % num_servers, (id + 3 + i) % num_servers))
+        res.append(((id + 3 + i) % num_servers, (id + 2) % num_servers))
+    return res
 
 
-def local_zero_one_check(id, num_servers, xs: dict):
-    # xs = dict: (id) => x_id
+def local_zero_one_check(id, num_servers, xs):
+    # xs = dict: (id) => x_i
     xvals = []
-    for (i,j) in to_mult_and_sum(id, num_servers):
+    for (i, j) in to_mult(id, num_servers):
         xi = xs[i]
         xj = xs[j]-(1/num_servers)
         xvals.append(xi*xj)
