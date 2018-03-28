@@ -132,7 +132,7 @@ class TestCommunication(unittest.TestCase):
 
     # def test_many_votes(self):
     #     reset_servers()
-    #     for i in range(1000):
+    #     for i in range(10000):
     #         client = 'c' + str(i)
     #         client_util.send_vote([4, 2, 1, 3], client, local_servers)
     #         # client_util.send_vote([1, 2, 3, 4], 'c2', local_servers)

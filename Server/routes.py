@@ -141,6 +141,7 @@ def compute_result():
     all_votes = db.round_two(my_name)
     if not server_util.verify_consistency(all_votes):
         return Response(status=400)
+    # TODO: Ensure agreement among servers regarding illegal_votes
     s = server_util.calculate_result(all_votes, illegal_votes)
     return make_response(util.vote_to_string(s))  # Response(util.vote_to_string(s), status=200, mimetype='text/text')
 
