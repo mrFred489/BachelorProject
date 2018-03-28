@@ -90,7 +90,7 @@ def receive_vote():
         for i in range(len(vote_)):
             vote = util.string_to_vote(vote_[i])
             assert type(vote) == np.ndarray
-            db.insert_vote(vote, id_[i], round_, client, server_name, my_name)
+            db.insert_vote(vote, int(id_[i]), round_, client, server_name, my_name)
         if int(round_) == 1:
             row_sum = server_util.create_sum_of_row(vote)
             col_sum = server_util.create_sum_of_row(vote.T)

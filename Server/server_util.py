@@ -152,11 +152,10 @@ def local_zero_one_check(id, num_servers, xs):
 def zero_one_check(my_id, votes, num_servers):
     vote_by_client = defaultdict(dict)
     for vote in votes:
-        vote_by_client[vote[3]][vote[1]] = (vote[3], vote[0])
+        vote_by_client[vote[3]][vote[1]] = vote[0]
     to_return = []
     for i in vote_by_client.keys():
-        to_return.append((vote_by_client[i][0],
-                          local_zero_one_check(my_id, num_servers, vote_by_client[i][1])))
+        to_return.append((i, local_zero_one_check(my_id, num_servers, vote_by_client[i])))
     return to_return
 
 
