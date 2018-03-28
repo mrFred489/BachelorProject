@@ -33,7 +33,7 @@ def submit(client_name: str, vote: list, servers: list):
 
     ### Returns: void. The purpose of the method is to distribute the matrix-shares between clients
 
-    secret_share_division = divide_secret_shares(len(servers))
+    secret_share_division = divide_secret_shares()
     for j, (division, vote_partition) in enumerate(zip(secret_share_division, vote)):
         for server_index in division:
             recipient = servers[server_index]
@@ -42,12 +42,8 @@ def submit(client_name: str, vote: list, servers: list):
             util.post_url(m, recipient + 'submit')
 
 
-def divide_secret_shares(n: int, cs=1):
-    combs = itertools.combinations(range(0, n), n-cs)
-    arrays = []
-    for subset in combs:
-        arrays.append(list(subset))
-    return list(reversed(arrays))
+def divide_secret_shares():
+    return [[2, 3, 4], [0, 3, 4], [0, 1, 4], [0, 1, 2], [1, 2, 3]]
 
 
 def get_total(urls: list):
@@ -79,7 +75,7 @@ def calculate_vote_result(servers):
         util.get_url(server + 'compute_result')
 
 
-def create_multiplication_secret(x: int, n: int, cs=1):
+def create_multiplication_secret(x: int, n: int, cs=2):
     remaining = x
     rng = random.Random()
     res = []
@@ -89,4 +85,5 @@ def create_multiplication_secret(x: int, n: int, cs=1):
         res.append(secret)
         remaining -= secret
     res.append(remaining)
+    print(res)
     return res

@@ -48,6 +48,7 @@ def reshape_vote(vote):
     else:
         return 0
 
+
 def secret_share(votes, servers):
     ss_votes = []
     for vote in votes:
@@ -71,7 +72,7 @@ def sum_votes(votes):
     return summed_votes
 
 
-def send_value_to_server(value, id,  round, sender, receiver, url):
+def send_value_to_server(value, id, round, sender, receiver, url):
     return util.post_url(data=dict(client=sender, server=sender, vote=value, id=id, round=round), url=receiver + url)
 
 
@@ -84,6 +85,7 @@ def verify_consistency(votes):
             return False
         prev = vote
     return True
+
 
 def verify_sums(rows):
     illegal_votes = []
@@ -109,7 +111,6 @@ def verify_sums(rows):
     return illegal_votes
 
 
-
 def calculate_result(votes, illegal_votes):
     used_votes = []
     res = 0
@@ -124,20 +125,18 @@ def calculate_result(votes, illegal_votes):
     return res % util.get_prime()
 
 
+def to_mult_and_sum(id, num_servers):
+    return (((id + 2) % num_servers, (id + 2) % num_servers),
+            ((id + 2) % num_servers, (id + 3) % num_servers),
+            ((id + 3) % num_servers, (id + 2) % num_servers),
+            ((id + 2) % num_servers, (id + 4) % num_servers),
+            ((id + 4) % num_servers, (id + 2) % num_servers))
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+def local_zero_one_check(id, num_servers, xs):
+    # xs = dict: (id) => x_i
+    xvals = []
+    for (i,j) in to_mult_and_sum(id, num_servers):
+        xi = xs[i]
+        xj = xs[j]-(1/num_servers)
+        xvals.append(xi*xj)
+    return sum(xvals)

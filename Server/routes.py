@@ -7,12 +7,17 @@ import util
 import sys
 import numpy as np
 from time import sleep
+import logging
 
 app = Flask(__name__)
 app.url_map.strict_slashes = False
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
+
+
 
 # numbers = defaultdict(list)
-testing = False  # variabel til at slå database fra hvis vi kører det lokalt
+testing = False  # variabel til at s(lå database fra hvis vi kører det lokalt
 
 try:
     my_name = str(os.path.dirname(__file__).split("/")[3])
@@ -94,7 +99,12 @@ def receive_vote():
 
             server_util.broadcast_rows_and_cols(row_sum, col_sum, id_, servers, my_name, client)
 
-            #TODO: send values for mult in order to ensure that all votes only contain zeroes and ones
+            #TODO: send values for mult and add in order to ensure that all votes only contain zeroes and ones
+
+            # x * ( x - 1)
+
+
+
 
     except TypeError as e:
         print(vote_)
@@ -161,7 +171,7 @@ def create_local(port):
     testing = True
     my_name = "http://127.0.0.1:" + str(port)
     server_nr = int(port) - 5000
-    app.run(port=int(port), debug=True, use_reloader=False, threaded=True)
+    app.run(port=int(port), debug=False, use_reloader=False, threaded=True)
 
 
 if __name__ == '__main__':
