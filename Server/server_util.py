@@ -1,5 +1,7 @@
 import numpy as np
 import util
+from collections import defaultdict
+
 
 
 def check_rows_and_columns(vote: np.ndarray):
@@ -72,8 +74,10 @@ def sum_votes(votes):
     return summed_votes
 
 
-def send_value_to_server(value, id, round, sender, receiver, url):
-    return util.post_url(data=dict(client=sender, server=sender, vote=value, id=id, round=round), url=receiver + url)
+def send_value_to_server(value, id, round, sender, receiver, url, client=None):
+    if client is None:
+        client = sender
+    return util.post_url(data=dict(client=client, server=sender, vote=value, id=id, round=round), url=receiver + url)
 
 
 def verify_consistency(votes):
@@ -132,11 +136,25 @@ def to_mult_and_sum(id, num_servers):
             ((id + 2) % num_servers, (id + 4) % num_servers),
             ((id + 4) % num_servers, (id + 2) % num_servers))
 
-def local_zero_one_check(id, num_servers, xs):
-    # xs = dict: (id) => x_i
+
+def local_zero_one_check(id, num_servers, xs: dict):
+    # xs = dict: (id) => x_id
     xvals = []
     for (i,j) in to_mult_and_sum(id, num_servers):
         xi = xs[i]
         xj = xs[j]-(1/num_servers)
         xvals.append(xi*xj)
     return sum(xvals)
+
+
+def zero_one_check(my_id, votes, num_servers):
+    vote_by_client = defaultdict(dict)
+    for vote in votes:
+        vote_by_client[vote[3]][vote[1]] = (vote[3], vote[0])
+    to_return = []
+    for i in vote_by_client.keys():
+        to_return.append((vote_by_client[i][0],
+                          local_zero_one_check(my_id, num_servers, vote_by_client[i][1])))
+    return to_return
+
+

@@ -66,7 +66,12 @@ else:
     cursor.execute('create table "http://127.0.0.1:5003/columns"(col bytea, id INTEGER, type_ text, client text, server text)')
     cursor.execute('create table "http://127.0.0.1:5004/columns"(col bytea, id INTEGER, type_ text, client text, server text)')
 
-
+    # Create table for votes
+    cursor.execute('create table "http://127.0.0.1:5000/zerocheck"(matrix bytea, id INTEGER, client text, server text)')
+    cursor.execute('create table "http://127.0.0.1:5001/zerocheck"(matrix bytea, id INTEGER, client text, server text)')
+    cursor.execute('create table "http://127.0.0.1:5002/zerocheck"(matrix bytea, id INTEGER, client text, server text)')
+    cursor.execute('create table "http://127.0.0.1:5003/zerocheck"(matrix bytea, id INTEGER, client text, server text)')
+    cursor.execute('create table "http://127.0.0.1:5004/zerocheck"(matrix bytea, id INTEGER, client text, server text)')
 
 
     cursor.close()
@@ -167,6 +172,26 @@ def insert_vote(matrix: np.ndarray, id: int, round: int, client_name: str, serve
     return 1
 
 
+def insert_zero_check(matrix: np.ndarray, client_name: str, server: str, db_name: str):
+    cur = get_cursor()
+    cur.execute('INSERT INTO "' + db_name + '" (matrix, client, server) VALUES (%s, %s, %s)',
+                (matrix, id, client_name, server))
+    cur.close()
+    conn.commit()
+    return 1
+
+
+def zero_check_num_clients(db_name: str):
+    cur = get_cursor()
+    cur.execute('SELECT client, COUNT (client) FROM "' + db_name + '" GROUP BY client')
+    res = []
+    for i in cur:
+        res.append(i)
+    cur.close()
+    conn.commit()
+    return res
+
+
 def reset(db_name: str):
     cur = get_cursor()
 
@@ -174,7 +199,6 @@ def reset(db_name: str):
 
     cur.close()
     conn.commit()
-
     return 1
 
 

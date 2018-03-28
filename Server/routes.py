@@ -82,14 +82,15 @@ def database():
 @app.route("/submit", methods=["POST"])
 def receive_vote():
     try:
-        vote_ = request.form['vote']
-        vote = util.string_to_vote(vote_)
-        assert type(vote) == np.ndarray
-        id_ = request.form['id']
+        vote_ = request.form.getlist('vote')
+        id_ = request.form.getlist('id')
         round_ = request.form['round']
         client = request.form['client']
         server_name = request.form['server']
-        db.insert_vote(vote, id_, round_, client, server_name, my_name)
+        for i in range(len(vote_)):
+            vote = util.string_to_vote(vote_[i])
+            assert type(vote) == np.ndarray
+            db.insert_vote(vote, id_[i], round_, client, server_name, my_name)
         if int(round_) == 1:
             row_sum = server_util.create_sum_of_row(vote)
             col_sum = server_util.create_sum_of_row(vote.T)
@@ -142,6 +143,19 @@ def add():
 
 @app.route("/compute_result", methods=["GET"])
 def compute_result():
+    votes = db.round_one(my_name)
+
+    my_id = servers.index(my_name)
+
+    check_of_clients = server_util.zero_one_check(my_id, votes, len(servers))
+
+    for i in check_of_clients:
+        db.insert_zero_check(i[1], i[0], my_name, my_name + "zerocheck")
+        servers_copy = servers.copy()
+        servers_copy.remove(my_name)
+        for server_name in servers_copy:
+            util.post_url(data=dict(client=i[0], server=my_name, vote=i[1]), url=server_name + "zerocheck")
+
 
     cols = db.get_cols(my_name)
     rows = db.get_rows(my_name)
@@ -154,6 +168,24 @@ def compute_result():
     # TODO: Ensure agreement among servers regarding illegal_votes
     s = server_util.calculate_result(all_votes, illegal_votes)
     return make_response(util.vote_to_string(s))  # Response(util.vote_to_string(s), status=200, mimetype='text/text')
+
+
+@app.route("/zerocheck", methods=["POST"])
+def zerocheck():
+    try:
+        vote_ = request.form['vote']
+        vote = util.string_to_vote(vote_)
+        assert type(vote) == np.ndarray
+        client = request.form['client']
+        server_name = request.form['server']
+        db.insert_zero_check(vote, client, server_name, my_name + "zerocheck")
+
+    except TypeError as e:
+        print(vote_)
+        print(e)
+        return Response(status=400)
+
+    return Response(status=200)
 
 
 @app.route("/multiply", methods=["GET"])
