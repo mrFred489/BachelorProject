@@ -34,12 +34,14 @@ def submit(client_name: str, vote: list, servers: list):
     ### Returns: void. The purpose of the method is to distribute the matrix-shares between clients
 
     secret_share_division = divide_secret_shares()
-    for j, (division, vote_partition) in enumerate(zip(secret_share_division, vote)):
-        for server_index in division:
-            recipient = servers[server_index]
-            m = dict(client=client_name, id=j, round=1, server=recipient,
-                     vote=util.vote_to_string(vote_partition))
-            util.post_url(m, recipient + 'submit')
+    for j, division in enumerate(secret_share_division):
+        server_values = []
+        for vote_partition in division:
+            server_values.append(util.vote_to_string(vote[vote_partition]))
+        recipient = servers[j]
+        m = dict(client=client_name, id=division, round=1, server=recipient,
+                 vote=server_values)
+        util.post_url(m, recipient + 'submit')
 
 
 def divide_secret_shares():

@@ -91,14 +91,14 @@ def receive_vote():
             vote = util.string_to_vote(vote_[i])
             assert type(vote) == np.ndarray
             db.insert_vote(vote, int(id_[i]), round_, client, server_name, my_name)
-        if int(round_) == 1:
-            row_sum = server_util.create_sum_of_row(vote)
-            col_sum = server_util.create_sum_of_row(vote.T)
+            if int(round_) == 1:
+                row_sum = server_util.create_sum_of_row(vote)
+                col_sum = server_util.create_sum_of_row(vote.T)
 
-            db.insert_row(row_sum, id_, 'row', client, server_name, my_name)
-            db.insert_col(col_sum, id_, 'column', client, server_name, my_name)
+                db.insert_row(row_sum, id_[i], 'row', client, server_name, my_name)
+                db.insert_col(col_sum, id_[i], 'column', client, server_name, my_name)
 
-            server_util.broadcast_rows_and_cols(row_sum, col_sum, id_, servers, my_name, client)
+                server_util.broadcast_rows_and_cols(row_sum, col_sum, id_[i], servers, my_name, client)
 
             #TODO: send values for mult and add in order to ensure that all votes only contain zeroes and ones
 
@@ -150,11 +150,11 @@ def compute_result():
     check_of_clients = server_util.zero_one_check(my_id, votes, len(servers))
 
     for i in check_of_clients:
-        db.insert_zero_check(i[1], i[0], my_name, my_name + "zerocheck")
+        db.insert_zero_check(i[1], i[0], my_name, my_name + "/zerocheck")
         servers_copy = servers.copy()
         servers_copy.remove(my_name)
         for server_name in servers_copy:
-            util.post_url(data=dict(client=i[0], server=my_name, vote=i[1]), url=server_name + "zerocheck")
+            util.post_url(data=dict(client=i[0], server=my_name, vote=util.vote_to_string(i[1])), url=server_name + "/zerocheck")
 
 
     cols = db.get_cols(my_name)
@@ -178,7 +178,7 @@ def zerocheck():
         assert type(vote) == np.ndarray
         client = request.form['client']
         server_name = request.form['server']
-        db.insert_zero_check(vote, client, server_name, my_name + "zerocheck")
+        db.insert_zero_check(vote, client, server_name, my_name + "/zerocheck")
 
     except TypeError as e:
         print(vote_)
