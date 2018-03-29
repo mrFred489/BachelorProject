@@ -96,21 +96,6 @@ class TestCommunication(unittest.TestCase):
             res = (res + server_util.create_sum_of_row(ss_partition)) % util.get_prime()
         self.assertFalse(server_util.check_rows_and_columns(res))
 
-    def test_adding_votes(self):
-        reset_servers()
-        client_util.send_vote([4, 2, 1, 3], 'c1', local_servers)
-        client_util.send_vote([1, 2, 3, 4], 'c2', local_servers)
-        for server in local_servers:
-            util.get_url(server + 'add')
-        for s in local_servers:
-            response = util.get_url(s + 'compute_result')
-            self.assertTrue(np.array_equal(util.string_to_vote(response.text), np.array([
-                                                                                            [1, 0, 0, 1],
-                                                                                            [0, 2, 0, 0],
-                                                                                            [1, 0, 1, 0],
-                                                                                            [0, 0, 1, 1]])))
-            self.assertTrue(response.ok)
-
     def test_neg_row_sum(self):
         r1 = (np.array([1,1,1,1]),0,"row", 'c1')
         r2 = (np.array([0,0,0,1]),1,"row", 'c1')
@@ -118,7 +103,7 @@ class TestCommunication(unittest.TestCase):
         v1 = [(np.array([1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4]),0,2,'c1')]
         illegal_votes = server_util.verify_sums([r1,r2,r3])
         res = server_util.calculate_result(v1, illegal_votes)
-        self.assertEqual(0,res)
+        self.assertEqual(0, res)
 
 
     # TODO: add test that checks that server actually sorts away illegal votes
@@ -136,25 +121,43 @@ class TestCommunication(unittest.TestCase):
         self.assertEqual(2, summed_rows[0])
 
     def test_division_of_secret_shares(self):
-        to_send_to = client_util.divide_secret_shares(len(local_servers))
+        to_send_to = client_util.divide_secret_shares()
         for i in range(len(local_servers)):
             partition_for_server = to_send_to[i]
+            print(partition_for_server)
             self.assertTrue((i not in partition_for_server))
+            self.assertTrue((i+1) % len(local_servers) not in partition_for_server)
 
-    # def test_many_votes(self):
-    #     reset_servers()
-    #     for i in range(10000):
-    #         client = 'c' + str(i)
-    #         client_util.send_vote([4, 2, 1, 3], client, local_servers)
-    #         # client_util.send_vote([1, 2, 3, 4], 'c2', local_servers)
-    #     for server in local_servers:
-    #         util.get_url(server + 'add')
-    #     for s in local_servers:
-    #         response = util.get_url(s + 'compute_result')
-    #         print("RES IS: ", util.string_to_vote(response.text))
+    def test_adding_votes(self):
+        reset_servers()
+        client_util.send_vote([4, 2, 1, 3], 'c1', local_servers)
+        client_util.send_vote([1, 2, 3, 4], 'c2', local_servers)
+        for server in local_servers:
+            util.get_url(server + 'add')
+        for s in local_servers:
+            response = util.get_url(s + 'compute_result')
+            self.assertTrue(np.array_equal(util.string_to_vote(response.text), np.array([
+                                                                                            [1, 0, 0, 1],
+                                                                                            [0, 2, 0, 0],
+                                                                                            [1, 0, 1, 0],
+                                                                                            [0, 0, 1, 1]])))
+            self.assertTrue(response.ok)
 
-
-
+    def test_many_votes(self):
+        reset_servers()
+        for i in range(10):
+            client = 'c' + str(i)
+            client_util.send_vote([1, 2, 3, 4], client, local_servers)
+        for server in local_servers:
+            util.get_url(server + 'add')
+        for s in local_servers:
+            response = util.get_url(s + 'compute_result')
+            self.assertTrue(np.array_equal(util.string_to_vote(response.text), np.array([
+                [10, 0, 0, 0],
+                [0, 10, 0, 0],
+                [0, 0, 10, 0],
+                [0, 0, 0, 10]])))
+            self.assertTrue(response.ok)
 
     @classmethod
     def tearDownClass(cls):
@@ -164,7 +167,7 @@ class TestCommunication(unittest.TestCase):
 
 
 def reset_servers():
-    for server in n_servers:
+    for server in local_servers:
         requests.post(server + "reset")
 
 

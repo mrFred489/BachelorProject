@@ -126,7 +126,7 @@ def round_two(db_name: str):
 def get_rows(db_name: str):
     cur = get_cursor()
     cur.execute('SELECT row, id, type_, client, server '
-                'FROM "' + db_name + '/rows' + '"')
+                'FROM "' + db_name + '/rows"')
     res = []
     for i in cur:
         res.append(i)
@@ -138,7 +138,7 @@ def get_rows(db_name: str):
 def get_cols(table_name: str):
     cur = get_cursor()
     cur.execute('SELECT col, id, type_, client, server '
-                'FROM "' + table_name + '/columns' + '"')
+                'FROM "' + table_name + '/columns"')
     res = []
     for i in cur:
         res.append(i)
@@ -149,7 +149,7 @@ def get_cols(table_name: str):
 
 def insert_row(row: np.ndarray, id: int, type_: str, client_name, server, my_name):
     cur = get_cursor()
-    cur.execute('INSERT INTO "' + my_name + '/rows' + '" (row, id, type_, client, server) VALUES (%s, %s, %s, %s, %s)',
+    cur.execute('INSERT INTO "' + my_name + '/rows" (row, id, type_, client, server) VALUES (%s, %s, %s, %s, %s)',
                 (row, id, type_, client_name, server))
     cur.close()
     conn.commit()
@@ -158,7 +158,7 @@ def insert_row(row: np.ndarray, id: int, type_: str, client_name, server, my_nam
 
 def insert_col(col: np.ndarray, id: int, type_: str, client_name, server, my_name):
     cur = get_cursor()
-    cur.execute('INSERT INTO "' + my_name + '/columns' + '" (col, id, type_, client, server) VALUES (%s, %s, %s, %s, %s)',
+    cur.execute('INSERT INTO "' + my_name + '/columns" (col, id, type_, client, server) VALUES (%s, %s, %s, %s, %s)',
                 (col, id, type_, client_name, server))
     cur.close()
     conn.commit()
@@ -195,21 +195,12 @@ def zero_check_num_clients(db_name: str):
 def reset(db_name: str):
     cur = get_cursor()
 
+    # TODO: Actually reset table, currently this is not done
     cur.execute('DELETE FROM "' + db_name + '"')
+    cur.execute('DELETE FROM "' + db_name + '/columns"')
+    cur.execute('DELETE FROM "' + db_name + '/rows"')
+    cur.execute('DELETE FROM "' + db_name + '/zerocheck"')
 
     cur.close()
     conn.commit()
     return 1
-
-
-if __name__ == "__main__":
-    temp = np.zeros((3,4))
-    cur = get_cursor()
-    cur.execute('insert into "http://127.0.0.1:5000" values (%s, %s, %s, %s, %s)', (temp, 1, 1, "c", "s"))
-    cur.close()
-    conn.commit()
-    cur = get_cursor()
-    cur.execute('select * from "http://127.0.0.1:5000"')
-    for i in cur:
-        print(i)
-    cur.close()

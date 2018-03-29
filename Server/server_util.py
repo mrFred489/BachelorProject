@@ -154,8 +154,9 @@ def zero_one_check(my_id, votes, num_servers):
     for vote in votes:
         vote_by_client[vote[3]][vote[1]] = vote[0]
     to_return = []
-    for i in vote_by_client.keys():
-        to_return.append((i, local_zero_one_check(my_id, num_servers, vote_by_client[i])))
+    for client in vote_by_client.keys():
+        to_return.append((client, local_zero_one_check(my_id, num_servers, vote_by_client[client])))
+
     return to_return
 
 

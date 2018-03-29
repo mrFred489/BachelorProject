@@ -87,5 +87,4 @@ def create_multiplication_secret(x: int, n: int, cs=2):
         res.append(secret)
         remaining -= secret
     res.append(remaining)
-    print(res)
     return res

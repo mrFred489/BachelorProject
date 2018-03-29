@@ -144,7 +144,7 @@ def add():
 @app.route("/compute_result", methods=["GET"])
 def compute_result():
     votes = db.round_one(my_name)
-
+    # TODO: Move calculation of zero-check values to when votes are received initially ("submit")
     my_id = servers.index(my_name)
 
     check_of_clients = server_util.zero_one_check(my_id, votes, len(servers))
