@@ -73,6 +73,13 @@ else:
     cursor.execute('create table "http://127.0.0.1:5003/zerocheck"(matrix bytea,  client text, server text)')
     cursor.execute('create table "http://127.0.0.1:5004/zerocheck"(matrix bytea,  client text, server text)')
 
+    # Create table for illegal votes
+    cursor.execute('create table "http://127.0.0.1:5000/illegal"(sender text, clients text[])')
+    cursor.execute('create table "http://127.0.0.1:5001/illegal"(sender text, clients text[])')
+    cursor.execute('create table "http://127.0.0.1:5002/illegal"(sender text, clients text[])')
+    cursor.execute('create table "http://127.0.0.1:5003/illegal"(sender text, clients text[])')
+    cursor.execute('create table "http://127.0.0.1:5004/illegal"(sender text, clients text[])')
+
 
     cursor.close()
     conn.commit()
@@ -174,16 +181,33 @@ def insert_vote(matrix: np.ndarray, id: int, round: int, client_name: str, serve
 
 def insert_zero_check(matrix: np.ndarray, client_name: str, server: str, db_name: str):
     cur = get_cursor()
-    cur.execute('INSERT INTO "' + db_name + '" (matrix, client, server) VALUES (%s, %s, %s)',
+    cur.execute('INSERT INTO "' + db_name + '/zerocheck' + '" (matrix, client, server) VALUES (%s, %s, %s)',
                 (matrix, client_name, server))
     cur.close()
     conn.commit()
     return 1
 
-
 def get_zero_check(db_name: str):
     cur = get_cursor()
-    cur.execute('SELECT matrix, client, server FROM "' + db_name + '"')
+    cur.execute('SELECT matrix, client, server FROM "' + db_name + '/zerocheck' + '"')
+    res = []
+    for i in cur:
+        res.append(i)
+    cur.close()
+    conn.commit()
+    return res
+
+def insert_illegal_votes(clients: list, sender: str, db_name: str):
+    cur = get_cursor()
+    cur.execute('INSERT INTO "' + db_name + '/illegal' + '" (sender, clients) VALUES (%s, %s)',
+                (sender, clients))
+    cur.close()
+    conn.commit()
+    return 1
+
+def get_illegal_votes(db_name: str):
+    cur = get_cursor()
+    cur.execute('SELECT sender, clients FROM "' + '/illegal' + db_name + '"')
     res = []
     for i in cur:
         res.append(i)
@@ -200,6 +224,7 @@ def reset(db_name: str):
     cur.execute('DELETE FROM "' + db_name + '/columns"')
     cur.execute('DELETE FROM "' + db_name + '/rows"')
     cur.execute('DELETE FROM "' + db_name + '/zerocheck"')
+    cur.execute('DELETE FROM "' + db_name + '/illegal"')
 
     cur.close()
     conn.commit()

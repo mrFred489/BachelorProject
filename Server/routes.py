@@ -112,7 +112,7 @@ def receive_vote():
             # x * ( x - 1)
         if int(round_) == 1:
             check = server_util.local_zero_one_check(my_id, len(servers), votes)
-            db.insert_zero_check(check, client, my_name, my_name + "/zerocheck")
+            db.insert_zero_check(check, client, my_name, my_name)
             servers_copy = servers.copy()
             servers_copy.remove(my_name)
             for server_name in servers_copy:
@@ -151,40 +151,40 @@ def add():
     server_util.broadcast_values(summed_votes, 2, servers, my_name)
     return Response(status=200)
 
+@app.route("/check_votes", methods=["GET"])
+def check_votes():
+    zerocheck_values = db.get_zero_check(my_name)  # [(matrix, client, server), ...]
 
-@app.route("/compute_result", methods=["GET"])
-def compute_result():
-
-    zerocheck_sums = dict()
-
-    zerocheck_values = db.get_zero_check(my_name + "/zerocheck") # [(matrix, client, server), ...]
-
-    for check in zerocheck_values:
-        if check[1] not in zerocheck_sums.keys():
-            zerocheck_sums[check[1]] = (check[0], False)
-        else:
-            temp = zerocheck_sums[check[1]][0]
-            temp = temp + check[0]
-            temp = temp % util.get_prime()
-            zerocheck_sums[check[1]] = (temp ,np.array_equal(temp, np.zeros(temp.shape)))
-
-    illegal_votes = set()
-    for key, value in zerocheck_sums.items():
-        if not value[1]:
-            illegal_votes.add(key)
+    illegal_votes = server_util.zero_one_illegal_check(zerocheck_values)
 
     cols = db.get_cols(my_name)
     rows = db.get_rows(my_name)
 
+    print("iv", illegal_votes)
+
     illegal_votes.union(server_util.verify_sums(rows))
     illegal_votes.union(server_util.verify_sums(cols))
+
     all_votes = db.round_two(my_name)
     if not server_util.verify_consistency(all_votes):
         return Response(status=400)
-    # TODO: Ensure agreement among servers regarding illegal_votes
-    s = server_util.calculate_result(all_votes, illegal_votes)
-    return make_response(util.vote_to_string(s))  # Response(util.vote_to_string(s), status=200, mimetype='text/text')
 
+    # TODO: Ensure agreement among servers regarding illegal_votes
+    list_illegal_votes = list(illegal_votes)
+    # Save own illegal votes
+    print("liv", list_illegal_votes)
+    db.insert_illegal_votes(list_illegal_votes, my_name, my_name)
+    # Broadcast own illegal votes to others
+    server_util.broadcast_illegal_votes(list_illegal_votes, my_name, servers)
+    return Response(status=200)
+
+
+@app.route("/compute_result", methods=["GET"])
+def compute_result():
+    # TODO: rewrite calculate result. Illegal_votes need to removed sooner
+    #s = server_util.calculate_result(all_votes, illegal_votes)
+    #return make_response(util.vote_to_string(s))  # Response(util.vote_to_string(s), status=200, mimetype='text/text')
+    return Response(status=200)
 
 @app.route("/zerocheck", methods=["POST"])
 def zerocheck():
@@ -194,13 +194,20 @@ def zerocheck():
         assert type(vote) == np.ndarray
         client = request.form['client']
         server_name = request.form['server']
-        db.insert_zero_check(vote, client, server_name, my_name + "/zerocheck")
+        db.insert_zero_check(vote, client, server_name, my_name)
 
     except TypeError as e:
         print(vote_)
         print(e)
         return Response(status=400)
 
+    return Response(status=200)
+
+@app.route("/illegal", methods=["POST"])
+def illegal_vote():
+    bad_votes = request.form.getlist('clients')
+    server_name = request.form['server']
+    db.insert_illegal_votes(bad_votes, server_name, my_name)
     return Response(status=200)
 
 

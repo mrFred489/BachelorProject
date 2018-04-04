@@ -1,7 +1,6 @@
 import numpy as np
 import util
 from collections import defaultdict
-
 import math
 
 
@@ -43,6 +42,11 @@ def broadcast_values(values, round_, servers, my_name):
                     (util.vote_to_string(vote_partition['vote_partition'])),
                     vote_partition['id'], round_, my_name, server, '/submit')
 
+def broadcast_illegal_votes(clients, my_name, servers):
+    server_nr = servers.index(my_name)
+    for i, server in enumerate(servers):
+        if i != server_nr:
+            util.post_url({'clients': clients, 'server': server}, server + '/illegal')
 
 def reshape_vote(vote):
     if type(vote) == np.ndarray:
@@ -147,7 +151,27 @@ def local_zero_one_check(id, num_servers, xs):
     for (i, j) in to_mult(id, num_servers):
         xi = xs[i]
         xj = xs[j]-(1/num_servers)
+        print(xi*xj)
         xvals.append(xi*xj)
     return sum(xvals)
 
+def zero_one_illegal_check(values):
+    # values = [(matrix, client, server), ...]
+    zerocheck_sums = dict()
 
+    for check in values:
+        if check[1] not in zerocheck_sums.keys():
+            zerocheck_sums[check[1]] = (check[0], False)
+        else:
+            temp = zerocheck_sums[check[1]][0]
+            temp = temp + check[0]
+            temp = temp % util.get_prime()
+            zerocheck_sums[check[1]] = (temp, np.array_equal(temp, np.zeros(temp.shape)))
+
+    illegal_votes = set()
+    for key, value in zerocheck_sums.items():
+        print(key, value)
+        if not value[1]:
+            illegal_votes.add(key)
+
+    return illegal_votes
