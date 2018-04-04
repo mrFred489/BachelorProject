@@ -181,9 +181,9 @@ def insert_zero_check(matrix: np.ndarray, client_name: str, server: str, db_name
     return 1
 
 
-def zero_check_num_clients(db_name: str):
+def get_zero_check(db_name: str):
     cur = get_cursor()
-    cur.execute('SELECT client, COUNT (client) FROM "' + db_name + '" GROUP BY client')
+    cur.execute('SELECT * FROM "' + db_name + '"')
     res = []
     for i in cur:
         res.append(i)

@@ -81,7 +81,7 @@ def send_value_to_server(value, id, round, sender, receiver, url, client=None):
     return util.post_url(data=dict(client=client, server=sender, vote=value, id=id, round=round), url=receiver + url)
 
 
-def verify_consistency(votes):
+def verify_consistency(votes: set):
     votes_sorted = sorted(votes, key=lambda x: x[1])
     prev = votes_sorted[0]
     for vote in votes_sorted:
@@ -93,7 +93,7 @@ def verify_consistency(votes):
 
 
 def verify_sums(rows):
-    illegal_votes = []
+    illegal_votes = set()
     sorted(rows, key=lambda x: x[3])
     diff_clients = []
     for x in rows:
@@ -112,7 +112,8 @@ def verify_sums(rows):
             sums = res % util.get_prime()
             for sum in sums:
                 if (sum != 1) & (client not in illegal_votes):
-                    illegal_votes.append(client)
+                    print("client", client)
+                    illegal_votes.add(client)
     return illegal_votes
 
 

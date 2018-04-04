@@ -8,6 +8,8 @@ import sys
 import numpy as np
 from time import sleep
 import logging
+from collections import defaultdict
+
 
 app = Flask(__name__)
 app.url_map.strict_slashes = False
@@ -87,9 +89,14 @@ def receive_vote():
         round_ = request.form['round']
         client = request.form['client']
         server_name = request.form['server']
+
+        my_id = servers.index(my_name)
+
+        votes = dict()
         for i in range(len(vote_)):
             vote = util.string_to_vote(vote_[i])
             assert type(vote) == np.ndarray
+            votes[id_[i]] = vote
             db.insert_vote(vote, int(id_[i]), round_, client, server_name, my_name)
             if int(round_) == 1:
                 row_sum = server_util.create_sum_of_row(vote)
@@ -103,10 +110,13 @@ def receive_vote():
             #TODO: send values for mult and add in order to ensure that all votes only contain zeroes and ones
 
             # x * ( x - 1)
-
-
-
-
+        check = server_util.local_zero_one_check(my_id, len(servers), votes)
+        db.insert_zero_check(check, client, my_name, my_name + "/zerocheck")
+        servers_copy = servers.copy()
+        servers_copy.remove(my_name)
+        for server_name in servers_copy:
+            util.post_url(data=dict(client=client, server=my_name, vote=util.vote_to_string(check)),
+                          url=server_name + "/zerocheck")
     except TypeError as e:
         print(vote_)
         print(e)
@@ -143,25 +153,29 @@ def add():
 
 @app.route("/compute_result", methods=["GET"])
 def compute_result():
-    votes = db.round_one(my_name)
-    # TODO: Move calculation of zero-check values to when votes are received initially ("submit")
-    my_id = servers.index(my_name)
 
-    check_of_clients = server_util.zero_one_check(my_id, votes, len(servers))
+    zerocheck_sums = dict()
 
-    for i in check_of_clients:
-        db.insert_zero_check(i[1], i[0], my_name, my_name + "/zerocheck")
-        servers_copy = servers.copy()
-        servers_copy.remove(my_name)
-        for server_name in servers_copy:
-            util.post_url(data=dict(client=i[0], server=my_name, vote=util.vote_to_string(i[1])), url=server_name + "/zerocheck")
+    zerocheck_values = db.get_zero_check(my_name + "zerocheck") # [(matrix, client, server), ...]
 
+    for check in zerocheck_values:
+        if check[1] not in zerocheck_sums.keys():
+            zerocheck_sums[check[1]] = (check[0], False)
+        else:
+            zerocheck_sums[check[1]][0] += check[0]
+            zerocheck_sums[check[1]][0] %= util.get_prime()
+            zerocheck_sums[check[1]][1] = zerocheck_sums[check[1]][0] == np.zeros(zerocheck_sums[check[1]][0].shape)
+
+    illegal_votes = set()
+    for key, value in zerocheck_sums.values():
+        if not value[1]:
+            illegal_votes.add(key)
 
     cols = db.get_cols(my_name)
     rows = db.get_rows(my_name)
 
-    illegal_votes = server_util.verify_sums(rows)
-    illegal_votes.append(server_util.verify_sums(cols))
+    illegal_votes.union(server_util.verify_sums(rows))
+    illegal_votes.union(server_util.verify_sums(cols))
     all_votes = db.round_two(my_name)
     if not server_util.verify_consistency(all_votes):
         return Response(status=400)
