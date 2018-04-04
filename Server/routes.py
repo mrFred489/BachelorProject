@@ -110,13 +110,14 @@ def receive_vote():
             #TODO: send values for mult and add in order to ensure that all votes only contain zeroes and ones
 
             # x * ( x - 1)
-        check = server_util.local_zero_one_check(my_id, len(servers), votes)
-        db.insert_zero_check(check, client, my_name, my_name + "/zerocheck")
-        servers_copy = servers.copy()
-        servers_copy.remove(my_name)
-        for server_name in servers_copy:
-            util.post_url(data=dict(client=client, server=my_name, vote=util.vote_to_string(check)),
-                          url=server_name + "/zerocheck")
+        if int(round_) == 1:
+            check = server_util.local_zero_one_check(my_id, len(servers), votes)
+            db.insert_zero_check(check, client, my_name, my_name + "/zerocheck")
+            servers_copy = servers.copy()
+            servers_copy.remove(my_name)
+            for server_name in servers_copy:
+                util.post_url(data=dict(client=client, server=my_name, vote=util.vote_to_string(check)),
+                              url=server_name + "/zerocheck")
     except TypeError as e:
         print(vote_)
         print(e)
