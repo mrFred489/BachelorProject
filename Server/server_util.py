@@ -132,11 +132,12 @@ def calculate_result(votes, illegal_votes):
 
 
 def to_mult(id, num_servers):
+    cs = int(num_servers/2)
     res = []
-    res.append(((id + 2) % num_servers, (id + 2) % num_servers))
+    res.append(((id + cs) % num_servers, (id + cs) % num_servers))
     for i in range(int(num_servers/2)):
-        res.append(((id + 2) % num_servers, (id + 3 + i) % num_servers))
-        res.append(((id + 3 + i) % num_servers, (id + 2) % num_servers))
+        res.append(((id + cs) % num_servers, (id + cs + 1 + i) % num_servers))
+        res.append(((id + cs + 1 + i) % num_servers, (id + cs) % num_servers))
     return res
 
 
@@ -148,16 +149,5 @@ def local_zero_one_check(id, num_servers, xs):
         xj = xs[j]-(1/num_servers)
         xvals.append(xi*xj)
     return sum(xvals)
-
-
-def zero_one_check(my_id, votes, num_servers):
-    vote_by_client = defaultdict(dict)
-    for vote in votes:
-        vote_by_client[vote[3]][vote[1]] = vote[0]
-    to_return = []
-    for client in vote_by_client.keys():
-        to_return.append((client, local_zero_one_check(my_id, num_servers, vote_by_client[client])))
-
-    return to_return
 
 

@@ -183,7 +183,7 @@ def insert_zero_check(matrix: np.ndarray, client_name: str, server: str, db_name
 
 def get_zero_check(db_name: str):
     cur = get_cursor()
-    cur.execute('SELECT * FROM "' + db_name + '"')
+    cur.execute('SELECT matrix, client, server FROM "' + db_name + '"')
     res = []
     for i in cur:
         res.append(i)

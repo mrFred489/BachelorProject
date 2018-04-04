@@ -96,7 +96,7 @@ def receive_vote():
         for i in range(len(vote_)):
             vote = util.string_to_vote(vote_[i])
             assert type(vote) == np.ndarray
-            votes[id_[i]] = vote
+            votes[int(id_[i])] = vote
             db.insert_vote(vote, int(id_[i]), round_, client, server_name, my_name)
             if int(round_) == 1:
                 row_sum = server_util.create_sum_of_row(vote)
@@ -157,18 +157,19 @@ def compute_result():
 
     zerocheck_sums = dict()
 
-    zerocheck_values = db.get_zero_check(my_name + "zerocheck") # [(matrix, client, server), ...]
+    zerocheck_values = db.get_zero_check(my_name + "/zerocheck") # [(matrix, client, server), ...]
 
     for check in zerocheck_values:
         if check[1] not in zerocheck_sums.keys():
             zerocheck_sums[check[1]] = (check[0], False)
         else:
-            zerocheck_sums[check[1]][0] += check[0]
-            zerocheck_sums[check[1]][0] %= util.get_prime()
-            zerocheck_sums[check[1]][1] = zerocheck_sums[check[1]][0] == np.zeros(zerocheck_sums[check[1]][0].shape)
+            temp = zerocheck_sums[check[1]][0]
+            temp = temp + check[0]
+            temp = temp % util.get_prime()
+            zerocheck_sums[check[1]] = (temp ,np.array_equal(temp, np.zeros(temp.shape)))
 
     illegal_votes = set()
-    for key, value in zerocheck_sums.values():
+    for key, value in zerocheck_sums.items():
         if not value[1]:
             illegal_votes.add(key)
 
