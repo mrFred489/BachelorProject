@@ -21,7 +21,7 @@ def typecast_array(data, cur):
     if data is None:
         return None
     buf = psy.BINARY(data, cur)
-    res = np.frombuffer(buf, dtype='int')
+    res = np.frombuffer(buf, dtype='float')
     return res
 
 
@@ -191,8 +191,8 @@ def get_zero_check(db_name: str):
     cur = get_cursor()
     cur.execute('SELECT matrix, client, server FROM "' + db_name + '/zerocheck' + '"')
     res = []
-    for i in cur:
-        res.append(i)
+    for m, c, s in cur:
+        res.append((reshape_vote(m), c, s))
     cur.close()
     conn.commit()
     return res
@@ -229,3 +229,10 @@ def reset(db_name: str):
     cur.close()
     conn.commit()
     return 1
+
+def reshape_vote(vote):
+    if type(vote) == np.ndarray:
+        shape = int(np.sqrt(len(vote)))
+        return np.reshape(vote, (shape, shape))
+    else:
+        return 0

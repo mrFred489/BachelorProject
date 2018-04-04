@@ -116,7 +116,6 @@ def verify_sums(rows):
             sums = res % util.get_prime()
             for sum in sums:
                 if (sum != 1) & (client not in illegal_votes):
-                    print("client", client)
                     illegal_votes.add(client)
     return illegal_votes
 
@@ -144,34 +143,42 @@ def to_mult(id, num_servers):
         res.append(((id + cs + 1 + i) % num_servers, (id + cs) % num_servers))
     return res
 
-
-def local_zero_one_check(id, num_servers, xs):
-    # xs = dict: (id) => x_i
-    xvals = []
+def index_zero_one_check(id, num_servers, xs):
+    new_val = 0
     for (i, j) in to_mult(id, num_servers):
         xi = xs[i]
-        xj = xs[j]-(1/num_servers)
-        print(xi*xj)
-        xvals.append(xi*xj)
-    return sum(xvals)
+        xj = (xs[j]-(1/num_servers))
+        new_val += (xi * xj)
+    return new_val
+
+def matrix_zero_one_check(id, num_servers, xs):
+    # xs = dict: (id) => x_i
+    new_matrix = np.zeros(list(xs.values())[0].shape)
+    for i in range(new_matrix.shape[0]):
+        for j in range(new_matrix.shape[1]):
+            index_dict = dict()
+            for ind, matrix in xs.items():
+                index_dict[ind] = matrix[i][j]
+            new_matrix[i][j] = index_zero_one_check(id, num_servers, index_dict)
+    return new_matrix
+
+def zero_one_check(xs):
+    res = sum(xs)
+    return np.rint(res) % util.get_prime()
+
 
 def zero_one_illegal_check(values):
     # values = [(matrix, client, server), ...]
-    zerocheck_sums = dict()
+    # print(values)
+    zerocheck_secrets = defaultdict(list)
 
     for check in values:
-        if check[1] not in zerocheck_sums.keys():
-            zerocheck_sums[check[1]] = (check[0], False)
-        else:
-            temp = zerocheck_sums[check[1]][0]
-            temp = temp + check[0]
-            temp = temp % util.get_prime()
-            zerocheck_sums[check[1]] = (temp, np.array_equal(temp, np.zeros(temp.shape)))
+        zerocheck_secrets[check[1]].append(check[0])
 
     illegal_votes = set()
-    for key, value in zerocheck_sums.items():
-        print(key, value)
-        if not value[1]:
+    for key in zerocheck_secrets.keys():
+        # print(zero_one_check(zerocheck_secrets[key]))
+        if not np.array_equal(zero_one_check(zerocheck_secrets[key]),np.zeros(zerocheck_secrets[key][0].shape)):
             illegal_votes.add(key)
 
     return illegal_votes
