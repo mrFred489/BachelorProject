@@ -179,6 +179,7 @@ def check_votes():
     server_util.broadcast_illegal_votes(list_illegal_votes, my_name, servers)
     return Response(status=200)
 
+@app.route("/ensure_vote_agreement", methods=["GET"])
 
 @app.route("/compute_result", methods=["GET"])
 def compute_result():

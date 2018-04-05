@@ -68,7 +68,7 @@ def sum_votes(votes):
     summed_votes = []
     for vote in votes:
         vote_id = vote[1]
-        vote_partition = reshape_vote(vote[0])
+        vote_partition = vote[0]
         if len([x for x in summed_votes if x['id'] == vote_id]) > 0:
             for dict in summed_votes:
                 if dict['id'] == vote_id:
@@ -130,7 +130,7 @@ def calculate_result(votes, illegal_votes):
         if (vote_id not in used_votes) & (round == 2) & (client_name not in illegal_votes):
             used_votes.append(vote_id)
             res += vote[0]
-    res = reshape_vote(res)
+    res = res
     return res % util.get_prime()
 
 
