@@ -160,6 +160,8 @@ class TestCommunication(unittest.TestCase):
             util.get_url(server + 'add')
         for s in local_servers:
             response = util.get_url(s + 'check_votes')
+        for s in local_servers:
+            response = util.get_url(s + 'ensure_vote_agreement')
         time.sleep(.5)
         for s in local_servers:
             response = util.get_url(s + 'compute_result')

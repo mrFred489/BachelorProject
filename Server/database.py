@@ -186,6 +186,12 @@ def insert_vote(matrix: np.ndarray, id: int, round: int, client_name: str, serve
     conn.commit()
     return 1
 
+def remove_vote(client_name: str, db_name: str):
+    cur = get_cursor()
+    cur.execute('DELETE FROM "' + db_name + '" WHERE client=%s', (client_name))
+    cur.close()
+    conn.commit()
+    return 1
 
 def insert_zero_check(matrix: np.ndarray, client_name: str, server: str, db_name: str):
     cur = get_cursor()
@@ -217,7 +223,7 @@ def insert_illegal_votes(clients: list, sender: str, db_name: str):
 
 def get_illegal_votes(db_name: str):
     cur = get_cursor()
-    cur.execute('SELECT sender, clients FROM "' + '/illegal' + db_name + '"')
+    cur.execute('SELECT sender, clients FROM "' + db_name + '/illegal' + '"')
     res = []
     for i in cur:
         res.append(i)

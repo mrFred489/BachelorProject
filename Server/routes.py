@@ -9,6 +9,7 @@ import numpy as np
 from time import sleep
 import logging
 from collections import defaultdict
+import math
 
 
 app = Flask(__name__)
@@ -180,6 +181,44 @@ def check_votes():
     return Response(status=200)
 
 @app.route("/ensure_vote_agreement", methods=["GET"])
+def ensure_agreement():
+    illegal_votes = []
+    for server in servers:
+        illegal_votes.append(db.get_illegal_votes(server)[1])
+    print(illegal_votes)
+
+    to_be_deleted = set()
+
+    agreed_illegal_votes = set()
+    disagreed_illegal_votes = set()
+
+    for i in range(len(servers)):
+        agreed_illegal_votes.intersection(illegal_votes[i])
+        disagreed_illegal_votes.union(illegal_votes[i])
+    disagreed_illegal_votes.difference(agreed_illegal_votes)
+    to_be_deleted.union(agreed_illegal_votes)
+
+    # Check for majority disagreement
+    majority_legal = set()
+    majority_illegal = set()
+    for client in disagreed_illegal_votes:
+        observations = 0
+        for il_clients in illegal_votes:
+            if client in il_clients:
+                observations =+ 1
+        if(observations>math.floor(len(servers)/2)):
+            majority_legal.add(client)
+        else: majority_illegal.add(client)
+    to_be_deleted.union(majority_illegal)
+
+    # Delete illegal and majority illegal votes
+    for client in to_be_deleted:
+        db.remove_vote(client, my_name)
+
+    # Agree on majority legal votes
+        # TODO: Find out which servers have the correct secret shares for each non-conclusive legal vote, so that these
+        # servers are the only ones to calculate these votes
+
 
 @app.route("/compute_result", methods=["GET"])
 def compute_result():
