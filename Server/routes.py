@@ -108,8 +108,6 @@ def receive_vote():
 
                 server_util.broadcast_rows_and_cols(row_sum, col_sum, id_[i], servers, my_name, client)
 
-            #TODO: send values for mult and add in order to ensure that all votes only contain zeroes and ones
-
             # x * ( x - 1)
         if int(round_) == 1:
             check = server_util.matrix_zero_one_check(my_id, len(servers), votes)
@@ -184,14 +182,12 @@ def check_votes():
 def ensure_agreement():
     illegal_votes = []
     for server in servers:
-        illegal_votes.append(db.get_illegal_votes(server)[1])
-    print(illegal_votes)
+        illegal_votes.append(db.get_illegal_votes(server)[1][1])
 
     to_be_deleted = set()
 
     agreed_illegal_votes = set()
     disagreed_illegal_votes = set()
-
     for i in range(len(servers)):
         agreed_illegal_votes.intersection(illegal_votes[i])
         disagreed_illegal_votes.union(illegal_votes[i])
@@ -218,6 +214,7 @@ def ensure_agreement():
     # Agree on majority legal votes
         # TODO: Find out which servers have the correct secret shares for each non-conclusive legal vote, so that these
         # servers are the only ones to calculate these votes
+    return Response(status=200)
 
 
 @app.route("/compute_result", methods=["GET"])
@@ -225,7 +222,7 @@ def compute_result():
     # TODO: rewrite calculate result. Illegal_votes need to removed sooner
     illegal_votes = []
     all_votes = db.round_two(my_name)
-    print("av", all_votes)
+    # print("av", all_votes)
     s = server_util.calculate_result(all_votes, illegal_votes)
     return make_response(util.vote_to_string(s))  # Response(util.vote_to_string(s), status=200, mimetype='text/text')
 

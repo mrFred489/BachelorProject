@@ -120,14 +120,21 @@ class TestCommunication(unittest.TestCase):
             res = (res + server_util.create_sum_of_row(ss_partition)) % util.get_prime()
         self.assertFalse(server_util.check_rows_and_columns(res))
 
+    def test_row_sum(self):
+        r1 = (np.array([0, 0, 0, 1]), 0, "row", 'c1')
+        r2 = (np.array([0, 0, 1, 0]), 1, "row", 'c1')
+        r3 = (np.array([0, 1, 0, 0]), 2, "row", 'c1')
+        r4 = (np.array([1, 0, 0, 0]), 3, "row", 'c1')
+        illegal_votes = server_util.verify_sums([r1, r2, r3, r4])
+        self.assertEqual(set(), illegal_votes)
+
+
     def test_neg_row_sum(self):
         r1 = (np.array([1,1,1,1]),0,"row", 'c1')
         r2 = (np.array([0,0,0,1]),1,"row", 'c1')
         r3 = (np.array([1,1,1,1]),2,"row", 'c1')
-        v1 = [(np.array([1,2,3,4,1,2,3,4,1,2,3,4,1,2,3,4]),0,2,'c1')]
         illegal_votes = server_util.verify_sums([r1,r2,r3])
-        res = server_util.calculate_result(v1, illegal_votes)
-        self.assertEqual(0, res)
+        self.assertEqual({'c1'}, illegal_votes)
 
 
     # TODO: add test that checks that server actually sorts away illegal votes
@@ -148,7 +155,6 @@ class TestCommunication(unittest.TestCase):
         to_send_to = client_util.divide_secret_shares()
         for i in range(len(local_servers)):
             partition_for_server = to_send_to[i]
-            print(partition_for_server)
             self.assertTrue((i not in partition_for_server))
             self.assertTrue((i+1) % len(local_servers) not in partition_for_server)
 
@@ -166,29 +172,27 @@ class TestCommunication(unittest.TestCase):
         for s in local_servers:
             response = util.get_url(s + 'compute_result')
             result = np.rint(util.string_to_vote(response.text))
-            print("res", result)
-            self.assertTrue(np.array_equal(result, np.array([
-                                                                                            [1, 0, 0, 1],
-                                                                                            [0, 2, 0, 0],
-                                                                                            [1, 0, 1, 0],
-                                                                                            [0, 0, 1, 1]])))
+            self.assertTrue(np.array_equal(result, np.array([[1, 0, 0, 1],
+                                                             [0, 2, 0, 0],
+                                                             [1, 0, 1, 0],
+                                                             [0, 0, 1, 1]])))
             self.assertTrue(response.ok)
 
-    def test_many_votes(self):
-        reset_servers()
-        for i in range(10):
-            client = 'c' + str(i)
-            client_util.send_vote([1, 2, 3, 4], client, local_servers)
-        for server in local_servers:
-            util.get_url(server + 'add')
-        for s in local_servers:
-            response = util.get_url(s + 'compute_result')
-            self.assertTrue(np.array_equal(util.string_to_vote(response.text), np.array([
-                [10, 0, 0, 0],
-                [0, 10, 0, 0],
-                [0, 0, 10, 0],
-                [0, 0, 0, 10]])))
-            self.assertTrue(response.ok)
+    # def test_many_votes(self):
+    #     reset_servers()
+    #     for i in range(10):
+    #         client = 'c' + str(i)
+    #         client_util.send_vote([1, 2, 3, 4], client, local_servers)
+    #     for server in local_servers:
+    #         util.get_url(server + 'add')
+    #     for s in local_servers:
+    #         response = util.get_url(s + 'compute_result')
+    #         self.assertTrue(np.array_equal(util.string_to_vote(response.text), np.array([
+    #             [10, 0, 0, 0],
+    #             [0, 10, 0, 0],
+    #             [0, 0, 10, 0],
+    #             [0, 0, 0, 10]])))
+    #         self.assertTrue(response.ok)
 
     @classmethod
     def tearDownClass(cls):

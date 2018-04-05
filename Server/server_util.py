@@ -85,7 +85,7 @@ def send_value_to_server(value, id, round, sender, receiver, url, client=None):
     return util.post_url(data=dict(client=client, server=sender, vote=value, id=id, round=round), url=receiver + url)
 
 
-def verify_consistency(votes: set):
+def verify_consistency(votes):
     votes_sorted = sorted(votes, key=lambda x: x[1])
     prev = votes_sorted[0]
     for vote in votes_sorted:
@@ -127,7 +127,7 @@ def calculate_result(votes, illegal_votes):
         vote_id = vote[1]
         round = vote[2]
         client_name = vote[3]
-        if (vote_id not in used_votes) & (round == 2) & (client_name not in illegal_votes):
+        if (vote_id not in used_votes) & (round == 2):
             used_votes.append(vote_id)
             res += vote[0]
     res = res
