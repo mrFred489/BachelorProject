@@ -163,11 +163,6 @@ def check_votes():
     illegal_votes.union(server_util.verify_sums(rows))
     illegal_votes.union(server_util.verify_sums(cols))
 
-    # ?
-    all_votes = db.round_two(my_name)
-    if not server_util.verify_consistency(all_votes):
-        return Response(status=400)
-
 
     # TODO: Ensure agreement among servers regarding illegal_votes
 

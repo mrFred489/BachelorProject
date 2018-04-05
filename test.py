@@ -162,12 +162,12 @@ class TestCommunication(unittest.TestCase):
         reset_servers()
         client_util.send_vote([4, 2, 1, 3], 'c1', local_servers)
         client_util.send_vote([1, 2, 3, 4], 'c2', local_servers)
-        for server in local_servers:
-            util.get_url(server + 'add')
         for s in local_servers:
             response = util.get_url(s + 'check_votes')
         for s in local_servers:
             response = util.get_url(s + 'ensure_vote_agreement')
+        for server in local_servers:
+            util.get_url(server + 'add')
         time.sleep(.5)
         for s in local_servers:
             response = util.get_url(s + 'compute_result')
