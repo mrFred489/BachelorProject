@@ -112,11 +112,8 @@ def receive_vote():
         if int(round_) == 1:
             check = server_util.matrix_zero_one_check(my_id, len(servers), votes)
             db.insert_zero_check(check, client, my_name, my_name)
-            servers_copy = servers.copy()
-            servers_copy.remove(my_name)
-            for server_name in servers_copy:
-                util.post_url(data=dict(client=client, server=my_name, vote=util.vote_to_string(check)),
-                              url=server_name + "/zerocheck")
+            servers_copy = server_util.list_remove(servers, my_name)
+            server_util.broadcast(dict(client=client, server=my_name, vote=util.vote_to_string(check)), servers_copy, "/zerocheck")
     except TypeError as e:
         print(vote_)
         print(e)
