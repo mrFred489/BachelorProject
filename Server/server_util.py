@@ -12,9 +12,7 @@ def broadcast(data, servers, url):
 
 def unpack_request(request, name):
     util.get_keys(name)
-    # print("unpack", type(request.form.getlist("signature")), request.form.getlist("signature"))
     sig = bytes(list(map(int, request.form.getlist("signature"))))
-    # print("unpack", type(sig), sig)
     verified = util.verify(sig, request.form["data"], request.form["pub"])
     if not verified:
         print("not verified")

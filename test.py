@@ -77,8 +77,15 @@ class TestArithmetics(unittest.TestCase):
         result = np.array_equal(val, np.zeros(val.shape))
         self.assertFalse(result)
 
+    def test_signature(self):
+        util.get_keys("")
+        res = util.make_post_signature(dict(test="1234"))
+        self.assertTrue(util.verify(bytes(res["signature"]), res["data"], res["pub"].decode()))
+
     def test_signature_neg(self):
-        pass
+        util.get_keys("")
+        res = util.make_post_signature(dict(test="1234"))
+        self.assertFalse(util.verify(bytes(res["signature"][:-1]), res["data"], res["pub"].decode()))
 
 
 
