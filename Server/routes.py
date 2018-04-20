@@ -6,9 +6,7 @@ from Server import server_util
 import util
 import sys
 import numpy as np
-from time import sleep
 import logging
-from collections import defaultdict
 import math
 
 
@@ -84,12 +82,20 @@ def database():
 
 @app.route("/submit", methods=["POST"])
 def receive_vote():
+    verified, data = server_util.unpack_request(request, my_name)
     try:
-        vote_ = request.form.getlist('vote')
-        id_ = request.form.getlist('id')
-        round_ = request.form['round']
-        client = request.form['client']
-        server_name = request.form['server']
+        vote_ = data['vote']
+        if type(vote_) == str:
+            vote_ = [vote_]
+        id_ = data['id']
+        if type(id_) in [str, int]:
+            id_ = [id_]
+        round_ = data['round']
+        if type(round_) == str:
+            round_ = [round_]
+        client = data['client']
+        server_name = data['server']
+        # print("vote_", client, round_, server_name, id, "start vote", vote_, "slut vote")
 
         my_id = servers.index(my_name)
 
@@ -124,13 +130,14 @@ def receive_vote():
 
 @app.route("/server_comm", methods=["POST"])
 def receive_broadcasted_value():
-    vote_ = request.form['vote']
+    verified, data = server_util.unpack_request(request, my_name)
+    vote_ = data['vote']
     vote = util.string_to_vote(vote_)
     assert type(vote) == np.ndarray
-    id_ = request.form['id']
-    type_ = request.form['round']
-    client = request.form['client']
-    server_name = request.form['server']
+    id_ = data['id']
+    type_ = data['round']
+    client = data['client']
+    server_name = data['server']
     if type_ == 'row':
         db.insert_row(vote, id_, type_, client, server_name, my_name)
     elif type_ == 'column':
@@ -220,12 +227,13 @@ def compute_result():
 
 @app.route("/zerocheck", methods=["POST"])
 def zerocheck():
+    verified, data = server_util.unpack_request(request, my_name)
     try:
-        vote_ = request.form['vote']
+        vote_ = data['vote']
         vote = util.string_to_vote(vote_)
         assert type(vote) == np.ndarray
-        client = request.form['client']
-        server_name = request.form['server']
+        client = data['client']
+        server_name = data['server']
         db.insert_zero_check(vote, client, server_name, my_name)
 
     except TypeError as e:
@@ -237,8 +245,9 @@ def zerocheck():
 
 @app.route("/illegal", methods=["POST"])
 def illegal_vote():
-    bad_votes = request.form.getlist('clients')
-    server_name = request.form['server']
+    verified, data = server_util.unpack_request(request, my_name)
+    bad_votes = data['clients']
+    server_name = data['server']
     db.insert_illegal_votes(bad_votes, server_name, my_name)
     return Response(status=200)
 
@@ -254,6 +263,8 @@ def create_local(port):
     def stop_server():
         shutdown_server()
         return 'Server shutting down...'
+
+    util.get_keys(str(port))
 
     testing = True
     my_name = "http://127.0.0.1:" + str(port)

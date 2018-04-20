@@ -3,14 +3,44 @@ import requests
 import random
 import codecs
 import pickle
+import rsa
+import rsa.pkcs1
+import cryp.keys
+import json
+
+
+privkey = None
+pubkey = None
+
+
+def get_keys(name):
+    global privkey, pubkey
+    if None not in [privkey, pubkey]:
+        return
+    privkey, pubkey = cryp.keys.get_key(name)
 
 
 def get_prime():
     return 50
 
 
+def make_post_signature(data):
+    dump = json.dumps(data)
+    signature = rsa.sign(dump.encode(), privkey, "SHA-1")
+    return {"data": dump, "signature": bytearray(signature), "pub": pubkey.save_pkcs1()}
+
+
 def post_url(data: dict, url: str):
-    return requests.post(url, data)
+    return requests.post(url, make_post_signature(data))
+
+
+def verify(sig, data, pub):
+    try:
+        if type(pub) == str:
+            pub = rsa.PublicKey.load_pkcs1(pub)
+        return rsa.verify(data.encode(), sig, pub)
+    except rsa.pkcs1.VerificationError:
+        return False
 
 
 def get_url(url):

@@ -77,6 +77,9 @@ class TestArithmetics(unittest.TestCase):
         result = np.array_equal(val, np.zeros(val.shape))
         self.assertFalse(result)
 
+    def test_signature_neg(self):
+        pass
+
 
 
 
