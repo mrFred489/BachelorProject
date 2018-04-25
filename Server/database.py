@@ -152,8 +152,13 @@ def get_cols(table_name: str):
 def insert_row(row: np.ndarray, id: int, type_: str, client_name, server, my_name):
     cur = get_cursor()
     row = util.vote_to_string(row)
-    cur.execute('INSERT INTO "' + my_name + '/rows" (row, id, type_, client, server) VALUES (%s, %s, %s, %s, %s)',
-                (row, id, type_, client_name, server))
+    cur.execute('SELECT row FROM "' + my_name + '/rows" WHERE id = ' + str(id) + ' AND client = \'' + str(client_name) + '\' AND server = \'' + str(server) + '\'')
+    if len(cur.fetchall()) == 0:
+        cur.execute('INSERT INTO "' + my_name + '/rows" (row, id, type_, client, server) VALUES (%s, %s, %s, %s, %s)',
+                    (row, id, type_, client_name, server))
+    else:
+        cur.execute('UPDATE "' + my_name + '/rows" SET row = \'' + row + '\' WHERE id = ' + str(
+            id) + ' AND client = \'' + str(client_name) + '\' AND server = \'' + str(server) + '\'')
     cur.close()
     conn.commit()
     return 1
@@ -162,8 +167,12 @@ def insert_row(row: np.ndarray, id: int, type_: str, client_name, server, my_nam
 def insert_col(col: np.ndarray, id: int, type_: str, client_name, server, my_name):
     cur = get_cursor()
     col = util.vote_to_string(col)
-    cur.execute('INSERT INTO "' + my_name + '/columns" (col, id, type_, client, server) VALUES (%s, %s, %s, %s, %s)',
-                (col, id, type_, client_name, server))
+    cur.execute('SELECT col FROM "' + my_name + '/columns" WHERE id = ' + str(id) + ' AND client = \'' + str(client_name) + '\' AND server = \'' + str(server) + '\'')
+    if len(cur.fetchall()) == 0:
+        cur.execute('INSERT INTO "' + my_name + '/columns" (col, id, type_, client, server) VALUES (%s, %s, %s, %s, %s)',
+                    (col, id, type_, client_name, server))
+    else:
+        cur.execute('UPDATE "' + my_name + '/columns" SET col = \'' + col + '\' WHERE id = ' + str(id) + ' AND client = \'' + str(client_name) + '\' AND server = \'' + str(server) + '\'')
     cur.close()
     conn.commit()
     return 1
@@ -172,8 +181,12 @@ def insert_col(col: np.ndarray, id: int, type_: str, client_name, server, my_nam
 def insert_vote(matrix: np.ndarray, id: int, round: int, client_name: str, server: str, db_name: str):
     cur = get_cursor()
     matrix = util.vote_to_string(matrix)
-    cur.execute('INSERT INTO "' + db_name + '" (matrix, id, round, client, server) VALUES (%s, %s, %s, %s, %s)',
+    cur.execute('SELECT matrix FROM "' + db_name + '" WHERE id = ' + str(id) + ' AND client = \'' + str(client_name) + '\' AND server = \'' + str(server) + '\' AND round = ' + str(round))
+    if len(cur.fetchall()) == 0:
+        cur.execute('INSERT INTO "' + db_name + '" (matrix, id, round, client, server) VALUES (%s, %s, %s, %s, %s)',
                 (matrix, id, round, client_name, server))
+    else:
+        cur.execute('UPDATE "' + db_name + '" SET matrix = \'' + matrix + '\' WHERE id = ' + str(id) + ' AND client = \'' + str(client_name) + '\' AND server = \'' + str(server) + '\' AND round = ' + str(round))
     cur.close()
     conn.commit()
     return 1

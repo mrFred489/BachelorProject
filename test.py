@@ -8,6 +8,8 @@ import Server.routes
 from Server import server_util
 from time import sleep
 import numpy as np
+import os.path
+
 
 
 p = util.get_prime()
@@ -29,6 +31,7 @@ n_servers = [baseurl1, baseurl2, baseurl3,
              official_server, official_server1,
              official_server2, official_server3, official_server4]
 
+test_keys_necessary = ["", "c1", "c2"] + [str(5000+i) for i in range(5)]
 
 def create_local_server(port):
     pr = mp.Process(target=Server.routes.create_local, args=(str(port),))
@@ -94,6 +97,10 @@ class TestCommunication(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        for n in test_keys_necessary:
+            if not os.path.isfile("cryp/public{}.pem".format(n)):
+                util.get_keys(n)
+
         for i in range(5):
             create_local_server(5000 + i)
 
@@ -186,6 +193,26 @@ class TestCommunication(unittest.TestCase):
                                                              [0, 2, 0, 0],
                                                              [1, 0, 1, 0],
                                                              [0, 0, 1, 1]])))
+            self.assertTrue(response.ok)
+
+    def test_receipt_freeness(self):
+        reset_servers()
+        client_util.send_vote([4, 2, 1, 3], 'c1', local_servers)
+        client_util.send_vote([1, 2, 3, 4], 'c1', local_servers)
+        for s in local_servers:
+            response = util.get_url(s + 'check_votes')
+        for s in local_servers:
+            response = util.get_url(s + 'ensure_vote_agreement')
+        for server in local_servers:
+            util.get_url(server + 'add')
+        time.sleep(.5)
+        for s in local_servers:
+            response = util.get_url(s + 'compute_result')
+            result = np.rint(util.string_to_vote(response.text))
+            self.assertTrue(np.array_equal(result, np.array([[1, 0, 0, 0],
+                                                             [0, 1, 0, 0],
+                                                             [0, 0, 1, 0],
+                                                             [0, 0, 0, 1]])))
             self.assertTrue(response.ok)
 
     # def test_many_votes(self):

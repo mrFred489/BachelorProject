@@ -41,7 +41,7 @@ def submit(client_name: str, vote: list, servers: list):
         recipient = servers[j]
         m = dict(client=client_name, id=division, round=1, server=recipient,
                  vote=server_values)
-        util.get_keys("")
+        util.get_keys(client_name)
         util.post_url(m, recipient + 'submit')
 
 

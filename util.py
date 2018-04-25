@@ -15,8 +15,6 @@ pubkey = None
 
 def get_keys(name):
     global privkey, pubkey
-    if None not in [privkey, pubkey]:
-        return
     privkey, pubkey = cryp.keys.get_key(name)
 
 

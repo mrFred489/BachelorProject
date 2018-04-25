@@ -14,3 +14,14 @@ def get_key(name):
             publicfile.write(pubkey.save_pkcs1())
             privatefile.write(privkey.save_pkcs1())
     return privkey, pubkey
+
+def get_public_key(name):
+    pubkey = None
+    try:
+        with open("cryp/public{}.pem".format(name), mode="rb") as publicfile:
+            keydata2 = publicfile.read()
+            pubkey = rsa.PublicKey.load_pkcs1(keydata2)
+
+    except:
+        print("missing public key for {}".format(name))
+    return pubkey
