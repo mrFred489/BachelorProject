@@ -203,8 +203,15 @@ def remove_vote(client_name: str, db_name: str):
 def insert_zero_check(matrix: np.ndarray, client_name: str, server: str, db_name: str):
     cur = get_cursor()
     matrix = util.vote_to_string(matrix)
-    cur.execute('INSERT INTO "' + db_name + '/zerocheck' + '" (matrix, client, server) VALUES (%s, %s, %s)',
-                (matrix, client_name, server))
+    cur.execute('SELECT matrix FROM "' + db_name + '/zerocheck" WHERE client = \'' + str(
+        client_name) + '\' AND server = \'' + str(server) + '\'')
+    if len(cur.fetchall()) == 0:
+        cur.execute('INSERT INTO "' + db_name + '/zerocheck' + '" (matrix, client, server) VALUES (%s, %s, %s)',
+                    (matrix, client_name, server))
+    else:
+        cur.execute(
+            'UPDATE "' + db_name + '/zerocheck" SET matrix = \'' + matrix + '\' WHERE client = \'' + str(
+                client_name) + '\' AND server = \'' + str(server) + '\'')
     cur.close()
     conn.commit()
     return 1
