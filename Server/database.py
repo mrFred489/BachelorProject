@@ -72,6 +72,9 @@ else:
     cursor.execute('CREATE TABLE "http://127.0.0.1:5003/illegal"(sender TEXT, clients TEXT[])')
     cursor.execute('CREATE TABLE "http://127.0.0.1:5004/illegal"(sender TEXT, clients TEXT[])')
 
+    # Create tables for the mediator
+    cursor.execute('CREATE TABLE "http://127.0.0.1:5100"(sender TEXT, client TEXT[])')
+
     cursor.close()
     conn.commit()
     print("DATABASES UP AND RUNNING\n")

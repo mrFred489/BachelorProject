@@ -9,13 +9,10 @@ import logging
 import math
 import os.path
 
-
 app = Flask(__name__)
 app.url_map.strict_slashes = False
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.ERROR)
-
-
 
 # numbers = defaultdict(list)
 testing = False  # variabel til at s(lå database fra hvis vi kører det lokalt
@@ -49,7 +46,7 @@ official_servers = [
     "https://server2.cryptovoting.dk/",
     "https://server3.cryptovoting.dk/",
     # "https://server4.cryptovoting.dk/"
-    ]
+]
 
 if not testing:
     servers = test_servers
@@ -57,27 +54,10 @@ else:
     servers = official_servers
 
 
-@app.route("/total")
-def total_sum():
-    totals = []
-    names = set()
-    numbers = db.round_one(my_name)
-    for i in numbers:
-        if i[2] not in names:
-            totals.append(("s" + str(i[2]), sum([x[0] if x[2] == i[2] else 0 for x in numbers]) % util.get_prime()))
-            names.add(i[2])
-    return str(totals)
-
-
 @app.route("/reset", methods=["POST"])
 def reset():
     db.reset(my_name)
     return Response(status=200)
-
-
-@app.route("/databases")
-def database():
-    return str(db.round_one(my_name))
 
 
 @app.route("/submit", methods=["POST"])
@@ -121,7 +101,8 @@ def receive_vote():
             check = server_util.matrix_zero_one_check(my_id, len(servers), votes)
             db.insert_zero_check(check, client, my_name, my_name)
             servers_copy = server_util.list_remove(servers, my_name)
-            server_util.broadcast(dict(client=client, server=my_name, vote=util.vote_to_string(check)), servers_copy, "/zerocheck")
+            server_util.broadcast(dict(client=client, server=my_name, vote=util.vote_to_string(check)), servers_copy,
+                                  "/zerocheck")
     except TypeError as e:
         print(vote_)
         print(e)
@@ -149,18 +130,29 @@ def receive_broadcasted_value():
     return Response(status=200)
 
 
-@app.route("/add", methods=["GET"])
-def add():
-    votes = db.round_one(my_name)
-    summed_votes = server_util.sum_votes(votes)
-    # TODO: Secret share summed votes
-    # ss_summed_votes = server_util.secret_share(summed_votes, servers)
-    server_util.broadcast_values(summed_votes, 2, servers, my_name)
+@app.route("/zerocheck", methods=["POST"])
+def zerocheck():
+    verified, data = util.unpack_request(request, str(server_nr))
+    if not verified:
+        return make_response("Could not verify", 400)
+    try:
+        vote_ = data['vote']
+        vote = util.string_to_vote(vote_)
+        assert type(vote) == np.ndarray
+        client = data['client']
+        server_name = data['server']
+        db.insert_zero_check(vote, client, server_name, my_name)
+
+    except TypeError as e:
+        print(vote_)
+        print(e)
+        return Response(status=400)
+
     return Response(status=200)
+
 
 @app.route("/check_votes", methods=["GET"])
 def check_votes():
-
     # ZERO ONE CHECK
     zerocheck_values = db.get_zero_check(my_name)  # [(matrix, client, server), ...]
     illegal_votes = server_util.zero_one_illegal_check(zerocheck_values)
@@ -171,7 +163,6 @@ def check_votes():
     illegal_votes.union(server_util.verify_sums(rows))
     illegal_votes.union(server_util.verify_sums(cols))
 
-
     # TODO: Ensure agreement among servers regarding illegal_votes
 
     list_illegal_votes = list(illegal_votes)
@@ -180,6 +171,7 @@ def check_votes():
     # Broadcast own illegal votes to others
     server_util.broadcast_illegal_votes(list_illegal_votes, my_name, servers)
     return Response(status=200)
+
 
 @app.route("/ensure_vote_agreement", methods=["GET"])
 def ensure_agreement():
@@ -204,10 +196,11 @@ def ensure_agreement():
         observations = 0
         for il_clients in illegal_votes:
             if client in il_clients:
-                observations =+ 1
-        if(observations>math.floor(len(servers)/2)):
+                observations = + 1
+        if (observations > math.floor(len(servers) / 2)):
             majority_legal.add(client)
-        else: majority_illegal.add(client)
+        else:
+            majority_illegal.add(client)
     to_be_deleted.union(majority_illegal)
 
     # Delete illegal and majority illegal votes
@@ -215,8 +208,18 @@ def ensure_agreement():
         db.remove_vote(client, my_name)
 
     # Agree on majority legal votes
-        # TODO: Find out which servers have the correct secret shares for each non-conclusive legal vote, so that these
-        # servers are the only ones to calculate these votes
+    # TODO: Find out which servers have the correct secret shares for each non-conclusive legal vote, so that these
+    # servers are the only ones to calculate these votes
+    return Response(status=200)
+
+
+@app.route("/add", methods=["GET"])
+def add():
+    votes = db.round_one(my_name)
+    summed_votes = server_util.sum_votes(votes)
+    # TODO: Secret share summed votes
+    # ss_summed_votes = server_util.secret_share(summed_votes, servers)
+    server_util.broadcast_values(summed_votes, 2, servers, my_name)
     return Response(status=200)
 
 
@@ -229,25 +232,6 @@ def compute_result():
     s = server_util.calculate_result(all_votes, illegal_votes)
     return make_response(util.vote_to_string(s))  # Response(util.vote_to_string(s), status=200, mimetype='text/text')
 
-@app.route("/zerocheck", methods=["POST"])
-def zerocheck():
-    verified, data = util.unpack_request(request, str(server_nr))
-    if not verified:
-        return make_response("Could not verify", 400)
-    try:
-        vote_ = data['vote']
-        vote = util.string_to_vote(vote_)
-        assert type(vote) == np.ndarray
-        client = data['client']
-        server_name = data['server']
-        db.insert_zero_check(vote, client, server_name, my_name)
-
-    except TypeError as e:
-        print(vote_)
-        print(e)
-        return Response(status=400)
-
-    return Response(status=200)
 
 @app.route("/illegal", methods=["POST"])
 def illegal_vote():
@@ -260,13 +244,9 @@ def illegal_vote():
     return Response(status=200)
 
 
-@app.route("/multiply", methods=["GET"])
-def multiply():
-    pass
-
-
 def create_local(port):
     global my_name, testing, server_nr
+
     @app.route("/shutdown")
     def stop_server():
         print("stopping", port)

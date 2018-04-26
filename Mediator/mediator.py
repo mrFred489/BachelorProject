@@ -27,6 +27,7 @@ def vote_validity():
 
 
 
+
 @app.route("/messageinconsistency", methods=["POST"])
 def message_inconsistency():
     verified, data = util.unpack_request(request, my_name)
