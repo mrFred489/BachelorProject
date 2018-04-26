@@ -83,6 +83,8 @@ def database():
 @app.route("/submit", methods=["POST"])
 def receive_vote():
     verified, data = util.unpack_request(request, str(server_nr))
+    if not verified:
+        return make_response("Could not verify", 400)
     try:
         vote_ = data['vote']
         if type(vote_) == str:
@@ -131,6 +133,8 @@ def receive_vote():
 @app.route("/server_comm", methods=["POST"])
 def receive_broadcasted_value():
     verified, data = util.unpack_request(request, str(server_nr))
+    if not verified:
+        return make_response("Could not verify", 400)
     vote_ = data['vote']
     vote = util.string_to_vote(vote_)
     assert type(vote) == np.ndarray
@@ -228,6 +232,8 @@ def compute_result():
 @app.route("/zerocheck", methods=["POST"])
 def zerocheck():
     verified, data = util.unpack_request(request, str(server_nr))
+    if not verified:
+        return make_response("Could not verify", 400)
     try:
         vote_ = data['vote']
         vote = util.string_to_vote(vote_)
@@ -246,6 +252,8 @@ def zerocheck():
 @app.route("/illegal", methods=["POST"])
 def illegal_vote():
     verified, data = util.unpack_request(request, str(server_nr))
+    if not verified:
+        return make_response("Could not verify", 400)
     bad_votes = data['clients']
     server_name = data['server']
     db.insert_illegal_votes(bad_votes, server_name, my_name)
@@ -261,6 +269,7 @@ def create_local(port):
     global my_name, testing, server_nr
     @app.route("/shutdown")
     def stop_server():
+        print("stopping", port)
         shutdown_server()
         return 'Server shutting down...'
 
@@ -269,6 +278,7 @@ def create_local(port):
     testing = True
     my_name = "http://127.0.0.1:" + str(port)
     server_nr = int(port)
+    print("starting ", port)
     app.run(port=int(port), debug=False, use_reloader=False, threaded=True)
 
 

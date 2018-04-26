@@ -4,8 +4,8 @@ from collections import defaultdict
 
 
 def broadcast(data, servers, url):
+    data["sender"] = data["server"][-4:]
     for server in servers:
-        data["server"] = server
         send_value_to_server(data, server + url)
 
 

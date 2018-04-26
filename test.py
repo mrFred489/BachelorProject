@@ -11,15 +11,16 @@ import numpy as np
 import os.path
 
 
-
-p = util.get_prime()
 baseurl1 = "http://127.0.0.1:5000/"
 baseurl2 = "http://127.0.0.1:5001/"
 baseurl3 = "http://127.0.0.1:5002/"
 baseurl4 = "http://127.0.0.1:5003/"
 baseurl5 = "http://127.0.0.1:5004/"
+mediator = "http://127.0.0.1:5100/"
 
 local_servers = [baseurl1, baseurl2, baseurl3,baseurl4, baseurl5]
+
+local_servers_and_med = local_servers + [mediator]
 
 official_server = "https://cryptovoting.dk/"
 official_server1 = "https://server1.cryptovoting.dk/"
@@ -31,7 +32,7 @@ n_servers = [baseurl1, baseurl2, baseurl3,
              official_server, official_server1,
              official_server2, official_server3, official_server4]
 
-test_keys_necessary = ["", "c1", "c2"] + [str(5000+i) for i in range(5)]
+test_keys_necessary = ["", "c1", "c2", "mediator"] + [str(5000+i) for i in range(5)]
 
 def create_local_server(port):
     pr = mp.Process(target=Server.routes.create_local, args=(str(port),))
@@ -236,6 +237,24 @@ class TestCommunication(unittest.TestCase):
         for i in local_servers:
             requests.get(i + "shutdown")
 
+
+class TestMediator(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        if not os.path.isfile("cryp/publicmediator.pem"):
+            util.get_keys("mediator")
+
+        create_local_server(5100)
+
+        time.sleep(3)
+
+    def test_todo(self):
+        self.assertTrue(True)
+
+    @classmethod
+    def tearDownClass(cls):
+        requests.get(mediator + "shutdown")
 
 
 def reset_servers():
