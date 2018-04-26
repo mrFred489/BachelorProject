@@ -2,7 +2,6 @@ import requests
 import random
 import util
 import scipy.special as ss
-import itertools
 import numpy as np
 
 

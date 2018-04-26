@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from flask import Flask, jsonify, render_template, request, Response, make_response
+from flask import Flask, request, Response, make_response
 from Server import database as db
 from Server import server_util
 import util
@@ -82,7 +82,7 @@ def database():
 
 @app.route("/submit", methods=["POST"])
 def receive_vote():
-    verified, data = server_util.unpack_request(request, str(server_nr))
+    verified, data = util.unpack_request(request, str(server_nr))
     try:
         vote_ = data['vote']
         if type(vote_) == str:
@@ -130,7 +130,7 @@ def receive_vote():
 
 @app.route("/server_comm", methods=["POST"])
 def receive_broadcasted_value():
-    verified, data = server_util.unpack_request(request, str(server_nr))
+    verified, data = util.unpack_request(request, str(server_nr))
     vote_ = data['vote']
     vote = util.string_to_vote(vote_)
     assert type(vote) == np.ndarray
@@ -227,7 +227,7 @@ def compute_result():
 
 @app.route("/zerocheck", methods=["POST"])
 def zerocheck():
-    verified, data = server_util.unpack_request(request, str(server_nr))
+    verified, data = util.unpack_request(request, str(server_nr))
     try:
         vote_ = data['vote']
         vote = util.string_to_vote(vote_)
@@ -245,7 +245,7 @@ def zerocheck():
 
 @app.route("/illegal", methods=["POST"])
 def illegal_vote():
-    verified, data = server_util.unpack_request(request, str(server_nr))
+    verified, data = util.unpack_request(request, str(server_nr))
     bad_votes = data['clients']
     server_name = data['server']
     db.insert_illegal_votes(bad_votes, server_name, my_name)

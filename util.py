@@ -84,3 +84,12 @@ def partition_and_secret_share_vote(vote: np.ndarray, servers: list):
         temp.append(np.array(i))
     return temp
 
+
+def unpack_request(request, name):
+    get_keys(name)
+    sig = bytes(list(map(int, request.form.getlist("signature"))))
+    verified = verify(sig, request.form["data"], request.form["pub"])
+    if not verified:
+        print("not verified")
+    data = json.loads(request.form["data"])
+    return verified, data

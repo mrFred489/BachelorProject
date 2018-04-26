@@ -1,23 +1,12 @@
 import numpy as np
 import util
 from collections import defaultdict
-import json
 
 
 def broadcast(data, servers, url):
     for server in servers:
         data["server"] = server
         send_value_to_server(data, server + url)
-
-
-def unpack_request(request, name):
-    util.get_keys(name)
-    sig = bytes(list(map(int, request.form.getlist("signature"))))
-    verified = util.verify(sig, request.form["data"], request.form["pub"])
-    if not verified:
-        print("not verified")
-    data = json.loads(request.form["data"])
-    return verified, data
 
 
 def list_remove(l:list, element):
