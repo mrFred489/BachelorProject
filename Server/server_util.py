@@ -99,15 +99,15 @@ def verify_consistency(votes):
     return True
 
 
-def verify_sums(rows):
+def verify_sums(data):
     illegal_votes = set()
-    sorted(rows, key=lambda x: x[3])
+    sorted(data, key=lambda x: x[3])
     diff_clients = []
-    for x in rows:
+    for x in data:
         if x[3] not in diff_clients:
             diff_clients.append(x[3])
     for client in diff_clients:
-        client_rows = [x for x in rows if x[3] == client]
+        client_rows = [x for x in data if x[3] == client]
         if verify_consistency(client_rows):
             res = 0
             used_rows = []
