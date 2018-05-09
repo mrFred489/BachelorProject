@@ -3,14 +3,42 @@ import requests
 import random
 import codecs
 import pickle
+import rsa
+import rsa.pkcs1
+import cryp.keys
+import json
+
+
+privkey = None
+pubkey = None
+
+
+def get_keys(name):
+    global privkey, pubkey
+    privkey, pubkey = cryp.keys.get_key(name)
 
 
 def get_prime():
     return 50
 
 
+def make_post_signature(data):
+    dump = json.dumps(data)
+    signature = rsa.sign(dump.encode(), privkey, hash="SHA-512")
+    return {"data": dump, "signature": bytearray(signature), "pub": pubkey.save_pkcs1()}
+
+
 def post_url(data: dict, url: str):
-    return requests.post(url, data)
+    return requests.post(url, make_post_signature(data))
+
+
+def verify(sig, data, pub):
+    try:
+        if type(pub) == str:
+            pub = rsa.PublicKey.load_pkcs1(pub)
+        return rsa.verify(data.encode(), sig, pub)
+    except rsa.pkcs1.VerificationError:
+        return False
 
 
 def get_url(url):
@@ -56,3 +84,13 @@ def partition_and_secret_share_vote(vote: np.ndarray, servers: list):
         temp.append(np.array(i))
     return temp
 
+
+def unpack_request(request, name):
+    get_keys(name)
+    sig = bytes(list(map(int, request.form.getlist("signature"))))
+    verified = verify(sig, request.form["data"], request.form["pub"])
+    data = json.loads(request.form["data"])
+    verified = cryp.keys.get_public_key(data["sender"]) and verified
+    if not verified:
+        print("not verified")
+    return verified, data

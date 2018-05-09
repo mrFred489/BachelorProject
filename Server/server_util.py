@@ -1,10 +1,21 @@
 import numpy as np
 import util
 from collections import defaultdict
-import math
 
 
-def check_rows_and_columns(vote: np.ndarray):
+def broadcast(data, servers, url):
+    data["sender"] = data["server"][-4:]
+    for server in servers:
+        send_value_to_server(data, server + url)
+
+
+def list_remove(l:list, element):
+    temp = l.copy()
+    del temp[l.index(element)]
+    return temp
+
+
+def check_rows_and_columns(vote: np.ndarray):  # slet
     for row in vote:
         if np.sum(row) != 1:
             return False
@@ -14,46 +25,40 @@ def check_rows_and_columns(vote: np.ndarray):
     return True
 
 
-def create_sum_of_row(vote):
+def create_sum_of_row(vote):  # slet
     res = []
     for row in vote:
         res.append(np.sum(row))
     return np.array(res)
 
 
-def broadcast_rows_and_cols(row, col, id_, servers, my_name, client_name):
-    for i, server in enumerate(servers):
-        if servers[i] != my_name:
-            send_value_to_server(
-                (util.vote_to_string(row)),
-                id_, 'row', client_name, server, '/server_comm')
+def broadcast_rows_and_cols(row, col, id_, servers, my_name, client_name):  # slet
+    servers = list_remove(servers, my_name)
+    broadcast(dict(vote=(util.vote_to_string(row)),
+                              id=id_, round="row",
+                              server=my_name,
+                              client=client_name),
+              servers, '/server_comm')
 
-            send_value_to_server(
-                (util.vote_to_string(col)),
-                id_, 'column', client_name, server, '/server_comm')
+    broadcast(dict(vote=(util.vote_to_string(col)),
+                              id=id_, round="column",
+                              server=my_name,
+                              client=client_name),
+              servers, '/server_comm')
 
 
 def broadcast_values(values, round_, servers, my_name):
-    server_nr = servers.index(my_name)
-    for i, server in enumerate(servers):
-        for j, vote_partition in enumerate(values):
-            if i != server_nr:
-                send_value_to_server(
-                    (util.vote_to_string(vote_partition['vote_partition'])),
-                    vote_partition['id'], round_, my_name, server, '/submit')
+    servers = list_remove(servers, my_name)
+    for j, vote_partition in enumerate(values):
+            broadcast(dict(vote=(util.vote_to_string(vote_partition['vote_partition'])),
+                              id=vote_partition["id"], round=round_,
+                              server=my_name,
+                              client=my_name),
+                      servers, '/submit')
 
 def broadcast_illegal_votes(clients, my_name, servers):
-    server_nr = servers.index(my_name)
-    for i, server in enumerate(servers):
-        if i != server_nr:
-            util.post_url({'clients': clients, 'server': server}, server + '/illegal')
-
-def reshape_vote(vote):
-    if type(vote) == np.ndarray:
-        shape = int(np.sqrt(len(vote)))
-        return np.reshape(vote, (shape, shape))
-    else:
-        return 0
+    servers = list_remove(servers, my_name)
+    broadcast({'clients': clients, 'server': my_name}, servers, '/illegal')
 
 
 def secret_share(votes, servers):
@@ -79,10 +84,8 @@ def sum_votes(votes):
     return summed_votes
 
 
-def send_value_to_server(value, id, round, sender, receiver, url, client=None):
-    if client is None:
-        client = sender
-    return util.post_url(data=dict(client=client, server=sender, vote=value, id=id, round=round), url=receiver + url)
+def send_value_to_server(data, url):
+    return util.post_url(data=data, url=url)
 
 
 def verify_consistency(votes):
@@ -96,15 +99,15 @@ def verify_consistency(votes):
     return True
 
 
-def verify_sums(rows):
+def verify_sums(data):
     illegal_votes = set()
-    sorted(rows, key=lambda x: x[3])
+    sorted(data, key=lambda x: x[3])
     diff_clients = []
-    for x in rows:
+    for x in data:
         if x[3] not in diff_clients:
             diff_clients.append(x[3])
     for client in diff_clients:
-        client_rows = [x for x in rows if x[3] == client]
+        client_rows = [x for x in data if x[3] == client]
         if verify_consistency(client_rows):
             res = 0
             used_rows = []

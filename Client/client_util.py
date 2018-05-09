@@ -2,7 +2,6 @@ import requests
 import random
 import util
 import scipy.special as ss
-import itertools
 import numpy as np
 
 
@@ -40,7 +39,8 @@ def submit(client_name: str, vote: list, servers: list):
             server_values.append(util.vote_to_string(vote[vote_partition]))
         recipient = servers[j]
         m = dict(client=client_name, id=division, round=1, server=recipient,
-                 vote=server_values)
+                 vote=server_values, sender=client_name)
+        util.get_keys(client_name)
         util.post_url(m, recipient + 'submit')
 
 
