@@ -134,14 +134,21 @@ def calculate_result(votes, illegal_votes):
     return res % util.get_prime()
 
 
-def to_mult(id, num_servers):
-    cs = int(num_servers/2)
-    res = []
-    res.append(((id + cs) % num_servers, (id + cs) % num_servers))
-    for i in range(int(num_servers/2)):
-        res.append(((id + cs) % num_servers, (id + cs + 1 + i) % num_servers))
-        res.append(((id + cs + 1 + i) % num_servers, (id + cs) % num_servers))
-    return res
+def to_mult(id, num_servers=0):
+    result = []
+    for i in range(4):
+        for j in range(4):
+            if (i != id and j != id):
+                result.append((i,j))
+    return result
+
+def matrix_mult_secret_share(id, xs):
+    # xs = dict: (id) => x_i
+    fake_server_list_len_4 = [0, 1, 2, 3]
+    matrixes = []
+    for i, j in to_mult(id):
+        matrixes.append((util.partition_and_secret_share_vote(xs[i] * (xs[j] - 1/4)), i, j))
+    return matrixes
 
 def index_zero_one_check(id, num_servers, xs):
     new_val = 0

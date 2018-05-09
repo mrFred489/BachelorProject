@@ -5,9 +5,33 @@ import atexit
 import numpy as np
 import util
 
+
 test = False
 if str(os.path.dirname(__file__).split("/")[-2]) != "flaskwebsite":
     test = True
+
+
+def adapt_array(a):
+    return psy.Binary(a)
+
+
+psy.extensions.register_adapter(np.ndarray, adapt_array)
+
+
+def typecast_array(data, cur):
+    if data is None:
+        return None
+    buf = psy.BINARY(data, cur)
+    res = np.frombuffer(buf, dtype='float')
+    return res
+
+
+ARRAY = psy.extensions.new_type(psy.BINARY.values,
+'ARRAY', typecast_array)
+
+
+psy.extensions.register_type(ARRAY)
+
 
 if not test:
     conn = psy.connect(host='localhost', user='bachelor', password='gruppen1234', dbname='bachelorprojekt')
@@ -23,69 +47,54 @@ else:
     cursor = conn.cursor()
 
     # Create table for votes
-    cursor.execute(
-        'CREATE TABLE "http://127.0.0.1:5000"(matrix TEXT, id INTEGER, round INTEGER, client TEXT, server TEXT)')
-    cursor.execute(
-        'CREATE TABLE "http://127.0.0.1:5001"(matrix TEXT, id INTEGER, round INTEGER, client TEXT, server TEXT)')
-    cursor.execute(
-        'CREATE TABLE "http://127.0.0.1:5002"(matrix TEXT, id INTEGER, round INTEGER, client TEXT, server TEXT)')
-    cursor.execute(
-        'CREATE TABLE "http://127.0.0.1:5003"(matrix TEXT, id INTEGER, round INTEGER, client TEXT, server TEXT)')
-    cursor.execute(
-        'CREATE TABLE "http://127.0.0.1:5004"(matrix TEXT, id INTEGER, round INTEGER, client TEXT, server TEXT)')
+    cursor.execute('create table "http://127.0.0.1:5000"(matrix text, id INTEGER, round INTEGER, client text, server text)')
+    cursor.execute('create table "http://127.0.0.1:5001"(matrix text, id INTEGER, round INTEGER, client text, server text)')
+    cursor.execute('create table "http://127.0.0.1:5002"(matrix text, id INTEGER, round INTEGER, client text, server text)')
+    cursor.execute('create table "http://127.0.0.1:5003"(matrix text, id INTEGER, round INTEGER, client text, server text)')
 
     # Create table for sums of rows
-    cursor.execute(
-        'CREATE TABLE "http://127.0.0.1:5000/rows"(row TEXT, id INTEGER, type_ TEXT, client TEXT, server TEXT)')
-    cursor.execute(
-        'CREATE TABLE "http://127.0.0.1:5001/rows"(row TEXT, id INTEGER, type_ TEXT, client TEXT, server TEXT)')
-    cursor.execute(
-        'CREATE TABLE "http://127.0.0.1:5002/rows"(row TEXT, id INTEGER, type_ TEXT, client TEXT, server TEXT)')
-    cursor.execute(
-        'CREATE TABLE "http://127.0.0.1:5003/rows"(row TEXT, id INTEGER, type_ TEXT, client TEXT, server TEXT)')
-    cursor.execute(
-        'CREATE TABLE "http://127.0.0.1:5004/rows"(row TEXT, id INTEGER, type_ TEXT, client TEXT, server TEXT)')
+    cursor.execute('create table "http://127.0.0.1:5000/rows"(row text, id INTEGER, type_ text, client text, server text)')
+    cursor.execute('create table "http://127.0.0.1:5001/rows"(row text, id INTEGER, type_ text, client text, server text)')
+    cursor.execute('create table "http://127.0.0.1:5002/rows"(row text, id INTEGER, type_ text, client text, server text)')
+    cursor.execute('create table "http://127.0.0.1:5003/rows"(row text, id INTEGER, type_ text, client text, server text)')
 
     # Create table for sums of columns
-    cursor.execute(
-        'CREATE TABLE "http://127.0.0.1:5000/columns"(col TEXT, id INTEGER, type_ TEXT, client TEXT, server TEXT)')
-    cursor.execute(
-        'CREATE TABLE "http://127.0.0.1:5001/columns"(col TEXT, id INTEGER, type_ TEXT, client TEXT, server TEXT)')
-    cursor.execute(
-        'CREATE TABLE "http://127.0.0.1:5002/columns"(col TEXT, id INTEGER, type_ TEXT, client TEXT, server TEXT)')
-    cursor.execute(
-        'CREATE TABLE "http://127.0.0.1:5003/columns"(col TEXT, id INTEGER, type_ TEXT, client TEXT, server TEXT)')
-    cursor.execute(
-        'CREATE TABLE "http://127.0.0.1:5004/columns"(col TEXT, id INTEGER, type_ TEXT, client TEXT, server TEXT)')
+    cursor.execute('create table "http://127.0.0.1:5000/columns"(col text, id INTEGER, type_ text, client text, server text)')
+    cursor.execute('create table "http://127.0.0.1:5001/columns"(col text, id INTEGER, type_ text, client text, server text)')
+    cursor.execute('create table "http://127.0.0.1:5002/columns"(col text, id INTEGER, type_ text, client text, server text)')
+    cursor.execute('create table "http://127.0.0.1:5003/columns"(col text, id INTEGER, type_ text, client text, server text)')
 
     # Create table for zero_check matrices
-    cursor.execute('CREATE TABLE "http://127.0.0.1:5000/zerocheck"(matrix TEXT,  client TEXT, server TEXT)')
-    cursor.execute('CREATE TABLE "http://127.0.0.1:5001/zerocheck"(matrix TEXT,  client TEXT, server TEXT)')
-    cursor.execute('CREATE TABLE "http://127.0.0.1:5002/zerocheck"(matrix TEXT,  client TEXT, server TEXT)')
-    cursor.execute('CREATE TABLE "http://127.0.0.1:5003/zerocheck"(matrix TEXT,  client TEXT, server TEXT)')
-    cursor.execute('CREATE TABLE "http://127.0.0.1:5004/zerocheck"(matrix TEXT,  client TEXT, server TEXT)')
+    cursor.execute('create table "http://127.0.0.1:5000/zerocheck"(matrix text,  client text, server text)')
+    cursor.execute('create table "http://127.0.0.1:5001/zerocheck"(matrix text,  client text, server text)')
+    cursor.execute('create table "http://127.0.0.1:5002/zerocheck"(matrix text,  client text, server text)')
+    cursor.execute('create table "http://127.0.0.1:5003/zerocheck"(matrix text,  client text, server text)')
+
+    # Create table for multiplication secret shares
+    cursor.execute('create table "http://127.0.0.1:5000/mult"(matrix text, part INTEGER, client text, server text, i INTEGER, j INTEGER)')
+    cursor.execute('create table "http://127.0.0.1:5001/mult"(matrix text, part INTEGER, client text, server text, i INTEGER, j INTEGER)')
+    cursor.execute('create table "http://127.0.0.1:5002/mult"(matrix text, part INTEGER, client text, server text, i INTEGER, j INTEGER)')
+    cursor.execute('create table "http://127.0.0.1:5003/mult"(matrix text, part INTEGER, client text, server text, i INTEGER, j INTEGER)')
+
 
     # Create table for illegal votes
-    cursor.execute('CREATE TABLE "http://127.0.0.1:5000/illegal"(sender TEXT, clients TEXT[])')
-    cursor.execute('CREATE TABLE "http://127.0.0.1:5001/illegal"(sender TEXT, clients TEXT[])')
-    cursor.execute('CREATE TABLE "http://127.0.0.1:5002/illegal"(sender TEXT, clients TEXT[])')
-    cursor.execute('CREATE TABLE "http://127.0.0.1:5003/illegal"(sender TEXT, clients TEXT[])')
-    cursor.execute('CREATE TABLE "http://127.0.0.1:5004/illegal"(sender TEXT, clients TEXT[])')
+    cursor.execute('create table "http://127.0.0.1:5000/illegal"(sender text, clients text[])')
+    cursor.execute('create table "http://127.0.0.1:5001/illegal"(sender text, clients text[])')
+    cursor.execute('create table "http://127.0.0.1:5002/illegal"(sender text, clients text[])')
+    cursor.execute('create table "http://127.0.0.1:5003/illegal"(sender text, clients text[])')
+
 
     cursor.close()
     conn.commit()
-    print("DATABASES UP AND RUNNING\n")
-
+    print("DATABASES UP AND RUNNING")
 
     def get_conn():
         global conn
         conn = psy.connect(postgresql.dsn())
 
-
     def cleanup():
         print("cleanup")
         postgresql.stop()
-
 
     atexit.register(cleanup)
 
@@ -100,10 +109,10 @@ def get_cursor():
         cursor = conn.cursor()
     return cursor
 
-
 def round_one(db_name: str):
     cur = get_cursor()
-    cur.execute('SELECT matrix, id, round, client, server FROM "' + db_name + '" WHERE round = 1')
+    cur.execute('SELECT matrix, id, round, client, server '
+                'FROM "' + db_name + '" WHERE round = 1')
     res = []
     for m, i, r, cl, s in cur:
         m = util.string_to_vote(m)
@@ -115,7 +124,8 @@ def round_one(db_name: str):
 
 def round_two(db_name: str):
     cur = get_cursor()
-    cur.execute('SELECT matrix, id, round, client, server FROM "' + db_name + '" WHERE round = 2')
+    cur.execute('SELECT matrix, id, round, client, server '
+                'FROM "' + db_name + '" WHERE round = 2')
     res = []
     for m, i, r, cl, s in cur:
         m = util.string_to_vote(m)
@@ -127,7 +137,8 @@ def round_two(db_name: str):
 
 def get_rows(db_name: str):
     cur = get_cursor()
-    cur.execute('SELECT row, id, type_, client, server FROM "' + db_name + '/rows"')
+    cur.execute('SELECT row, id, type_, client, server '
+                'FROM "' + db_name + '/rows"')
     res = []
     for r, i, t, cl, s in cur:
         r = util.string_to_vote(r)
@@ -139,7 +150,8 @@ def get_rows(db_name: str):
 
 def get_cols(table_name: str):
     cur = get_cursor()
-    cur.execute('SELECT col, id, type_, client, server FROM "' + table_name + '/columns"')
+    cur.execute('SELECT col, id, type_, client, server '
+                'FROM "' + table_name + '/columns"')
     res = []
     for c, i, t, cl, s in cur:
         c = util.string_to_vote(c)
@@ -168,16 +180,13 @@ def insert_col(col: np.ndarray, id: int, type_: str, client_name, server, my_nam
     conn.commit()
     return 1
 
-
 def insert_vote(matrix: np.ndarray, id: int, round: int, client_name: str, server: str, db_name: str):
     cur = get_cursor()
     matrix = util.vote_to_string(matrix)
-    cur.execute('INSERT INTO "' + db_name + '" (matrix, id, round, client, server) VALUES (%s, %s, %s, %s, %s)',
-                (matrix, id, round, client_name, server))
+    cur.execute('INSERT INTO "' + db_name + '" (matrix, id, round, client, server) VALUES (%s, %s, %s, %s, %s)', (matrix, id, round, client_name, server))
     cur.close()
     conn.commit()
     return 1
-
 
 def remove_vote(client_name: str, db_name: str):
     cur = get_cursor()
@@ -185,7 +194,6 @@ def remove_vote(client_name: str, db_name: str):
     cur.close()
     conn.commit()
     return 1
-
 
 def insert_zero_check(matrix: np.ndarray, client_name: str, server: str, db_name: str):
     cur = get_cursor()
@@ -195,7 +203,6 @@ def insert_zero_check(matrix: np.ndarray, client_name: str, server: str, db_name
     cur.close()
     conn.commit()
     return 1
-
 
 def get_zero_check(db_name: str):
     cur = get_cursor()
@@ -208,7 +215,6 @@ def get_zero_check(db_name: str):
     conn.commit()
     return res
 
-
 def insert_illegal_votes(clients: list, sender: str, db_name: str):
     cur = get_cursor()
     cur.execute('INSERT INTO "' + db_name + '/illegal' + '" (sender, clients) VALUES (%s, %s)',
@@ -216,7 +222,6 @@ def insert_illegal_votes(clients: list, sender: str, db_name: str):
     cur.close()
     conn.commit()
     return 1
-
 
 def get_illegal_votes(db_name: str):
     cur = get_cursor()
@@ -227,6 +232,15 @@ def get_illegal_votes(db_name: str):
     cur.close()
     conn.commit()
     return res
+
+def insert_mult_secret_share(matrix: np.ndarray, part: int, client: str, server: str, db_name: str, i: int, j: int):
+    matrix = util.vote_to_string(matrix)
+    cur = get_cursor()
+    cur.execute('INSERT INTO "' + db_name + '/mult' + '" (matrix, part, client, server, i, j) VALUES (%s, %s, %s, %s, %s, %s)',
+                (matrix, part, client, server, i, j))
+    cur.close()
+    conn.commit()
+    return 1
 
 
 def reset(db_name: str):
@@ -242,7 +256,6 @@ def reset(db_name: str):
     cur.close()
     conn.commit()
     return 1
-
 
 def reshape_vote(vote):
     if type(vote) == np.ndarray:

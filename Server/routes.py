@@ -41,8 +41,7 @@ test_servers = [
     "http://127.0.0.1:5000",
     "http://127.0.0.1:5001",
     "http://127.0.0.1:5002",
-    "http://127.0.0.1:5003",
-    "http://127.0.0.1:5004",
+    "http://127.0.0.1:5003"
 ]
 
 official_servers = [
@@ -110,13 +109,15 @@ def receive_vote():
 
             # x * ( x - 1)
         if int(round_) == 1:
-            check = server_util.matrix_zero_one_check(my_id, len(servers), votes)
-            db.insert_zero_check(check, client, my_name, my_name)
-            servers_copy = servers.copy()
-            servers_copy.remove(my_name)
-            for server_name in servers_copy:
-                util.post_url(data=dict(client=client, server=my_name, vote=util.vote_to_string(check)),
-                              url=server_name + "/zerocheck")
+            secret_shares_mult = server_util.matrix_mult_secret_share(my_id, votes)
+            for secret_shares, i, j in secret_shares_mult:
+                for part, secret in enumerate(secret_shares):
+                    db.insert_mult_secret_share(secret, part, client, my_name, i ,j)
+                    for i, server_name in enumerate(servers):
+                        if not server_name == my_name:
+                            if not i == part:
+                                util.post_url(data=dict(client=client, server=my_name, share=util.vote_to_string(secret), part=i, i=i, j=j),
+                                url=server_name + "/receive_mult")
     except TypeError as e:
         print(vote_)
         print(e)
@@ -124,6 +125,15 @@ def receive_vote():
 
     return Response(status=200)
 
+@app.route("/receive_mult", methods=["POST"])
+def receive_mult():
+    client = request.form['client']
+    server = request.form['server']
+    part = request.form['part']
+    share_ = request.form['share']
+    share = util.string_to_vote(share_)
+
+    db.insert_mult_secret_share(share, part, client, server, my_name)
 
 @app.route("/server_comm", methods=["POST"])
 def receive_broadcasted_value():
@@ -150,12 +160,21 @@ def add():
     server_util.broadcast_values(summed_votes, 2, servers, my_name)
     return Response(status=200)
 
+@app.route("/check_zero_one_phase_2", methods=["GET"])
+def check_zero_one_phase_2():
+
+    return 1
+
+
+
 @app.route("/check_votes", methods=["GET"])
 def check_votes():
 
     # ZERO ONE CHECK
     zerocheck_values = db.get_zero_check(my_name)  # [(matrix, client, server), ...]
     illegal_votes = server_util.zero_one_illegal_check(zerocheck_values)
+
+
 
     # COLUMN ROW CHECK
     cols = db.get_cols(my_name)
