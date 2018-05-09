@@ -9,7 +9,7 @@ def get_key(name):
             pubkey = rsa.PublicKey.load_pkcs1(keydata2)
 
     except:
-        (pubkey, privkey) = rsa.newkeys(512)
+        (pubkey, privkey) = rsa.newkeys(2048)
         with open("cryp/public{}.pem".format(name), mode='wb') as publicfile, open("cryp/private{}.pem".format(name), mode='wb') as privatefile:
             publicfile.write(pubkey.save_pkcs1())
             privatefile.write(privkey.save_pkcs1())

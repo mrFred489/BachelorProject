@@ -23,9 +23,7 @@ def vote_validity():
     verified, data = util.unpack_request(request, my_name)
     if not verified:
         return make_response("Could not verify", 400)
-
-
-
+    return make_response(200)
 
 
 @app.route("/messageinconsistency", methods=["POST"])
@@ -33,7 +31,7 @@ def message_inconsistency():
     verified, data = util.unpack_request(request, my_name)
     if not verified:
         return make_response("Could not verify", 400)
-
+    return make_response(200)
 
 
 def create_local(port):

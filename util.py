@@ -24,7 +24,7 @@ def get_prime():
 
 def make_post_signature(data):
     dump = json.dumps(data)
-    signature = rsa.sign(dump.encode(), privkey, "SHA-1")
+    signature = rsa.sign(dump.encode(), privkey, hash="SHA-512")
     return {"data": dump, "signature": bytearray(signature), "pub": pubkey.save_pkcs1()}
 
 
