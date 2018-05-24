@@ -15,10 +15,9 @@ baseurl1 = "http://127.0.0.1:5000/"
 baseurl2 = "http://127.0.0.1:5001/"
 baseurl3 = "http://127.0.0.1:5002/"
 baseurl4 = "http://127.0.0.1:5003/"
-baseurl5 = "http://127.0.0.1:5004/"
 mediator = "http://127.0.0.1:5100/"
 
-local_servers = [baseurl1, baseurl2, baseurl3,baseurl4, baseurl5]
+local_servers = [baseurl1, baseurl2, baseurl3,baseurl4]
 
 local_servers_and_med = local_servers + [mediator]
 
@@ -102,7 +101,7 @@ class TestCommunication(unittest.TestCase):
             if not os.path.isfile("cryp/public{}.pem".format(n)):
                 util.get_keys(n)
 
-        for i in range(5):
+        for i in range(4):
             create_local_server(5000 + i)
 
         time.sleep(3)

@@ -23,11 +23,36 @@ def create_vote(priorities: list):
         row[priorities[num]-1] = 1
     return priority_matrix
 
+def postvote(client_name: str, vote: list, servers: list):
+    ### Parameters:
+    ### client_name: unique identifier for client
+    ### vote: a list consisting of matrices containing the different secret shared r_i-element of the vote
+    ### servers: a list with all servers which the secrets should be distributed to
+    ###
+    ### Returns:
+    ### void. Should only distribute secret shares to servers
+
+
+    for i,share in enumerate(vote):
+        rest = vote.copy()
+        rest.pop(i)
+        ids = [0,1,2,3]
+        ids.remove(i)
+        rest_strings = []
+        for vote_partition in rest:
+            rest_strings.append(util.vote_to_string(vote_partition))
+        m = dict(client=client_name, ids=ids, server=servers[i], votes=rest_strings, sender=client_name)
+        util.get_keys(client_name)
+        util.post_url(m, servers[i] + 'vote')
+
+def zero_sum_db_print(servers: list):
+    for s in servers:
+        util.post_url(data=dict(), url=s + 'z0print')
 
 def submit(client_name: str, vote: list, servers: list):
     ### Parameters:
     ### client_name: unique identifier for client
-    ### vote: a matrix consisting of matrices containing the different secret shared r_i-elements of the vote
+    ### vote: a list consisting of matrices containing the different secret shared r_i-elements of the vote
     ### servers: a list with all servers which the secrets should be distributed to
 
     ### Returns: void. The purpose of the method is to distribute the matrix-shares between clients
@@ -36,6 +61,7 @@ def submit(client_name: str, vote: list, servers: list):
     for j, division in enumerate(secret_share_division):
         server_values = []
         for vote_partition in division:
+            division.remove(vote_partition)
             server_values.append(util.vote_to_string(vote[vote_partition]))
         recipient = servers[j]
         m = dict(client=client_name, id=division, round=1, server=recipient,

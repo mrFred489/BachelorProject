@@ -37,7 +37,6 @@ test_servers = [
     "http://127.0.0.1:5001",
     "http://127.0.0.1:5002",
     "http://127.0.0.1:5003",
-    "http://127.0.0.1:5004",
 ]
 
 official_servers = [
@@ -59,6 +58,58 @@ def reset():
     db.reset(my_name)
     return Response(status=200)
 
+@app.route("/vote", methods=["POST"])
+def vote():
+    verified, data = util.unpack_request(request, str(server_nr))
+    if not verified:
+        return make_response("Could not verify", 400)
+    try:
+        # Unpack data
+        votes_ = data['votes']
+        if type(votes_) == str:
+            votes_ = [votes_]
+        ids_ = data['ids']
+        if type(ids_) in [str, int]:
+            ids_ = [ids_]
+        server_name = data['server']
+        client = data['client']
+
+        # Convert votes_ to list of np.array
+        votes = []
+        for v_ in votes_:
+            votes.append(util.string_to_vote(v_))
+
+        # Attach each share to its proper id
+        id_vote_tuple = list(zip(ids_, votes))
+
+        # Insert votes, row and column in db and broadcast
+        for (id, vote) in id_vote_tuple:
+            row_sum = server_util.create_sum_of_row(vote)
+            col_sum = server_util.create_sum_of_row(vote.T)
+
+            db.insert_vote(vote, id, 1, client, server_name, my_name)
+
+            db.insert_row(row_sum, id, 'row', client, server_name, my_name)
+            db.insert_col(col_sum, id, 'column', client, server_name, my_name)
+
+            server_util.broadcast_rows_and_cols(row_sum, col_sum, id, servers, my_name, client)
+
+        # Insert zero check and broadcast
+        my_id = servers.index(my_name)
+
+        votes_dict = dict()
+        for id, v in id_vote_tuple:
+            votes_dict[id] = v
+
+        zero_one_check = server_util.matrix_zero_one_check(my_id, len(servers), votes_dict)
+        db.insert_zero_check(zero_one_check, client, my_name, my_name)
+        servers_copy = server_util.list_remove(servers, my_name)
+        server_util.broadcast(dict(client=client, server=my_name, vote=util.vote_to_string(zero_one_check)), servers_copy,
+                                  "/zerocheck")
+    except TypeError as e:
+        print(e)
+        return Response(status=400)
+    return Response(status=200)
 
 @app.route("/submit", methods=["POST"])
 def receive_vote():
@@ -78,6 +129,7 @@ def receive_vote():
         client = data['client']
         server_name = data['server']
         # print("vote_", client, round_, server_name, id, "start vote", vote_, "slut vote")
+
 
         my_id = servers.index(my_name)
 
@@ -160,8 +212,8 @@ def check_votes():
     # COLUMN ROW CHECK
     cols = db.get_cols(my_name)
     rows = db.get_rows(my_name)
-    illegal_votes.union(server_util.verify_sums(rows))
-    illegal_votes.union(server_util.verify_sums(cols))
+    illegal_votes = illegal_votes.union(server_util.verify_sums(rows))
+    illegal_votes = illegal_votes.union(server_util.verify_sums(cols))
 
     # TODO: Ensure agreement among servers regarding illegal_votes
 

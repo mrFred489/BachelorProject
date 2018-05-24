@@ -19,7 +19,7 @@ def get_keys(name):
 
 
 def get_prime():
-    return 50
+    return 500000
 
 
 def make_post_signature(data):

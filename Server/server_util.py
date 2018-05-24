@@ -120,6 +120,8 @@ def verify_sums(data):
             for sum in sums:
                 if (sum != 1) & (client not in illegal_votes):
                     illegal_votes.add(client)
+
+    print(illegal_votes)
     return illegal_votes
 
 
@@ -138,11 +140,13 @@ def calculate_result(votes, illegal_votes):
 
 
 def to_mult(id, num_servers=0):
-    result = []
-    for i in range(4):
-        for j in range(4):
-            if (i != id and j != id):
-                result.append((i,j))
+    result = [((id+1) % 4, (id+1) % 4)]
+    list = [(id+2) % 4, (id+3) % 4]
+    for i in list:
+        if(i != (id+3) % 4):
+            result.append(((id+1) % 4, i))
+        result.append((i, (id+1) % 4))
+
     return result
 
 def matrix_mult_secret_share(id, xs):
@@ -150,7 +154,7 @@ def matrix_mult_secret_share(id, xs):
     fake_server_list_len_4 = [0, 1, 2, 3]
     matrixes = []
     for i, j in to_mult(id):
-        matrixes.append((util.partition_and_secret_share_vote(xs[i] * (xs[j] - 1/4)), i, j))
+        matrixes.append((util.partition_and_secret_share_vote(xs[i] * (xs[j] - (1/4))), i, j))
     return matrixes
 
 def index_zero_one_check(id, num_servers, xs):
@@ -169,12 +173,15 @@ def matrix_zero_one_check(id, num_servers, xs):
             index_dict = dict()
             for ind, matrix in xs.items():
                 index_dict[ind] = matrix[i][j]
-            new_matrix[i][j] = index_zero_one_check(id, num_servers, index_dict)
+            new_matrix[i][j] = new_matrix[i][j] + index_zero_one_check(id, num_servers, index_dict)
     return new_matrix
 
 def zero_one_check(xs):
-    res = sum(xs)
-    return np.rint(res) % util.get_prime()
+    res = 0
+    for x in xs:
+        res = res + np.rint(x*100)/100
+
+    return res % util.get_prime()
 
 
 def zero_one_illegal_check(values):
@@ -188,6 +195,7 @@ def zero_one_illegal_check(values):
     illegal_votes = set()
     for key in zerocheck_secrets.keys():
         # print(zero_one_check(zerocheck_secrets[key]))
+
         if not np.array_equal(zero_one_check(zerocheck_secrets[key]),np.zeros(zerocheck_secrets[key][0].shape)):
             illegal_votes.add(key)
 
