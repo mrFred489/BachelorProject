@@ -11,6 +11,7 @@ if str(os.path.dirname(__file__).split("/")[-2]) != "flaskwebsite":
 
 if not test:
     conn = psy.connect(host='localhost', user='bachelor', password='gruppen1234', dbname='bachelorprojekt')
+    mediator = "http://127.0.0.1:5100"
 
 
     def get_conn():
@@ -73,11 +74,12 @@ else:
     cursor.execute('CREATE TABLE "http://127.0.0.1:5004/illegal"(sender TEXT, clients TEXT[])')
 
     # Create tables for the mediator
-    cursor.execute('CREATE TABLE "http://127.0.0.1:5100"(sender TEXT, client TEXT[])')
+    cursor.execute('CREATE TABLE "http://127.0.0.1:5100/illegal"(sender TEXT, clients TEXT[])')
 
     cursor.close()
     conn.commit()
     print("DATABASES UP AND RUNNING\n")
+
 
 
     def get_conn():
@@ -251,6 +253,23 @@ def get_illegal_votes(db_name: str):
     conn.commit()
     return res
 
+def insert_mediator_illegal_votes(clients: list, sender: str):
+    cur = get_cursor()
+    cur.execute('INSERT INTO "' + mediator + '/illegal' + '" (sender, clients) VALUES (%s, %s)',
+                (sender, clients))
+    cur.close()
+    conn.commit()
+    return 1
+
+def get_mediator_illegal_votes():
+    cur  = get_cursor()
+    cur.execute('SELECT sender, clients FROM "' + mediator + '/illegal' + '"')
+    res = []
+    for i in cur:
+        res.append(i)
+    cur.close()
+    conn.commit()
+    return res
 
 def reset(db_name: str):
     cur = get_cursor()

@@ -87,6 +87,8 @@ def sum_votes(votes):
 def send_value_to_server(data, url):
     return util.post_url(data=data, url=url)
 
+def send_illegal_votes_to_mediator(illegal_list: list, server: str, url):
+    return util.post_url(data=dict(illegal_list=illegal_list, server=server), url=url + "/votevalidity")
 
 def verify_consistency(votes):
     votes_sorted = sorted(votes, key=lambda x: x[1])

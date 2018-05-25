@@ -39,6 +39,8 @@ test_servers = [
     "http://127.0.0.1:5003",
 ]
 
+test_mediator = "http://127.0.0.1:5100"
+
 official_servers = [
     "https://cryptovoting.dk/",
     "https://server1.cryptovoting.dk/",
@@ -49,9 +51,12 @@ official_servers = [
 
 if not testing:
     servers = test_servers
+    mediator = test_mediator
 else:
     servers = official_servers
 
+found_malicious_server = False
+malicious_server = ""
 
 @app.route("/reset", methods=["POST"])
 def reset():
@@ -228,8 +233,11 @@ def check_votes():
 @app.route("/ensure_vote_agreement", methods=["GET"])
 def ensure_agreement():
     illegal_votes = []
-    for server in servers:
-        illegal_votes.append(db.get_illegal_votes(server)[1][1])
+    print(illegal_votes.append(db.get_illegal_votes(my_name)))
+
+    return Response(status=700)
+
+    illegal_votes.append(db.get_illegal_votes(my_name)[1][1])
 
     to_be_deleted = set()
 
@@ -237,31 +245,37 @@ def ensure_agreement():
     disagreed_illegal_votes = set()
     for i in range(len(servers)):
         agreed_illegal_votes.intersection(illegal_votes[i])
-        disagreed_illegal_votes.union(illegal_votes[i])
-    disagreed_illegal_votes.difference(agreed_illegal_votes)
-    to_be_deleted.union(agreed_illegal_votes)
+        disagreed_illegal_votes = disagreed_illegal_votes.union(illegal_votes[i])
+    disagreed_illegal_votes = disagreed_illegal_votes.difference(agreed_illegal_votes)
+    to_be_deleted = to_be_deleted.union(agreed_illegal_votes)
 
-    # Check for majority disagreement
-    majority_legal = set()
-    majority_illegal = set()
-    for client in disagreed_illegal_votes:
-        observations = 0
-        for il_clients in illegal_votes:
-            if client in il_clients:
-                observations = + 1
-        if (observations > math.floor(len(servers) / 2)):
-            majority_legal.add(client)
-        else:
-            majority_illegal.add(client)
-    to_be_deleted.union(majority_illegal)
-
-    # Delete illegal and majority illegal votes
     for client in to_be_deleted:
         db.remove_vote(client, my_name)
 
-    # Agree on majority legal votes
-    # TODO: Find out which servers have the correct secret shares for each non-conclusive legal vote, so that these
-    # servers are the only ones to calculate these votes
+    # Send disagreed illegal votes to mediator
+    server_util.send_illegal_votes_to_mediator(illegal_votes=list(disagreed_illegal_votes), server=my_name)
+
+
+    return Response(status=200)
+
+@app.route("/mediator_answer_votes", methods=["POST"])
+def mediator_answer_votes():
+    verified, data = util.unpack_request(request, str(server_nr))
+    if not verified:
+        return make_response("Could not verify", 400)
+    malicious_server_ = data['malicious_server']
+    if(malicious_server_ == ""):
+        votes_for_deletion_ = data['votes_for_deletion']
+        for client in votes_for_deletion_:
+            db.remove_vote(client, my_name)
+    else:
+        found_malicious_server = True
+        malicious_server = malicious_server_
+        if (my_name != malicious_server_):
+            for sender, votes in db.get_illegal_votes(my_name):
+                if(sender == my_name):
+                    for client in votes:
+                        db.remove_vote(client, my_name)
     return Response(status=200)
 
 
