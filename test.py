@@ -179,6 +179,9 @@ class TestCommunication(unittest.TestCase):
         reset_servers()
         client_util.send_vote([4, 2, 1, 3], 'c1', local_servers)
         client_util.send_vote([1, 2, 3, 4], 'c2', local_servers)
+        # Bad vote
+        client_util.send_vote([1, 1, 1, 1], 'c3', local_servers)
+        client_util.send_vote([2, 2, 2, 2], 'c4', local_servers)
         for s in local_servers:
             response = util.get_url(s + 'check_votes')
         for s in local_servers:
@@ -189,6 +192,7 @@ class TestCommunication(unittest.TestCase):
         for s in local_servers:
             response = util.get_url(s + 'compute_result')
             result = np.rint(util.string_to_vote(response.text))
+            print(result)
             self.assertTrue(np.array_equal(result, np.array([[1, 0, 0, 1],
                                                              [0, 2, 0, 0],
                                                              [1, 0, 1, 0],

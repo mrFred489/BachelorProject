@@ -233,27 +233,30 @@ def check_votes():
 @app.route("/ensure_vote_agreement", methods=["GET"])
 def ensure_agreement():
     illegal_votes = []
-    print(illegal_votes.append(db.get_illegal_votes(my_name)))
 
-    return Response(status=700)
-
-    illegal_votes.append(db.get_illegal_votes(my_name)[1][1])
+    for server in servers:
+        illegal_votes.append(db.get_illegal_votes(server)[1][1])
 
     to_be_deleted = set()
 
-    agreed_illegal_votes = set()
+
+    agreed_illegal_votes = set(illegal_votes[0])
     disagreed_illegal_votes = set()
     for i in range(len(servers)):
-        agreed_illegal_votes.intersection(illegal_votes[i])
+        agreed_illegal_votes = agreed_illegal_votes.intersection(illegal_votes[i])
         disagreed_illegal_votes = disagreed_illegal_votes.union(illegal_votes[i])
     disagreed_illegal_votes = disagreed_illegal_votes.difference(agreed_illegal_votes)
     to_be_deleted = to_be_deleted.union(agreed_illegal_votes)
 
     for client in to_be_deleted:
+        print("removing vote", client)
         db.remove_vote(client, my_name)
 
+
+    disagreed_illegal_votes = ["c3"]
     # Send disagreed illegal votes to mediator
-    server_util.send_illegal_votes_to_mediator(illegal_votes=list(disagreed_illegal_votes), server=my_name)
+    if(len(disagreed_illegal_votes) > 0):
+        server_util.send_illegal_votes_to_mediator(illegal_votes=list(disagreed_illegal_votes), server=my_name, url=mediator)
 
 
     return Response(status=200)
@@ -284,6 +287,8 @@ def add():
     votes = db.round_one(my_name)
     summed_votes = server_util.sum_votes(votes)
     # TODO: Secret share summed votes
+
+    # TODO: EXLUDE CORRUPT SERVER FROM TAKING PART.
     # ss_summed_votes = server_util.secret_share(summed_votes, servers)
     server_util.broadcast_values(summed_votes, 2, servers, my_name)
     return Response(status=200)
@@ -291,11 +296,15 @@ def add():
 
 @app.route("/compute_result", methods=["GET"])
 def compute_result():
-    # TODO: rewrite calculate result. Illegal_votes need to removed sooner
-    illegal_votes = []
+
+    # TODO: EXCLUDE CORRUPT SERVERS FROM TAKING PART IN THIS.
+    # TODO:
     all_votes = db.round_two(my_name)
     # print("av", all_votes)
-    s = server_util.calculate_result(all_votes, illegal_votes)
+    s = server_util.calculate_result(all_votes)
+
+    # Broadcast result to other servers. If disagreement, then send to mediator.
+
     return make_response(util.vote_to_string(s))  # Response(util.vote_to_string(s), status=200, mimetype='text/text')
 
 
@@ -306,6 +315,7 @@ def illegal_vote():
         return make_response("Could not verify", 400)
     bad_votes = data['clients']
     server_name = data['server']
+    print("Got votes", bad_votes, "from server", server_name)
     db.insert_illegal_votes(bad_votes, server_name, my_name)
     return Response(status=200)
 

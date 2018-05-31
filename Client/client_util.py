@@ -8,7 +8,7 @@ import numpy as np
 def send_vote(priorities: list, client_name: str, servers: list):
     vote = create_vote(priorities)
     vote_partitions = util.partition_and_secret_share_vote(vote, servers)
-    submit(client_name, vote_partitions, servers)
+    postvote(client_name, vote_partitions, servers)
 
 
 def create_vote(priorities: list):

@@ -87,10 +87,11 @@ def sum_votes(votes):
 def send_value_to_server(data, url):
     return util.post_url(data=data, url=url)
 
-def send_illegal_votes_to_mediator(illegal_list: list, server: str, url):
-    return util.post_url(data=dict(illegal_list=illegal_list, server=server), url=url + "/votevalidity")
+def send_illegal_votes_to_mediator(illegal_votes: list, server: str, url: str):
+    return util.post_url(data=dict(illegal_list=illegal_votes, server=server), url=url + "/votevalidity")
 
 def verify_consistency(votes):
+    # TODO: USE THIS EVERYWHERE TO ENSURE EQUALITY IN DATABASE.
     votes_sorted = sorted(votes, key=lambda x: x[1])
     prev = votes_sorted[0]
     for vote in votes_sorted:
@@ -127,7 +128,7 @@ def verify_sums(data):
     return illegal_votes
 
 
-def calculate_result(votes, illegal_votes):
+def calculate_result(votes):
     used_votes = []
     res = 0
     for vote in votes:
@@ -176,6 +177,8 @@ def matrix_zero_one_check(id, num_servers, xs):
             for ind, matrix in xs.items():
                 index_dict[ind] = matrix[i][j]
             new_matrix[i][j] = new_matrix[i][j] + index_zero_one_check(id, num_servers, index_dict)
+
+    # TODO: MAKE SECRET SHARING OF EACH PRODUCT PART ! MUY IMPORTANTE
     return new_matrix
 
 def zero_one_check(xs):

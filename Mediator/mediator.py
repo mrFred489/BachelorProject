@@ -62,8 +62,6 @@ def decide_validity():
             # complaining server is malicious
             malicious_server = complaining_servers[0]
 
-            break;
-
         if complaints == 2:
             # If this happens something horrible has gone wrong. Shouldn't be possible scenario in correct setup
             return make_response("Two complaints. Mediator is confused", 400)
@@ -71,11 +69,10 @@ def decide_validity():
         if complaints == 3:
             # noncomplaining server is malicious
             malicious_server = set(sender_dict.keys()).difference(complaining_servers)[0]
-
-            break;
+            votes_to_be_deleted.add(vote)
 
         if complaints == 4:
-            # vote should be deleted
+            # vote should be deleted. Should not happen
             votes_to_be_deleted.add(vote)
 
     if malicious_server == "":
@@ -106,6 +103,6 @@ def create_local(port):
     testing = True
     app.run(port=int(port), debug=False, use_reloader=False, threaded=True)
 
-def broadcast_to_servers(data:  dict, url: string):
+def broadcast_to_servers(data:  dict, url: str):
     for server in servers:
         util.post_url(data=data, url=url)

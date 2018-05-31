@@ -199,7 +199,7 @@ def insert_vote(matrix: np.ndarray, id: int, round: int, client_name: str, serve
 
 def remove_vote(client_name: str, db_name: str):
     cur = get_cursor()
-    cur.execute('DELETE FROM "' + db_name + '" WHERE client=%s', (client_name))
+    cur.execute('DELETE FROM "' + db_name + '" WHERE client = \'' + str(client_name) + '\'')
     cur.close()
     conn.commit()
     return 1
