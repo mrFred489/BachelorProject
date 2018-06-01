@@ -143,13 +143,11 @@ def calculate_result(votes):
 
 
 def to_mult(id, num_servers=0):
-    result = [((id+1) % 4, (id+1) % 4)]
-    list = [(id+2) % 4, (id+3) % 4]
-    for i in list:
-        if(i != (id+3) % 4):
-            result.append(((id+1) % 4, i))
-        result.append((i, (id+1) % 4))
-
+    result = []
+    for i in range(4):
+        for j in range(4):
+            if (i != id and j != id):
+                result.append((i,j))
     return result
 
 def matrix_mult_secret_share(id, xs):
