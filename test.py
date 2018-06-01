@@ -9,6 +9,7 @@ from Server import server_util
 from time import sleep
 import numpy as np
 import os.path
+import Mediator.mediator
 
 
 baseurl1 = "http://127.0.0.1:5000/"
@@ -37,6 +38,11 @@ def create_local_server(port):
     pr = mp.Process(target=Server.routes.create_local, args=(str(port),))
     pr.start()
 
+def create_local_mediator(port):
+    pr = mp.Process(target=Mediator.mediator.create_local, args=(str(port),))
+    pr.start()
+
+
 
 class TestArithmetics(unittest.TestCase):
 
@@ -48,7 +54,7 @@ class TestArithmetics(unittest.TestCase):
 
     def test_multiplication_x_minus_one(self):
         secret = [20, 1, 91, 13, 4, 2, 27]
-        secret_real_sum = np.outer(np.sum(secret), np.sum(secret) - np.array([[1]]))
+        secret_real_sum = np.sum(secret) * (np.sum(secret) - np.array([[1]]))
         secret_share_sums = []
         for id in range(7):
             secret_share_sums.append(server_util.index_zero_one_check(id, 7, secret))
@@ -103,6 +109,8 @@ class TestCommunication(unittest.TestCase):
 
         for i in range(4):
             create_local_server(5000 + i)
+
+        create_local_mediator(5100)
 
         time.sleep(3)
 
@@ -239,6 +247,7 @@ class TestCommunication(unittest.TestCase):
     def tearDownClass(cls):
         for i in local_servers:
             requests.get(i + "shutdown")
+        requests.get(mediator + "shutdown")
 
 
 class TestMediator(unittest.TestCase):
@@ -248,11 +257,12 @@ class TestMediator(unittest.TestCase):
         if not os.path.isfile("cryp/publicmediator.pem"):
             util.get_keys("mediator")
 
-        create_local_server(5100)
+        create_local_mediator(5100)
 
         time.sleep(3)
 
     def test_todo(self):
+        server_util.send_illegal_votes_to_mediator([], "me", mediator[:-1])
         self.assertTrue(True)
 
     @classmethod
