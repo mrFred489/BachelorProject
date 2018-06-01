@@ -8,6 +8,7 @@ import numpy as np
 import logging
 import math
 import os.path
+from collections import defaultdict
 
 app = Flask(__name__)
 app.url_map.strict_slashes = False
@@ -207,27 +208,124 @@ def zerocheck():
 
     return Response(status=200)
 
+@app.route("/zeroonepartitions", methods=["POST"])
+def zeroonepartions():
+    verified, data = util.unpack_request(request, str(server_nr))
+    if not verified:
+        return make_response("Could not verify", 400)
+    try:
+        partitions_ = data['ss']
+        i_ = data['i']
+        j_ = data['j']
+        server_ = data['server']
+        id_ = data['id']
+        client_ = data['client']
+        for x, ss in partitions_:
+            db.insert_zero_partition(ss, x, i_, j_, client_, server_, my_name)
+    except TypeError as e:
+        print(data)
+        print(e)
+        return Response(status=400)
+
+    return Response(status=200)
 
 @app.route("/check_votes", methods=["GET"])
 def check_votes():
-    # ZERO ONE CHECK
-    zerocheck_values = db.get_zero_check(my_name)  # [(matrix, client, server), ...]
-    illegal_votes = server_util.zero_one_illegal_check(zerocheck_values)
-
     # COLUMN ROW CHECK
     cols = db.get_cols(my_name)
     rows = db.get_rows(my_name)
-    illegal_votes = illegal_votes.union(server_util.verify_sums(rows))
+    illegal_votes = set(server_util.verify_sums(rows))
     illegal_votes = illegal_votes.union(server_util.verify_sums(cols))
+
 
     # TODO: Ensure agreement among servers regarding illegal_votes
 
     list_illegal_votes = list(illegal_votes)
+
+    # TODO: ADD ZERO ONE CHECK
+
     # Save own illegal votes
     db.insert_illegal_votes(list_illegal_votes, my_name, my_name)
+
     # Broadcast own illegal votes to others
     server_util.broadcast_illegal_votes(list_illegal_votes, my_name, servers)
     return Response(status=200)
+
+@app.route("/zero_one_consistency", methods=["GET"])
+def zero_one_partitions_consistency_check(already_illegal_votes: list):
+    # Create three dimensional list which contains lists for each share of a part of a product
+
+    partition_dict = db.get_zero_partitions(my_name)
+    partition_dict_clients = partition_dict.keys()
+    for client in partition_dict_clients:
+        partition_matrix_list = [[[[] for h in range(len(servers))] for j in range(len(servers))] for i in range(len(servers))]
+        for partition in partition_dict[client]:
+            partition_matrix_list[partition['i']][partition['j']][partition['x']].append((partition['matrix'],partition['server']))
+
+        # Ensure that two should-be-identical parts from different servers are, indeed, identical, that a - b = 0.
+        for i in range(len(servers)):
+            for j in range(len(servers)):
+                for x in range(len(servers)):
+                    matrix_server_pairs = enumerate(partition_matrix_list[i][j][x])
+                    for y, (matrix_y, server_y) in matrix_server_pairs:
+                        for z, (matrix_z, server_z) in matrix_server_pairs:
+                            if(y < z):
+                                difference = matrix_y - matrix_z
+                                # broadcast_difference_share
+                                data=dict(diff=difference, x=x, i=i, j=j, server_a=server_y, server_b=server_z, server=my_name, client=client)
+                                server_util.broadcast(data=data, servers=servers, url="/differenceshareforzeroone")
+
+@app.route("/differenceshareforzeroone", methods=["POST"])
+def differenceshareforzeroone():
+    verified, data = util.unpack_request(request, str(server_nr))
+    if not verified:
+        return make_response("Could not verify", 400)
+    try:
+        diff_ = data['diff']
+        x_ = data['x']
+        i_ = data['i']
+        j_ = data['j']
+        server_a_ = data['server_a']
+        server_b_ = data['server_b']
+        client_ = data['client']
+        server_ = data['server']
+
+        # Save each difference in database
+        db.insert_zero_consistency_check(diff=diff_, x=x_, i=i_, j=j_, server_a=server_a_, server_b=server_b_, client_name=client_, server=server_, db_name=my_name)
+    except TypeError as e:
+        print(e)
+        return Response(status=400)
+    return Response(status=200)
+
+@app.route("/sumdifferenceshareforzeroone", methods=["GET"])
+def sumdifferenceshareforzeroone():
+    difference_dict = db.get_zero_consistency_check(my_name)
+    differece_dict_clients = difference_dict.keys()
+    for client in differece_dict_clients:
+        difference_matrix_list = [[[[] for h in range(len(servers))] for j in range(len(servers))] for i in range(len(servers))]
+        for difference in difference_dict[client]:
+            difference_matrix_list[difference['i']][difference['j']][difference['x']].append((difference['diff'],difference['server_a'], difference['server_b']. difference['server']))
+
+        # Ensure diff_a = diff_b and sum diff_shares
+        result = np.zeros((len(servers), len(servers)))
+        for i in range(len(servers)):
+            for j in range(len(servers)):
+                res = 0
+                for x in range(len(servers)):
+                    # Ensure equality
+                    differences = difference_matrix_list[i][j][x]
+                    first_diff = differences[0]
+                    for difference in differences[1:]:
+                        if first_diff[0] != difference[0]:
+                            # TODO: Do something with meditator
+                            print("Disagreement")
+                    res = res + first_diff[0]
+                result[i][j] = res
+        if(result != np.zeros(result.shape)):
+            # TODO: Do something because of disagreement
+            print("Disagreement")
+        else:
+            return Response(status=200)
 
 
 @app.route("/ensure_vote_agreement", methods=["GET"])
