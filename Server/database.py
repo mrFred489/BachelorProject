@@ -82,6 +82,14 @@ else:
     cursor.execute(
         'CREATE TABLE "http://127.0.0.01:5004/zeroconsistency"(diff TEXT, x INTEGER, i INTEGER, j INTEGER, server_a TEXT, server_b TEXT, client TEXT, server TEXT)')
 
+    # Create table for zero_one_partition_sum matrices
+    cursor.execute('CREATE TABLE "http://127.0.0.01:5000/zeropartitionsum"(matrix TEXT, client TEXT, server TEXT)')
+    cursor.execute('CREATE TABLE "http://127.0.0.01:5001/zeropartitionsum"(matrix TEXT, client TEXT, server TEXT)')
+    cursor.execute('CREATE TABLE "http://127.0.0.01:5002/zeropartitionsum"(matrix TEXT, client TEXT, server TEXT)')
+    cursor.execute('CREATE TABLE "http://127.0.0.01:5003/zeropartitionsum"(matrix TEXT, client TEXT, server TEXT)')
+    cursor.execute('CREATE TABLE "http://127.0.0.01:5004/zeropartitionsum"(matrix TEXT, client TEXT, server TEXT)')
+
+
     # Create table for zero_check matrices
     cursor.execute('CREATE TABLE "http://127.0.0.1:5000/zerocheck"(matrix TEXT,  client TEXT, server TEXT)')
     cursor.execute('CREATE TABLE "http://127.0.0.1:5001/zerocheck"(matrix TEXT,  client TEXT, server TEXT)')
@@ -247,6 +255,26 @@ def get_zero_partitions(db_name: str):
     conn.commit()
     return res
 
+def insert_zero_partition_sum(matrix: np.ndarray, server: str, client: str, db_name: str):
+    cur = get_cursor()
+    matrix = util.vote_to_string(matrix)
+    cur.execute('INSERT INTO "' + db_name + '/zeropartitionsum" (matrix, client, server) VALUES (%s, %s, %s)',
+                (matrix, client, server))
+    cur.close()
+    conn.commit()
+    return 1
+
+def get_zero_partition_sum(db_name):
+    cur = get_cursor()
+    cur.execute('SELECT matrix, client, server FROM "' + db_name + '/zeropartitionsum')
+    res = defaultdict(list)
+    for m, c, s in cur:
+        m = util.vote_to_string(m)
+        res[c] = res[c].append(dict(matrix=m, server=s))
+    cur.close()
+    conn.commit()
+    return res
+
 def insert_zero_consistency_check(diff: np.ndarray, x: int, i: int, j:int, server_a: str, server_b: str, client_name: str, server: str, db_name: str):
     cur = get_cursor()
     matrix = util.vote_to_string(diff)
@@ -262,7 +290,7 @@ def get_zero_consistency_check(db_name: str):
     res = defaultdict(list)
     for d, x, i, j, sa, sb, c, s in cur:
         d = util.string_to_vote(d)
-        res[c].append(dict(diff=d, x=x, i=i, j=j, server_a=sa, server_b=sb, server=server))
+        res[c].append(dict(diff=d, x=x, i=i, j=j, server_a=sa, server_b=sb, server=s))
     cur.close()
     conn.commit()
     return res

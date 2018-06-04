@@ -301,6 +301,7 @@ def differenceshareforzeroone():
 def sumdifferenceshareforzeroone():
     difference_dict = db.get_zero_consistency_check(my_name)
     differece_dict_clients = difference_dict.keys()
+    disagreed_clients = []
     for client in differece_dict_clients:
         difference_matrix_list = [[[[] for h in range(len(servers))] for j in range(len(servers))] for i in range(len(servers))]
         for difference in difference_dict[client]:
@@ -321,11 +322,80 @@ def sumdifferenceshareforzeroone():
                             print("Disagreement")
                     res = res + first_diff[0]
                 result[i][j] = res
-        if(result != np.zeros(result.shape)):
-            # TODO: Do something because of disagreement
-            print("Disagreement")
+                if(result != np.zeros(result.shape)):
+                    print("Disagreement")
+                    disagreed_clients.append((client, i, j, difference_matrix_list[i][j][x][1], difference_matrix_list[i][j][x][2]))
+        if len(disagreed_clients) > 0:
+            # TODO: Use mediator for each part
+            print(disagreed_clients)
         else:
-            return Response(status=200)
+            # TODO: Locally find sum of product
+            sum_product_zero_one_check()
+        return Response(status=200)
+
+def sum_product_zero_one_check():
+    zero_partitions_dict = db.get_zero_partitions(my_name)
+    zero_partitions_clients = zero_partitions_dict.keys()
+    sum_partition_array = [[[0 for x in range(len(servers))] for j in range(len(servers))] for i in range(len(servers))]
+    for c in zero_partitions_clients:
+        client_parts = zero_partitions_dict[c]
+        used_parts = set()
+        for part in client_parts:
+            matrix = part['matrix']
+            i = part['i']
+            j = part['j']
+            x = part['x']
+            if not (used_parts.__contains__((i, j, x))):
+                used_parts.add((i, j, x))
+                sum_partition_array[i][j][x] = sum_partition_array[i][j][x] + matrix
+        server_util.broadcast(data=dict(sum_matrix=sum_partition_array, server=my_name, client=c), url="/zeroone_sum_partition")
+
+@app.route("/zeroone_sum_partition", methods=["POST"])
+def sum_product_receive():
+    verified, data = util.unpack_request(request, str(server_nr))
+    if not verified:
+        return make_response("Could not verify", 400)
+    try:
+        sum_matrix_ = data['sum_matrix']
+        client_ = data['client']
+        server_ = data['server']
+
+        # Save on database
+        db.insert_zero_partition_sum(matrix=sum_matrix_, client=client_, server=server_, db_name=my_name)
+    except TypeError as e:
+        print("ERROR")
+
+    return Response(status=200)
+
+@app.route("/zeroone_sum_partition_finalize", methods=["GET"])
+def zeroone_sum_partition_finalize():
+    partition_sums = db.get_zero_partition_sum(my_name)
+    partition_sums_clients = partition_sums.keys()
+    client_product = []
+    for client in partition_sums_clients:
+        part_sums = partition_sums[client]
+        res = [[[[0] for x in range(len(servers))] for j in range(len(servers))] for i in range(len(servers))]
+        for i in range(len(servers)):
+            for j in range(len(servers)):
+                for x in range(len(servers)):
+                    server = 0
+                    for part_sum in part_sums:
+                        val = part_sum[i][j][x]
+                        if(res[i][j][x] == 0):
+                            server = part_sum['server']
+                            res = val
+                        else:
+                            if not(val != 0 and res == val):
+                                # TODO: Disagreement
+                                print("Disagreement! MEDIATOR not implemented yet")
+                res[i][j] = sum(res[i][j])
+
+        if sum([sum(res[i]) for i in range(len(servers))]) != np.zeros((range(len(servers)), range(len(servers)))):
+            # Illegal vote.
+            print("illegal vote")
+        else:
+            print("legal vote")
+
 
 
 @app.route("/ensure_vote_agreement", methods=["GET"])
