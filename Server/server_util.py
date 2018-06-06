@@ -160,11 +160,14 @@ def matrix_mult_secret_share(id, xs):
 
 def matrix_zero_one_check(id, servers: list, xs, my_name, client):
     # xs = dict: (id) => x_i
+    local_parts = []
     for i, j in to_mult(id):
         # TODO: Secretshare each part
         to_be_secret_shared = xs[i] * (xs[j]-(1/4))
         partioned = util.partition_and_secret_share_vote(to_be_secret_shared, servers)
         send_zero_one_secret_shares(id, i, j, partioned, servers, my_name, client)
+        local_parts.append((id, i, j, partioned, my_name, client))
+    return local_parts
 
 
 

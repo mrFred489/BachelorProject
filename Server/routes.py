@@ -107,7 +107,8 @@ def vote():
         for id, v in id_vote_tuple:
             votes_dict[id] = v
 
-        server_util.matrix_zero_one_check(my_id, servers, votes_dict, my_name, client)
+        local_parts = server_util.matrix_zero_one_check(my_id, servers, votes_dict, my_name, client)
+        db.insert_zero_partition()
     except TypeError as e:
         print(e)
         return Response(status=400)
@@ -371,7 +372,7 @@ def sum_product_receive():
 def zeroone_sum_partition_finalize():
     partition_sums = db.get_zero_partition_sum(my_name)
     partition_sums_clients = partition_sums.keys()
-    client_product = []
+    print("MY PRINT:", partition_sums_clients)
     for client in partition_sums_clients:
         part_sums = partition_sums[client]
         res = [[[[0] for x in range(len(servers))] for j in range(len(servers))] for i in range(len(servers))]
@@ -381,20 +382,21 @@ def zeroone_sum_partition_finalize():
                     server = 0
                     for part_sum in part_sums:
                         val = part_sum[i][j][x]
-                        if(res[i][j][x] == 0):
-                            server = part_sum['server']
-                            res = val
-                        else:
-                            if not(val != 0 and res == val):
+                        if(part_sum[i][j][x] != 0):
+                            if not (val == part_sum[i][j][x]):
                                 # TODO: Disagreement
                                 print("Disagreement! MEDIATOR not implemented yet")
+                            server = part_sum['server']
+                            res[i][j][x] = val
                 res[i][j] = sum(res[i][j])
+        print("MY PRINT:", sum([sum(res[i] for i in range(len(servers)))]))
 
         if sum([sum(res[i]) for i in range(len(servers))]) != np.zeros((range(len(servers)), range(len(servers)))):
             # Illegal vote.
-            print("illegal vote")
+            print(client, "is an illegal vote")
         else:
-            print("legal vote")
+            print(client, "is a legal vote")
+    return Response(status=200)
 
 
 

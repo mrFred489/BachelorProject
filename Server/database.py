@@ -267,11 +267,12 @@ def insert_zero_partition_sum(matrix: np.ndarray, server: str, client: str, db_n
 
 def get_zero_partition_sum(db_name):
     cur = get_cursor()
-    cur.execute('SELECT matrix, client, server FROM "' + db_name + '/zeropartitionsum')
+    cur.execute('SELECT matrix, client, server FROM "' + db_name + '/zeropartitionsum"')
     res = defaultdict(list)
     for m, c, s in cur:
+        print("MY PRINT:", m, c, s)
         res[c]
-        m = util.vote_to_string(m)
+        m = util.string_to_vote(m)
         res[c].append(dict(matrix=m, server=s))
     cur.close()
     conn.commit()
