@@ -62,32 +62,32 @@ else:
 
     # Create table for zero_partitions
     cursor.execute(
-        'CREATE TABLE "http://127.0.0.1:5000/zeropartition"(matrix TEXT, x INTEGER, i INTEGER, j INTEGER, client TEXT, server TEXT)')
+        'CREATE TABLE "http://127.0.0.1:5000/zeropartition"(matrix TEXT, client TEXT, server TEXT, x INTEGER, i INTEGER, j INTEGER)')
     cursor.execute(
-        'CREATE TABLE "http://127.0.0.1:5001/zeropartition"(matrix TEXT, x INTEGER, i INTEGER, j INTEGER, client TEXT, server TEXT)')
+        'CREATE TABLE "http://127.0.0.1:5001/zeropartition"(matrix TEXT, client TEXT, server TEXT, x INTEGER, i INTEGER, j INTEGER)')
     cursor.execute(
-        'CREATE TABLE "http://127.0.0.1:5002/zeropartition"(matrix TEXT, x INTEGER, i INTEGER, j INTEGER, client TEXT, server TEXT)')
+        'CREATE TABLE "http://127.0.0.1:5002/zeropartition"(matrix TEXT, client TEXT, server TEXT, x INTEGER, i INTEGER, j INTEGER)')
     cursor.execute(
-        'CREATE TABLE "http://127.0.0.1:5003/zeropartition"(matrix TEXT, x INTEGER, i INTEGER, j INTEGER, client TEXT, server TEXT)')
+        'CREATE TABLE "http://127.0.0.1:5003/zeropartition"(matrix TEXT, client TEXT, server TEXT, x INTEGER, i INTEGER, j INTEGER)')
 
     # Create table for zero_one_consistency_check matrices
     cursor.execute(
-        'CREATE TABLE "http://127.0.0.01:5000/zeroconsistency"(diff TEXT, x INTEGER, i INTEGER, j INTEGER, server_a TEXT, server_b TEXT, client TEXT, server TEXT)')
+        'CREATE TABLE "http://127.0.0.1:5000/zeroconsistency"(diff TEXT, x INTEGER, i INTEGER, j INTEGER, server_a TEXT, server_b TEXT, client TEXT, server TEXT)')
     cursor.execute(
-        'CREATE TABLE "http://127.0.0.01:5001/zeroconsistency"(diff TEXT, x INTEGER, i INTEGER, j INTEGER, server_a TEXT, server_b TEXT, client TEXT, server TEXT)')
+        'CREATE TABLE "http://127.0.0.1:5001/zeroconsistency"(diff TEXT, x INTEGER, i INTEGER, j INTEGER, server_a TEXT, server_b TEXT, client TEXT, server TEXT)')
     cursor.execute(
-        'CREATE TABLE "http://127.0.0.01:5002/zeroconsistency"(diff TEXT, x INTEGER, i INTEGER, j INTEGER, server_a TEXT, server_b TEXT, client TEXT, server TEXT)')
+        'CREATE TABLE "http://127.0.0.1:5002/zeroconsistency"(diff TEXT, x INTEGER, i INTEGER, j INTEGER, server_a TEXT, server_b TEXT, client TEXT, server TEXT)')
     cursor.execute(
-        'CREATE TABLE "http://127.0.0.01:5003/zeroconsistency"(diff TEXT, x INTEGER, i INTEGER, j INTEGER, server_a TEXT, server_b TEXT, client TEXT, server TEXT)')
+        'CREATE TABLE "http://127.0.0.1:5003/zeroconsistency"(diff TEXT, x INTEGER, i INTEGER, j INTEGER, server_a TEXT, server_b TEXT, client TEXT, server TEXT)')
     cursor.execute(
-        'CREATE TABLE "http://127.0.0.01:5004/zeroconsistency"(diff TEXT, x INTEGER, i INTEGER, j INTEGER, server_a TEXT, server_b TEXT, client TEXT, server TEXT)')
+        'CREATE TABLE "http://127.0.0.1:5004/zeroconsistency"(diff TEXT, x INTEGER, i INTEGER, j INTEGER, server_a TEXT, server_b TEXT, client TEXT, server TEXT)')
 
     # Create table for zero_one_partition_sum matrices
-    cursor.execute('CREATE TABLE "http://127.0.0.01:5000/zeropartitionsum"(matrix TEXT, client TEXT, server TEXT)')
-    cursor.execute('CREATE TABLE "http://127.0.0.01:5001/zeropartitionsum"(matrix TEXT, client TEXT, server TEXT)')
-    cursor.execute('CREATE TABLE "http://127.0.0.01:5002/zeropartitionsum"(matrix TEXT, client TEXT, server TEXT)')
-    cursor.execute('CREATE TABLE "http://127.0.0.01:5003/zeropartitionsum"(matrix TEXT, client TEXT, server TEXT)')
-    cursor.execute('CREATE TABLE "http://127.0.0.01:5004/zeropartitionsum"(matrix TEXT, client TEXT, server TEXT)')
+    cursor.execute('CREATE TABLE "http://127.0.0.1:5000/zeropartitionsum"(matrix TEXT, client TEXT, server TEXT)')
+    cursor.execute('CREATE TABLE "http://127.0.0.1:5001/zeropartitionsum"(matrix TEXT, client TEXT, server TEXT)')
+    cursor.execute('CREATE TABLE "http://127.0.0.1:5002/zeropartitionsum"(matrix TEXT, client TEXT, server TEXT)')
+    cursor.execute('CREATE TABLE "http://127.0.0.1:5003/zeropartitionsum"(matrix TEXT, client TEXT, server TEXT)')
+    cursor.execute('CREATE TABLE "http://127.0.0.1:5004/zeropartitionsum"(matrix TEXT, client TEXT, server TEXT)')
 
 
     # Create table for zero_check matrices
@@ -238,7 +238,7 @@ def remove_vote(client_name: str, db_name: str):
 def insert_zero_partition(matrix: np.ndarray, x: int, i: int, j: int, client_name: str, server: str, db_name: str):
     cur = get_cursor()
     matrix = util.vote_to_string(matrix)
-    cur.execute('INSERT INTO "' + db_name + '/zeropartition" (matrix, client, server, x, i, j) VALUES (%s, %s, %s, %s, %s)',
+    cur.execute('INSERT INTO "' + db_name + '/zeropartition" (matrix, client, server, x, i, j) VALUES (%s, %s, %s, %s, %s, %s)',
             (matrix, client_name, server, x, i, j))
     cur.close()
     conn.commit()
@@ -246,11 +246,12 @@ def insert_zero_partition(matrix: np.ndarray, x: int, i: int, j: int, client_nam
 
 def get_zero_partitions(db_name: str):
     cur = get_cursor()
-    cur.execute('SELECT matrix, x, i, j, client, server FROM "' + db_name + '/zeropartition"')
+    cur.execute('SELECT matrix, client, server, x, i, j FROM "' + db_name + '/zeropartition"')
     res = defaultdict(list)
-    for m, x, i, j, c, s in cur:
+    for m, c, s, x, i, j in cur:
+        res[c]
         m = util.string_to_vote(m)
-        res[c] = res[c].append(dict(matrix=m, x=x, i=i, j=j, server=s))
+        res[c].append(dict(matrix=m, x=x, i=i, j=j, server=s))
     cur.close()
     conn.commit()
     return res
@@ -269,17 +270,20 @@ def get_zero_partition_sum(db_name):
     cur.execute('SELECT matrix, client, server FROM "' + db_name + '/zeropartitionsum')
     res = defaultdict(list)
     for m, c, s in cur:
+        res[c]
         m = util.vote_to_string(m)
-        res[c] = res[c].append(dict(matrix=m, server=s))
+        res[c].append(dict(matrix=m, server=s))
     cur.close()
     conn.commit()
     return res
 
 def insert_zero_consistency_check(diff: np.ndarray, x: int, i: int, j:int, server_a: str, server_b: str, client_name: str, server: str, db_name: str):
     cur = get_cursor()
-    matrix = util.vote_to_string(diff)
+    diff = util.vote_to_string(diff)
+    print("HERE2a")
     cur.execute('INSERT INTO "' + db_name + '/zeroconsistency" (diff, x, i, j, server_a, server_b, client, server) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)',
-                diff, x, i, j, server_a, server_b, client_name, server)
+                (diff, x, i, j, server_a, server_b, client_name, server))
+    print("HERE2b")
     cur.close()
     conn.commit()
     return 1

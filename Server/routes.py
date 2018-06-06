@@ -107,11 +107,7 @@ def vote():
         for id, v in id_vote_tuple:
             votes_dict[id] = v
 
-        zero_one_check = server_util.matrix_zero_one_check(my_id, len(servers), votes_dict)
-        db.insert_zero_check(zero_one_check, client, my_name, my_name)
-        servers_copy = server_util.list_remove(servers, my_name)
-        server_util.broadcast(dict(client=client, server=my_name, vote=util.vote_to_string(zero_one_check)), servers_copy,
-                                  "/zerocheck")
+        server_util.matrix_zero_one_check(my_id, servers, votes_dict, my_name, client)
     except TypeError as e:
         print(e)
         return Response(status=400)
@@ -215,6 +211,7 @@ def zeroonepartions():
         return make_response("Could not verify", 400)
     try:
         partitions_ = data['ss']
+        partitions_ = [(x, util.string_to_vote(y)) for (x,y) in partitions_]
         i_ = data['i']
         j_ = data['j']
         server_ = data['server']
@@ -252,11 +249,12 @@ def check_votes():
     return Response(status=200)
 
 @app.route("/zero_one_consistency", methods=["GET"])
-def zero_one_partitions_consistency_check(already_illegal_votes: list):
+def zero_one_partitions_consistency_check():
     # Create three dimensional list which contains lists for each share of a part of a product
 
+
     partition_dict = db.get_zero_partitions(my_name)
-    partition_dict_clients = partition_dict.keys()
+    partition_dict_clients = list(partition_dict.keys())
     for client in partition_dict_clients:
         partition_matrix_list = [[[[] for h in range(len(servers))] for j in range(len(servers))] for i in range(len(servers))]
         for partition in partition_dict[client]:
@@ -270,10 +268,11 @@ def zero_one_partitions_consistency_check(already_illegal_votes: list):
                     for y, (matrix_y, server_y) in matrix_server_pairs:
                         for z, (matrix_z, server_z) in matrix_server_pairs:
                             if(y < z):
-                                difference = matrix_y - matrix_z
+                                difference = np.subtract(np.array(matrix_y), np.array(matrix_z))
                                 # broadcast_difference_share
-                                data=dict(diff=difference, x=x, i=i, j=j, server_a=server_y, server_b=server_z, server=my_name, client=client)
+                                data=dict(diff=util.vote_to_string(difference), x=x, i=i, j=j, server_a=server_y, server_b=server_z, server=my_name, client=client)
                                 server_util.broadcast(data=data, servers=servers, url="/differenceshareforzeroone")
+    return Response(status=200)
 
 @app.route("/differenceshareforzeroone", methods=["POST"])
 def differenceshareforzeroone():
@@ -282,6 +281,7 @@ def differenceshareforzeroone():
         return make_response("Could not verify", 400)
     try:
         diff_ = data['diff']
+        diff_ = util.string_to_vote(diff_)
         x_ = data['x']
         i_ = data['i']
         j_ = data['j']

@@ -227,6 +227,15 @@ class TestCommunication(unittest.TestCase):
                                                              [0, 0, 0, 1]])))
             self.assertTrue(response.ok)
 
+    def test_new_product(self):
+        reset_servers()
+        vote1 = client_util.create_vote([1])
+        vote1_partitions = util.partition_and_secret_share_vote(vote1, local_servers)
+        client_util.postvote("test1", vote1_partitions, local_servers)
+        for server in local_servers:
+            util.get_url(server + "zero_one_consistency")
+        self.assertTrue(True)
+
     # def test_many_votes(self):
     #     reset_servers()
     #     for i in range(10):
