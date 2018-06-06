@@ -108,7 +108,10 @@ def vote():
             votes_dict[id] = v
 
         local_parts = server_util.matrix_zero_one_check(my_id, servers, votes_dict, my_name, client)
-        db.insert_zero_partition()
+        for local_part in local_parts:
+            for x, ss in local_part[3]:
+                if(x != my_id):
+                    db.insert_zero_partition(matrix=ss, x=x, i=local_part[1], j=local_part[2], client_name=local_part[5], server=my_name, db_name=my_name)
     except TypeError as e:
         print(e)
         return Response(status=400)
