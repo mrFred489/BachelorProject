@@ -224,7 +224,7 @@ def zero_one_partitions_consistency_check():
                                 # broadcast_difference_share
                                 data=dict(diff=util.vote_to_string(difference), x=x, i=i, j=j, server_a=server_y, server_b=server_z, server=my_name, client=client)
                                 server_util.broadcast(data=data, servers=servers, url="/differenceshareforzeroone")
-                                db.insert_zero_consistency_check(diff=util.vote_to_string(difference), x=x, i=i, j=j, server_a=server_y, server_b=server_z, server=my_name, client_name=client)
+                                db.insert_zero_consistency_check(diff=util.vote_to_string(difference), x=x, i=i, j=j, server_a=server_y, server_b=server_z, server=my_name, client_name=client, db_name=my_name)
     return Response(status=200)
 
 @app.route("/differenceshareforzeroone", methods=["POST"])
@@ -253,13 +253,11 @@ def differenceshareforzeroone():
 @app.route("/sumdifferenceshareforzeroone", methods=["GET"])
 def sumdifferenceshareforzeroone():
     difference_dict = db.get_zero_consistency_check(my_name)
-    print("DD:", difference_dict)
     difference_dict_clients = difference_dict.keys()
     disagreed_clients = []
     for client in difference_dict_clients:
         difference_matrix_list = [[[[] for h in range(len(servers))] for j in range(len(servers))] for i in range(len(servers))]
         for difference in difference_dict[client]:
-            print("DIFFDIFF:", difference)
             difference_matrix_list[difference['i']][difference['j']][difference['x']].append((difference['diff'],difference['server_a'], difference['server_b'], difference['server']))
 
         # Ensure diff_a = diff_b and sum diff_shares
@@ -267,11 +265,9 @@ def sumdifferenceshareforzeroone():
         for i in range(len(servers)):
             for j in range(len(servers)):
                 res = 0
-                print("DIFF_MAT:", difference_matrix_list[i][j])
                 for x in range(len(servers)):
                     # Ensure equality
                     differences = difference_matrix_list[i][j][x]
-                    print("DIFFS:", differences, i, j, x)
                     first_diff = differences[0]
                     for difference in differences[1:]:
                         if first_diff[0] != difference[0]:
@@ -343,8 +339,9 @@ def zeroone_sum_partition_finalize():
             for j in range(len(servers)):
                 for x in range(len(servers)):
                     server = 0
-                    for part_sum in part_sums:
-                        val = part_sum[i][j][x]
+                    val = partition_sums[0][i][j][x]
+                    for part_sum in part_sums[1:]:
+                        print("PS:", part_sum)
                         if(part_sum[i][j][x] != 0):
                             if not (val == part_sum[i][j][x]):
                                 # TODO: Disagreement
