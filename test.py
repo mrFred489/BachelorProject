@@ -234,6 +234,9 @@ class TestCommunication(unittest.TestCase):
         client_util.postvote("test1", vote1_partitions, local_servers)
         for server in local_servers:
             util.get_url(server + "zero_one_consistency")
+        time.sleep(.5)
+        for server in local_servers:
+            util.get_url(server + "zeroone_sum_partition_finalize")
         self.assertTrue(True)
 
     # def test_many_votes(self):
