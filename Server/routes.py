@@ -429,7 +429,7 @@ def ensure_agreement():
     disagreed_illegal_votes = ["c3"]
     # Send disagreed illegal votes to mediator
     if(len(disagreed_illegal_votes) > 0):
-        server_util.send_illegal_votes_to_mediator(illegal_votes=list(disagreed_illegal_votes), server=my_name, url=mediator, name=my_name)
+        server_util.send_illegal_votes_to_mediator(illegal_votes=list(disagreed_illegal_votes), server=my_name, url=mediator, name=my_name.split(":")[-1])
 
 
     return Response(status=200)
