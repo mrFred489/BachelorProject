@@ -339,7 +339,7 @@ def zeroone_sum_partition_finalize():
             for j in range(len(servers)):
                 for x in range(len(servers)):
                     server = 0
-                    val = partition_sums[0][i][j][x]
+                    val = part_sums[0][i][j][x]
                     for part_sum in part_sums[1:]:
                         print("PS:", part_sum)
                         if(part_sum[i][j][x] != 0):
