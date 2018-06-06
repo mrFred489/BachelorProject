@@ -110,8 +110,7 @@ def vote():
         local_parts = server_util.matrix_zero_one_check(my_id, servers, votes_dict, my_name, client)
         for local_part in local_parts:
             for x, ss in enumerate(local_part[3]):
-                if(x != my_id):
-                    db.insert_zero_partition(matrix=ss, x=x, i=local_part[1], j=local_part[2], client_name=local_part[5], server=my_name, db_name=my_name)
+                db.insert_zero_partition(matrix=ss, x=x, i=local_part[1], j=local_part[2], client_name=local_part[5], server=my_name, db_name=my_name)
     except TypeError as e:
         print(e)
         return Response(status=400)
@@ -207,9 +206,7 @@ def zero_one_partitions_consistency_check():
 
 
     partition_dict = db.get_zero_partitions(my_name)
-    print("PD:", partition_dict)
     partition_dict_clients = partition_dict.keys()
-    print("PDC:", partition_dict_clients)
     for client in partition_dict_clients:
         partition_matrix_list = [[[[] for h in range(len(servers))] for j in range(len(servers))] for i in range(len(servers))]
         for partition in partition_dict[client]:
@@ -227,6 +224,7 @@ def zero_one_partitions_consistency_check():
                                 # broadcast_difference_share
                                 data=dict(diff=util.vote_to_string(difference), x=x, i=i, j=j, server_a=server_y, server_b=server_z, server=my_name, client=client)
                                 server_util.broadcast(data=data, servers=servers, url="/differenceshareforzeroone")
+                                db.insert_zero_consistency_check(diff=util.vote_to_string(difference), x=x, i=i, j=j, server_a=server_y, server_b=server_z, server=my_name, client_name=client)
     return Response(status=200)
 
 @app.route("/differenceshareforzeroone", methods=["POST"])
@@ -257,11 +255,11 @@ def sumdifferenceshareforzeroone():
     difference_dict = db.get_zero_consistency_check(my_name)
     print("DD:", difference_dict)
     difference_dict_clients = difference_dict.keys()
-    print("DDC:", difference_dict_clients)
     disagreed_clients = []
     for client in difference_dict_clients:
         difference_matrix_list = [[[[] for h in range(len(servers))] for j in range(len(servers))] for i in range(len(servers))]
         for difference in difference_dict[client]:
+            print("DIFFDIFF:", difference)
             difference_matrix_list[difference['i']][difference['j']][difference['x']].append((difference['diff'],difference['server_a'], difference['server_b'], difference['server']))
 
         # Ensure diff_a = diff_b and sum diff_shares
@@ -269,9 +267,11 @@ def sumdifferenceshareforzeroone():
         for i in range(len(servers)):
             for j in range(len(servers)):
                 res = 0
+                print("DIFF_MAT:", difference_matrix_list[i][j])
                 for x in range(len(servers)):
                     # Ensure equality
                     differences = difference_matrix_list[i][j][x]
+                    print("DIFFS:", differences, i, j, x)
                     first_diff = differences[0]
                     for difference in differences[1:]:
                         if first_diff[0] != difference[0]:
@@ -308,7 +308,7 @@ def sum_product_zero_one_check():
             if not (used_parts.__contains__((i, j, x))):
                 used_parts.add((i, j, x))
                 sum_partition_array[i][j][x] = sum_partition_array[i][j][x] + matrix
-        server_util.broadcast(data=dict(sum_matrix=sum_partition_array, server=my_name, client=c), servers=servers, url="/zeroone_sum_partition")
+        server_util.broadcast(data=dict(sum_matrix=util.vote_to_string(sum_partition_array), server=my_name, client=c), servers=servers, url="/zeroone_sum_partition")
         db.insert_zero_partition_sum(matrix=sum_partition_array, server=my_name, client=c, db_name=my_name)
 
 @app.route("/zeroone_sum_partition", methods=["POST"])
@@ -319,6 +319,7 @@ def sum_product_receive():
     try:
         print("I SUM")
         sum_matrix_ = data['sum_matrix']
+        sum_matrix_ = util.string_to_vote(sum_matrix_)
         client_ = data['client']
         server_ = data['server']
 
