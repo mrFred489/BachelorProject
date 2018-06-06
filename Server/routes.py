@@ -117,57 +117,6 @@ def vote():
         return Response(status=400)
     return Response(status=200)
 
-@app.route("/submit", methods=["POST"])
-def receive_vote():
-    verified, data = util.unpack_request(request, str(server_nr))
-    if not verified:
-        return make_response("Could not verify", 400)
-    try:
-        vote_ = data['vote']
-        if type(vote_) == str:
-            vote_ = [vote_]
-        id_ = data['id']
-        if type(id_) in [str, int]:
-            id_ = [id_]
-        round_ = data['round']
-        if type(round_) == str:
-            round_ = [round_]
-        client = data['client']
-        server_name = data['server']
-        # print("vote_", client, round_, server_name, id, "start vote", vote_, "slut vote")
-
-
-        my_id = servers.index(my_name)
-
-        votes = dict()
-        for i in range(len(vote_)):
-            vote = util.string_to_vote(vote_[i])
-            assert type(vote) == np.ndarray
-            votes[int(id_[i])] = vote
-            db.insert_vote(vote, int(id_[i]), round_, client, server_name, my_name)
-            if int(round_) == 1:
-                row_sum = server_util.create_sum_of_row(vote)
-                col_sum = server_util.create_sum_of_row(vote.T)
-
-                db.insert_row(row_sum, id_[i], 'row', client, server_name, my_name)
-                db.insert_col(col_sum, id_[i], 'column', client, server_name, my_name)
-
-                server_util.broadcast_rows_and_cols(row_sum, col_sum, id_[i], servers, my_name, client)
-
-            # x * ( x - 1)
-        if int(round_) == 1:
-            check = server_util.matrix_zero_one_check(my_id, len(servers), votes)
-            db.insert_zero_check(check, client, my_name, my_name)
-            servers_copy = server_util.list_remove(servers, my_name)
-            server_util.broadcast(dict(client=client, server=my_name, vote=util.vote_to_string(check)), servers_copy,
-                                  "/zerocheck")
-    except TypeError as e:
-        print(vote_)
-        print(e)
-        return Response(status=400)
-
-    return Response(status=200)
-
 
 @app.route("/server_comm", methods=["POST"])
 def receive_broadcasted_value():
@@ -468,6 +417,39 @@ def add():
     # TODO: EXLUDE CORRUPT SERVER FROM TAKING PART.
     # ss_summed_votes = server_util.secret_share(summed_votes, servers)
     server_util.broadcast_values(summed_votes, 2, servers, my_name)
+    return Response(status=200)
+
+
+@app.route("/summed_votes", methods=["POST"])
+def summed_votes():
+    verified, data = util.unpack_request(request, str(server_nr))
+    print("submit: ", data)
+    if not verified:
+        return make_response("Could not verify", 400)
+    try:
+        vote_ = data['vote']
+        if type(vote_) == str:
+            vote_ = [vote_]
+        id_ = data['id']
+        if type(id_) in [str, int]:
+            id_ = [id_]
+        client = data['client']
+        server_name = data['server']
+        # print("vote_", client, round_, server_name, id, "start vote", vote_, "slut vote")
+
+        my_id = servers.index(my_name)
+
+        votes = dict()
+        for i in range(len(vote_)):
+            vote = util.string_to_vote(vote_[i])
+            assert type(vote) == np.ndarray
+            votes[int(id_[i])] = vote
+            db.insert_summed_votes(vote, int(id_[i]), client, server_name, my_name)
+    except TypeError as e:
+        print(vote_)
+        print(e)
+        return Response(status=400)
+
     return Response(status=200)
 
 

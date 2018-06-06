@@ -106,6 +106,18 @@ else:
     cursor.execute('CREATE TABLE "http://127.0.0.1:5003/illegal"(sender TEXT, clients TEXT[])')
     cursor.execute('CREATE TABLE "http://127.0.0.1:5004/illegal"(sender TEXT, clients TEXT[])')
 
+    # Create tables for summed votes
+    cursor.execute(
+        'CREATE TABLE "http://127.0.0.1:5000/summed_votes"(matrix TEXT, id INTEGER, client TEXT, server TEXT)')
+    cursor.execute(
+        'CREATE TABLE "http://127.0.0.1:5001/summed_votes"(matrix TEXT, id INTEGER, client TEXT, server TEXT)')
+    cursor.execute(
+        'CREATE TABLE "http://127.0.0.1:5002/summed_votes"(matrix TEXT, id INTEGER, client TEXT, server TEXT)')
+    cursor.execute(
+        'CREATE TABLE "http://127.0.0.1:5003/summed_votes"(matrix TEXT, id INTEGER, client TEXT, server TEXT)')
+    cursor.execute(
+        'CREATE TABLE "http://127.0.0.1:5004/summed_votes"(matrix TEXT, id INTEGER, client TEXT, server TEXT)')
+
     # Create tables for the mediator
     cursor.execute('CREATE TABLE "http://127.0.0.1:5100/illegal"(sender TEXT, clients TEXT[])')
 
@@ -153,11 +165,11 @@ def round_one(db_name: str):
 
 def round_two(db_name: str):
     cur = get_cursor()
-    cur.execute('SELECT matrix, id, round, client, server FROM "' + db_name + '" WHERE round = 2')
+    cur.execute('SELECT matrix, id, client, server FROM "' + db_name + '/summed_votes"')
     res = []
-    for m, i, r, cl, s in cur:
+    for m, i, cl, s in cur:
         m = util.string_to_vote(m)
-        res.append((m, i, r, cl, s))
+        res.append((m, i, cl, s))
     cur.close()
     conn.commit()
     return res
@@ -237,9 +249,19 @@ def remove_vote(client_name: str, db_name: str):
     conn.commit()
     return 1
 
+
+def insert_summed_votes(matrix: np.ndarray, id: int, client_name: str, server: str, db_name: str):
+    cur = get_cursor()
+    matrix = util.vote_to_string(matrix)
+    cur.execute('INSERT INTO "' + db_name + '/summed_votes" (matrix, id, client, server) VALUES (%s, %s, %s, %s)',
+                (matrix, id, client_name, server))
+    cur.close()
+    conn.commit()
+    return 1
+
+
 def insert_zero_partition(matrix: np.ndarray, x: int, i: int, j: int, client_name: str, server: str, db_name: str):
     cur = get_cursor()
-    print("ZERO PARTITION INSERT")
     matrix = util.vote_to_string(matrix)
     cur.execute('INSERT INTO "' + db_name + '/zeropartition" (matrix, client, server, x, i, j) VALUES (%s, %s, %s, %s, %s, %s)',
             (matrix, client_name, server, x, i, j))
@@ -260,7 +282,6 @@ def get_zero_partitions(db_name: str):
     return res
 
 def insert_zero_partition_sum(matrix: np.ndarray, server: str, client: str, db_name: str):
-    print("INSERTED PARTITION SUM")
     cur = get_cursor()
     matrix = util.vote_to_string(matrix)
     cur.execute('INSERT INTO "' + db_name + '/zeropartitionsum" (matrix, client, server) VALUES (%s, %s, %s)',
@@ -274,7 +295,6 @@ def get_zero_partition_sum(db_name):
     cur.execute('SELECT matrix, client, server FROM "' + db_name + '/zeropartitionsum"')
     res = defaultdict(list)
     for m, c, s in cur:
-        print("MY PRINT:", m, c, s)
         res[c]
         m = util.string_to_vote(m)
         res[c].append(dict(matrix=m, server=s))
@@ -370,7 +390,6 @@ def get_mediator_illegal_votes():
 def reset(db_name: str):
     cur = get_cursor()
 
-    # TODO: Actually reset table, currently this is not done
     cur.execute('DELETE FROM "' + db_name + '"')
     cur.execute('DELETE FROM "' + db_name + '/columns"')
     cur.execute('DELETE FROM "' + db_name + '/rows"')

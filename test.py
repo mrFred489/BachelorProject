@@ -69,7 +69,7 @@ class TestArithmetics(unittest.TestCase):
             secrets_dict[i] = secret
         secret_share_sum = []
         for id in range(len(local_servers)):
-            secret_share_sum.append(server_util.matrix_zero_one_check(id, len(local_servers), secrets_dict))
+            secret_share_sum.append(server_util.matrix_zero_one_check(id, len(local_servers), secrets_dict, "server" + str(id), "test1")) # TODO: Korrekt client og my_name?
         val = server_util.zero_one_check(secret_share_sum)
         result = np.array_equal(val, np.zeros(val.shape))
         self.assertTrue(result)
