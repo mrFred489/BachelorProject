@@ -239,6 +239,7 @@ def remove_vote(client_name: str, db_name: str):
 
 def insert_zero_partition(matrix: np.ndarray, x: int, i: int, j: int, client_name: str, server: str, db_name: str):
     cur = get_cursor()
+    print("ZERO PARTITION INSERT")
     matrix = util.vote_to_string(matrix)
     cur.execute('INSERT INTO "' + db_name + '/zeropartition" (matrix, client, server, x, i, j) VALUES (%s, %s, %s, %s, %s, %s)',
             (matrix, client_name, server, x, i, j))
@@ -259,6 +260,7 @@ def get_zero_partitions(db_name: str):
     return res
 
 def insert_zero_partition_sum(matrix: np.ndarray, server: str, client: str, db_name: str):
+    print("INSERTED PARTITION SUM")
     cur = get_cursor()
     matrix = util.vote_to_string(matrix)
     cur.execute('INSERT INTO "' + db_name + '/zeropartitionsum" (matrix, client, server) VALUES (%s, %s, %s)',

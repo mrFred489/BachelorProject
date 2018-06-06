@@ -109,7 +109,7 @@ def vote():
 
         local_parts = server_util.matrix_zero_one_check(my_id, servers, votes_dict, my_name, client)
         for local_part in local_parts:
-            for x, ss in local_part[3]:
+            for x, ss in enumerate(local_part[3]):
                 if(x != my_id):
                     db.insert_zero_partition(matrix=ss, x=x, i=local_part[1], j=local_part[2], client_name=local_part[5], server=my_name, db_name=my_name)
     except TypeError as e:
@@ -258,6 +258,7 @@ def zero_one_partitions_consistency_check():
 
 
     partition_dict = db.get_zero_partitions(my_name)
+    print(partition_dict)
     partition_dict_clients = list(partition_dict.keys())
     for client in partition_dict_clients:
         partition_matrix_list = [[[[] for h in range(len(servers))] for j in range(len(servers))] for i in range(len(servers))]
@@ -339,6 +340,7 @@ def sumdifferenceshareforzeroone():
 
 def sum_product_zero_one_check():
     zero_partitions_dict = db.get_zero_partitions(my_name)
+    print(zero_partitions_dict)
     zero_partitions_clients = zero_partitions_dict.keys()
     sum_partition_array = [[[0 for x in range(len(servers))] for j in range(len(servers))] for i in range(len(servers))]
     for c in zero_partitions_clients:
@@ -353,6 +355,7 @@ def sum_product_zero_one_check():
                 used_parts.add((i, j, x))
                 sum_partition_array[i][j][x] = sum_partition_array[i][j][x] + matrix
         server_util.broadcast(data=dict(sum_matrix=sum_partition_array, server=my_name, client=c), url="/zeroone_sum_partition")
+        db.insert_zero_partition_sum(matrix=sum_partition_array, server=my_name, client=c, db_name=my_name)
 
 @app.route("/zeroone_sum_partition", methods=["POST"])
 def sum_product_receive():
@@ -360,6 +363,7 @@ def sum_product_receive():
     if not verified:
         return make_response("Could not verify", 400)
     try:
+        print("I SUM")
         sum_matrix_ = data['sum_matrix']
         client_ = data['client']
         server_ = data['server']
