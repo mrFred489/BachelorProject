@@ -280,10 +280,8 @@ def get_zero_partition_sum(db_name):
 def insert_zero_consistency_check(diff: np.ndarray, x: int, i: int, j:int, server_a: str, server_b: str, client_name: str, server: str, db_name: str):
     cur = get_cursor()
     diff = util.vote_to_string(diff)
-    print("HERE2a")
     cur.execute('INSERT INTO "' + db_name + '/zeroconsistency" (diff, x, i, j, server_a, server_b, client, server) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)',
                 (diff, x, i, j, server_a, server_b, client_name, server))
-    print("HERE2b")
     cur.close()
     conn.commit()
     return 1
