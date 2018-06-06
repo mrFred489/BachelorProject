@@ -270,6 +270,7 @@ class TestCommunication(unittest.TestCase):
         for i in local_servers:
             requests.get(i + "shutdown")
         requests.get(mediator + "shutdown")
+        time.sleep(1)
 
 
 class TestMediator(unittest.TestCase):
