@@ -87,8 +87,8 @@ def sum_votes(votes):
 def send_value_to_server(data, url):
     return util.post_url(data=data, url=url)
 
-def send_illegal_votes_to_mediator(illegal_votes: list, server: str, url: str):
-    return util.post_url(data=dict(illegal_list=illegal_votes, server=server), url=url + "/votevalidity")
+def send_illegal_votes_to_mediator(illegal_votes: list, server: str, url: str, name):
+    return util.post_url(data=dict(illegal_votes=illegal_votes, server=server, sender=name), url=url + "/votevalidity")
 
 def verify_consistency(votes):
     # TODO: USE THIS EVERYWHERE TO ENSURE EQUALITY IN DATABASE.

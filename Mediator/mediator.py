@@ -20,6 +20,7 @@ test_servers = [
 
 servers = test_servers
 
+
 def shutdown_server():
     func = request.environ.get('werkzeug.server.shutdown')
     if func is None:
@@ -37,7 +38,8 @@ def vote_validity():
         illegal_votes_ = [illegal_votes_]
     server_ = data['server']
     db.insert_mediator_illegal_votes(illegal_votes_, server_)
-    return make_response(200)
+    return make_response("valid", 200)
+
 
 @app.route("/decidevalidity", methods=["POST"])
 def decide_validity():
@@ -81,8 +83,6 @@ def decide_validity():
         broadcast_to_servers(dict(malicious_server=malicious_server, votes_for_deletion=[]), url="/mediator_answer_votes")
 
 
-
-
 @app.route("/messageinconsistency", methods=["POST"])
 def message_inconsistency():
     verified, data = util.unpack_request(request, my_name)
@@ -102,6 +102,7 @@ def create_local(port):
 
     testing = True
     app.run(port=int(port), debug=False, use_reloader=False, threaded=True)
+
 
 def broadcast_to_servers(data:  dict, url: str):
     for server in servers:

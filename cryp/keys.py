@@ -15,6 +15,7 @@ def get_key(name):
             privatefile.write(privkey.save_pkcs1())
     return privkey, pubkey
 
+
 def get_public_key(name):
     pubkey = None
     try:

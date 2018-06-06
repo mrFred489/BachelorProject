@@ -23,6 +23,8 @@ else:
     postgresql = testing.postgresql.Postgresql()
     conn = psy.connect(**postgresql.dsn())
     cursor = conn.cursor()
+    mediator = "http://127.0.0.1:5100"
+
 
     # Create table for votes
     cursor.execute(
@@ -371,6 +373,9 @@ def reset(db_name: str):
     cur.execute('DELETE FROM "' + db_name + '/columns"')
     cur.execute('DELETE FROM "' + db_name + '/rows"')
     cur.execute('DELETE FROM "' + db_name + '/zerocheck"')
+    cur.execute('DELETE FROM "' + db_name + '/zeropartitionsum"')
+    cur.execute('DELETE FROM "' + db_name + '/zeroconsistency"')
+    cur.execute('DELETE FROM "' + db_name + '/zeropartition"')
     cur.execute('DELETE FROM "' + db_name + '/illegal"')
 
     cur.close()

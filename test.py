@@ -39,6 +39,7 @@ def create_local_server(port):
     pr.start()
 
 def create_local_mediator(port):
+    util.get_keys("mediator")
     pr = mp.Process(target=Mediator.mediator.create_local, args=(str(port),))
     pr.start()
 
@@ -115,10 +116,12 @@ class TestCommunication(unittest.TestCase):
         time.sleep(3)
 
     def test_vote_format(self):
+        reset_servers()
         vote = client_util.create_vote([4, 2, 1, 3])
         self.assertEqual(1, vote[0][3])
 
     def test_r_i_matrices(self):
+        reset_servers()
         vote = client_util.create_vote([4, 2, 1, 3])
         secret_shared_matrices = util.partition_and_secret_share_vote(vote, local_servers)
         res = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]
@@ -130,6 +133,7 @@ class TestCommunication(unittest.TestCase):
         self.assertTrue(np.array_equal(vote, np.array(res)))
 
     def test_check_vote(self):
+        reset_servers()
         vote = client_util.create_vote([4, 2, 1, 3])
         ss_vote_partitions = util.partition_and_secret_share_vote(vote, local_servers)
         res = 0
@@ -138,6 +142,7 @@ class TestCommunication(unittest.TestCase):
         self.assertTrue(server_util.check_rows_and_columns(res))
 
     def test_check_vote_neg(self):
+        reset_servers()
         vote = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [1, 0, 0, 1]])
         ss_vote_partitions = util.partition_and_secret_share_vote(vote, local_servers)
         res = 0
@@ -146,6 +151,7 @@ class TestCommunication(unittest.TestCase):
         self.assertFalse(server_util.check_rows_and_columns(res))
 
     def test_row_sum(self):
+        reset_servers()
         r1 = (np.array([0, 0, 0, 1]), 0, "row", 'c1')
         r2 = (np.array([0, 0, 1, 0]), 1, "row", 'c1')
         r3 = (np.array([0, 1, 0, 0]), 2, "row", 'c1')
@@ -155,6 +161,7 @@ class TestCommunication(unittest.TestCase):
 
 
     def test_neg_row_sum(self):
+        reset_servers()
         r1 = (np.array([1,1,1,1]),0,"row", 'c1')
         r2 = (np.array([0,0,0,1]),1,"row", 'c1')
         r3 = (np.array([1,1,1,1]),2,"row", 'c1')
@@ -165,18 +172,21 @@ class TestCommunication(unittest.TestCase):
     # TODO: add test that checks that server actually sorts away illegal votes
 
     def test_create_sum_of_row(self):
+        reset_servers()
         vote = client_util.create_vote([2, 1, 3, 4])
         summed_rows = server_util.create_sum_of_row(vote)
         for sum in summed_rows:
             self.assertEqual(1, sum)
 
     def test_create_sum_of_col_neg(self):
+        reset_servers()
         vote = client_util.create_vote([1, 1, 3, 4])
         summed_rows = server_util.create_sum_of_row(vote.T)
         self.assertNotEqual(1, summed_rows[0])
         self.assertEqual(2, summed_rows[0])
 
     def test_division_of_secret_shares(self):
+        reset_servers()
         to_send_to = client_util.divide_secret_shares()
         for i in range(len(local_servers)):
             partition_for_server = to_send_to[i]
@@ -274,7 +284,7 @@ class TestMediator(unittest.TestCase):
         time.sleep(3)
 
     def test_todo(self):
-        server_util.send_illegal_votes_to_mediator([], "me", mediator[:-1])
+        server_util.send_illegal_votes_to_mediator([], "me", mediator[:-1], "test1")
         self.assertTrue(True)
 
     @classmethod
@@ -285,6 +295,7 @@ class TestMediator(unittest.TestCase):
 def reset_servers():
     for server in local_servers:
         requests.post(server + "reset")
+    requests.post(mediator + "reset")
 
 
 if __name__ == '__main__':
