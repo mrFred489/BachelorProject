@@ -207,8 +207,9 @@ def zero_one_partitions_consistency_check():
 
 
     partition_dict = db.get_zero_partitions(my_name)
-    print(partition_dict)
-    partition_dict_clients = list(partition_dict.keys())
+    print("PD:", partition_dict)
+    partition_dict_clients = partition_dict.keys()
+    print("PDC:", partition_dict_clients)
     for client in partition_dict_clients:
         partition_matrix_list = [[[[] for h in range(len(servers))] for j in range(len(servers))] for i in range(len(servers))]
         for partition in partition_dict[client]:
@@ -254,12 +255,14 @@ def differenceshareforzeroone():
 @app.route("/sumdifferenceshareforzeroone", methods=["GET"])
 def sumdifferenceshareforzeroone():
     difference_dict = db.get_zero_consistency_check(my_name)
-    differece_dict_clients = difference_dict.keys()
+    print("DD:", difference_dict)
+    difference_dict_clients = difference_dict.keys()
+    print("DDC:", difference_dict_clients)
     disagreed_clients = []
-    for client in differece_dict_clients:
+    for client in difference_dict_clients:
         difference_matrix_list = [[[[] for h in range(len(servers))] for j in range(len(servers))] for i in range(len(servers))]
         for difference in difference_dict[client]:
-            difference_matrix_list[difference['i']][difference['j']][difference['x']].append((difference['diff'],difference['server_a'], difference['server_b']. difference['server']))
+            difference_matrix_list[difference['i']][difference['j']][difference['x']].append((difference['diff'],difference['server_a'], difference['server_b'], difference['server']))
 
         # Ensure diff_a = diff_b and sum diff_shares
         result = np.zeros((len(servers), len(servers)))
@@ -276,9 +279,11 @@ def sumdifferenceshareforzeroone():
                             print("Disagreement")
                     res = res + first_diff[0]
                 result[i][j] = res
-                if(result != np.zeros(result.shape)):
+                if not (np.array_equal(np.mod(np.array(result),util.get_prime()), (np.zeros(result.shape)))):
                     print("Disagreement")
                     disagreed_clients.append((client, i, j, difference_matrix_list[i][j][x][1], difference_matrix_list[i][j][x][2]))
+                else:
+                    print("Agreement")
         if len(disagreed_clients) > 0:
             # TODO: Use mediator for each part
             print(disagreed_clients)
@@ -289,7 +294,7 @@ def sumdifferenceshareforzeroone():
 
 def sum_product_zero_one_check():
     zero_partitions_dict = db.get_zero_partitions(my_name)
-    print(zero_partitions_dict)
+    print("ZPD:", zero_partitions_dict)
     zero_partitions_clients = zero_partitions_dict.keys()
     sum_partition_array = [[[0 for x in range(len(servers))] for j in range(len(servers))] for i in range(len(servers))]
     for c in zero_partitions_clients:
@@ -303,7 +308,7 @@ def sum_product_zero_one_check():
             if not (used_parts.__contains__((i, j, x))):
                 used_parts.add((i, j, x))
                 sum_partition_array[i][j][x] = sum_partition_array[i][j][x] + matrix
-        server_util.broadcast(data=dict(sum_matrix=sum_partition_array, server=my_name, client=c), url="/zeroone_sum_partition")
+        server_util.broadcast(data=dict(sum_matrix=sum_partition_array, server=my_name, client=c), servers=servers, url="/zeroone_sum_partition")
         db.insert_zero_partition_sum(matrix=sum_partition_array, server=my_name, client=c, db_name=my_name)
 
 @app.route("/zeroone_sum_partition", methods=["POST"])
@@ -327,8 +332,9 @@ def sum_product_receive():
 @app.route("/zeroone_sum_partition_finalize", methods=["GET"])
 def zeroone_sum_partition_finalize():
     partition_sums = db.get_zero_partition_sum(my_name)
+    print("PS:", partition_sums)
     partition_sums_clients = partition_sums.keys()
-    print("MY PRINT:", partition_sums_clients)
+    print("PSC:", partition_sums_clients)
     for client in partition_sums_clients:
         part_sums = partition_sums[client]
         res = [[[[0] for x in range(len(servers))] for j in range(len(servers))] for i in range(len(servers))]

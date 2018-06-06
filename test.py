@@ -246,6 +246,9 @@ class TestCommunication(unittest.TestCase):
             util.get_url(server + "zero_one_consistency")
         time.sleep(.5)
         for server in local_servers:
+            util.get_url(server + "sumdifferenceshareforzeroone")
+        time.sleep(.5)
+        for server in local_servers:
             util.get_url(server + "zeroone_sum_partition_finalize")
         self.assertTrue(True)
 
