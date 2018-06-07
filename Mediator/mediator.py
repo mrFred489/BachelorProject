@@ -66,6 +66,7 @@ def decide_validity():
 
         if complaints == 2:
             # If this happens something horrible has gone wrong. Shouldn't be possible scenario in correct setup
+            # Ask for relevant values from all servers who has them, and compute correct value. 
             return make_response("Two complaints. Mediator is confused", 400)
 
         if complaints == 3:
@@ -88,6 +89,7 @@ def message_inconsistency():
     verified, data = util.unpack_request(request, my_name)
     if not verified:
         return make_response("Could not verify", 400)
+    db.insert_mediator_inconsistency(data["sender"], data["reported1"], data["reported2"], data["value1"], data["value2"], data["protocol"])
     return make_response(200)
 
 
@@ -104,6 +106,6 @@ def create_local(port):
     app.run(port=int(port), debug=False, use_reloader=False, threaded=True)
 
 
-def broadcast_to_servers(data:  dict, url: str):
+def broadcast_to_servers(data: dict, url: str):
     for server in servers:
         util.post_url(data=data, url=url)

@@ -23,8 +23,13 @@ try:
 except:
     my_name = "test"
 
+methods = ["vote", "receive_broadcasted_value", "zerocheck", "zeroonepartions", "check_votes", "zero_one_partitions_consistency_check", "differenceshareforzeroone", "sumdifferenceshareforzeroone", "sum_product_zero_one_check", "sum_product_receive", "zeroone_sum_partition_finalize", "ensure_agreement", "mediator_answer_votes", "add", "summed_votes", "compute_result", "illegal_vote"]
+
+
+
 
 def shutdown_server():
+    print("Metoder der ikke er brugt:", methods)
     func = request.environ.get('werkzeug.server.shutdown')
     if func is None:
         raise RuntimeError('Not running with the Werkzeug Server')
@@ -67,6 +72,8 @@ def reset():
 
 @app.route("/vote", methods=["POST"])
 def vote():
+    if "vote" in methods:
+        methods.remove("vote")
     verified, data = util.unpack_request(request, str(server_nr))
     if not verified:
         return make_response("Could not verify", 400)
@@ -120,6 +127,8 @@ def vote():
 
 @app.route("/server_comm", methods=["POST"])
 def receive_broadcasted_value():
+    if "receive_broadcasted_value" in methods:
+        methods.remove("receive_broadcasted_value")
     verified, data = util.unpack_request(request, str(server_nr))
     if not verified:
         return make_response("Could not verify", 400)
@@ -139,6 +148,8 @@ def receive_broadcasted_value():
 
 @app.route("/zerocheck", methods=["POST"])
 def zerocheck():
+    if "zerocheck" in methods:
+        methods.remove("zerocheck")
     verified, data = util.unpack_request(request, str(server_nr))
     if not verified:
         return make_response("Could not verify", 400)
@@ -159,6 +170,8 @@ def zerocheck():
 
 @app.route("/zeroonepartitions", methods=["POST"])
 def zeroonepartions():
+    if "zeroonepartitions" in methods:
+        methods.remove("zeroonepartitions")
     verified, data = util.unpack_request(request, str(server_nr))
     if not verified:
         return make_response("Could not verify", 400)
@@ -181,6 +194,8 @@ def zeroonepartions():
 
 @app.route("/check_votes", methods=["GET"])
 def check_votes():
+    if "check_votes" in methods:
+        methods.remove("check_votes")
     # COLUMN ROW CHECK
     cols = db.get_cols(my_name)
     rows = db.get_rows(my_name)
@@ -191,6 +206,7 @@ def check_votes():
     # TODO: Ensure agreement among servers regarding illegal_votes
 
     list_illegal_votes = list(illegal_votes)
+
 
     # TODO: ADD ZERO ONE CHECK
 
@@ -203,6 +219,8 @@ def check_votes():
 
 @app.route("/zero_one_consistency", methods=["GET"])
 def zero_one_partitions_consistency_check():
+    if "zero_one_partitions_consistency_check" in methods:
+        methods.remove("zero_one_partitions_consistency_check")
     # Create three dimensional list which contains lists for each share of a part of a product
 
 
@@ -230,6 +248,8 @@ def zero_one_partitions_consistency_check():
 
 @app.route("/differenceshareforzeroone", methods=["POST"])
 def differenceshareforzeroone():
+    if "differenceshareforzeroone" in methods:
+        methods.remove("differenceshareforzeroone")
     verified, data = util.unpack_request(request, str(server_nr))
     if not verified:
         return make_response("Could not verify", 400)
@@ -253,13 +273,17 @@ def differenceshareforzeroone():
 
 @app.route("/sumdifferenceshareforzeroone", methods=["GET"])
 def sumdifferenceshareforzeroone():
+    if "sumdifferenceshareforzeroone" in methods:
+        methods.remove("sumdifferenceshareforzeroone")
     difference_dict = db.get_zero_consistency_check(my_name)
     difference_dict_clients = difference_dict.keys()
     disagreed_clients = []
     for client in difference_dict_clients:
-        difference_matrix_list = [[[[] for h in range(len(servers))] for j in range(len(servers))] for i in range(len(servers))]
+        difference_matrix_list = [[[[] for h in range(len(servers))]
+                                   for j in range(len(servers))]
+                                  for i in range(len(servers))]
         for difference in difference_dict[client]:
-            difference_matrix_list[difference['i']][difference['j']][difference['x']].append((difference['diff'],difference['server_a'], difference['server_b'], difference['server']))
+            difference_matrix_list[difference['i']][difference['j']][difference['x']].append((difference['diff'], difference['server_a'], difference['server_b'], difference['server']))
 
         # Ensure diff_a = diff_b and sum diff_shares
         result = [[0 for j in range(len(servers))] for i in range(len(servers))]
@@ -290,6 +314,8 @@ def sumdifferenceshareforzeroone():
         return Response(status=200)
 
 def sum_product_zero_one_check():
+    if "sum_product_zero_one_check" in methods:
+        methods.remove("sum_product_zero_one_check")
     zero_partitions_dict = db.get_zero_partitions(my_name)
     zero_partitions_clients = zero_partitions_dict.keys()
     sum_partition_array = [[[0 for x in range(len(servers))] for j in range(len(servers))] for i in range(len(servers))]
@@ -309,6 +335,8 @@ def sum_product_zero_one_check():
 
 @app.route("/zeroone_sum_partition", methods=["POST"])
 def sum_product_receive():
+    if "sum_product_receive" in methods:
+        methods.remove("sum_product_receive")
     verified, data = util.unpack_request(request, str(server_nr))
     if not verified:
         return make_response("Could not verify", 400)
@@ -327,6 +355,8 @@ def sum_product_receive():
 
 @app.route("/zeroone_sum_partition_finalize", methods=["GET"])
 def zeroone_sum_partition_finalize():
+    if "zeroone_sum_partition_finalize" in methods:
+        methods.remove("zeroone_sum_partition_finalize")
     partition_sums = db.get_zero_partition_sum(my_name)
     partition_sums_clients = partition_sums.keys()
     for client in partition_sums_clients:
@@ -360,6 +390,8 @@ def zeroone_sum_partition_finalize():
 
 @app.route("/ensure_vote_agreement", methods=["GET"])
 def ensure_agreement():
+    if "ensure_agreement" in methods:
+        methods.remove("ensure_agreement")
     illegal_votes = []
 
     for server in servers:
@@ -367,6 +399,7 @@ def ensure_agreement():
 
     to_be_deleted = set()
 
+    # TODO: Brug verify_consistency til at verificere alting
 
     agreed_illegal_votes = set(illegal_votes[0])
     disagreed_illegal_votes = set()
@@ -380,17 +413,17 @@ def ensure_agreement():
         print("removing vote", client)
         db.remove_vote(client, my_name)
 
-
     disagreed_illegal_votes = ["c3"]
     # Send disagreed illegal votes to mediator
     if(len(disagreed_illegal_votes) > 0):
         server_util.send_illegal_votes_to_mediator(illegal_votes=list(disagreed_illegal_votes), server=my_name, url=mediator, name=my_name.split(":")[-1])
 
-
     return Response(status=200)
 
 @app.route("/mediator_answer_votes", methods=["POST"])
 def mediator_answer_votes():
+    if "mediator_answer_votes" in methods:
+        methods.remove("mediator_answer_votes")
     verified, data = util.unpack_request(request, str(server_nr))
     if not verified:
         return make_response("Could not verify", 400)
@@ -412,20 +445,29 @@ def mediator_answer_votes():
 
 @app.route("/add", methods=["GET"])
 def add():
+    if "add" in methods:
+        methods.remove("add")
     votes = db.round_one(my_name)
-    summed_votes = server_util.sum_votes(votes)
     # TODO: Secret share summed votes
 
     # TODO: EXLUDE CORRUPT SERVER FROM TAKING PART.
+    legal_votes = [x for x in votes if x[4] != malicious_server]  # list(filter(lambda a: a[4] != malicious_server, votes))
+
+    # for matrix, id, _, client, server in legal_votes:
+    #     db.insert_summed_votes(matrix, id, client, server, my_name)
+
     # ss_summed_votes = server_util.secret_share(summed_votes, servers)
+
+    summed_votes = server_util.sum_votes(legal_votes)
     server_util.broadcast_values(summed_votes, 2, servers, my_name)
     return Response(status=200)
 
 
 @app.route("/summed_votes", methods=["POST"])
 def summed_votes():
+    if "summed_votes" in methods:
+        methods.remove("summed_votes")
     verified, data = util.unpack_request(request, str(server_nr))
-    print("submit: ", data)
     if not verified:
         return make_response("Could not verify", 400)
     try:
@@ -457,12 +499,14 @@ def summed_votes():
 
 @app.route("/compute_result", methods=["GET"])
 def compute_result():
-
+    if "compute_result" in methods:
+        methods.remove("compute_result")
     # TODO: EXCLUDE CORRUPT SERVERS FROM TAKING PART IN THIS.
     # TODO:
     all_votes = db.round_two(my_name)
+    legal_votes = [x for x in all_votes if x[3] != malicious_server]
     # print("av", all_votes)
-    s = server_util.calculate_result(all_votes)
+    s = server_util.calculate_result(legal_votes)
 
     # Broadcast result to other servers. If disagreement, then send to mediator.
 
@@ -471,6 +515,8 @@ def compute_result():
 
 @app.route("/illegal", methods=["POST"])
 def illegal_vote():
+    if "illegal_vote" in methods:
+        methods.remove("illegal_vote")
     verified, data = util.unpack_request(request, str(server_nr))
     if not verified:
         return make_response("Could not verify", 400)

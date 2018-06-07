@@ -6,7 +6,6 @@ from Client import client_util
 import multiprocessing as mp
 import Server.routes
 from Server import server_util
-from time import sleep
 import numpy as np
 import os.path
 import Mediator.mediator
@@ -18,7 +17,7 @@ baseurl3 = "http://127.0.0.1:5002/"
 baseurl4 = "http://127.0.0.1:5003/"
 mediator = "http://127.0.0.1:5100/"
 
-local_servers = [baseurl1, baseurl2, baseurl3,baseurl4]
+local_servers = [baseurl1, baseurl2, baseurl3, baseurl4]
 
 local_servers_and_med = local_servers + [mediator]
 
@@ -69,7 +68,7 @@ class TestArithmetics(unittest.TestCase):
             secrets_dict[i] = secret
         secret_share_sum = []
         for id in range(len(local_servers)):
-            secret_share_sum.append(server_util.matrix_zero_one_check(id, len(local_servers), secrets_dict, "server" + str(id), "test1")) # TODO: Korrekt client og my_name?
+            secret_share_sum.append(server_util.matrix_zero_one_check(id, len(local_servers), secrets_dict, "server" + str(id), "test1"))  # TODO: Korrekt client og my_name?
         val = server_util.zero_one_check(secret_share_sum)
         result = np.array_equal(val, np.zeros(val.shape))
         self.assertTrue(result)
@@ -247,10 +246,10 @@ class TestCommunication(unittest.TestCase):
         client_util.postvote("illegal", vote2_partitions, local_servers)
         for server in local_servers:
             util.get_url(server + "zero_one_consistency")
-        time.sleep(1)
+        time.sleep(0.5)
         for server in local_servers:
             util.get_url(server + "sumdifferenceshareforzeroone")
-        time.sleep(1)
+        time.sleep(0.5)
         for server in local_servers:
             util.get_url(server + "zeroone_sum_partition_finalize")
         self.assertTrue(True)
@@ -307,3 +306,4 @@ def reset_servers():
 
 if __name__ == '__main__':
     unittest.main()
+    

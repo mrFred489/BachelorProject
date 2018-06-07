@@ -9,7 +9,7 @@ def broadcast(data, servers, url):
         send_value_to_server(data, server + url)
 
 
-def list_remove(l:list, element):
+def list_remove(l: list, element):
     temp = l.copy()
     del temp[l.index(element)]
     return temp
@@ -35,15 +35,15 @@ def create_sum_of_row(vote):  # slet
 def broadcast_rows_and_cols(row, col, id_, servers, my_name, client_name):  # slet
     servers = list_remove(servers, my_name)
     broadcast(dict(vote=(util.vote_to_string(row)),
-                              id=id_, round="row",
-                              server=my_name,
-                              client=client_name),
+                   id=id_, round="row",
+                   server=my_name,
+                   client=client_name),
               servers, '/server_comm')
 
     broadcast(dict(vote=(util.vote_to_string(col)),
-                              id=id_, round="column",
-                              server=my_name,
-                              client=client_name),
+                   id=id_, round="column",
+                   server=my_name,
+                   client=client_name),
               servers, '/server_comm')
 
 
@@ -87,8 +87,16 @@ def sum_votes(votes):
 def send_value_to_server(data, url):
     return util.post_url(data=data, url=url)
 
+
 def send_illegal_votes_to_mediator(illegal_votes: list, server: str, url: str, name):
     return util.post_url(data=dict(illegal_votes=illegal_votes, server=server, sender=name), url=url + "/votevalidity")
+
+
+def complain_consistency(complaint: util.Complaint, servers, mediator, my_name):
+    util.get_keys(my_name.split(":")[-1])
+    for server in list_remove(servers, servers[complaint.value_id]) + [mediator]:
+        util.post_url(dict(complaint=util.vote_to_string(complaint), server=my_name), server + "messageinconsistency")
+
 
 def verify_consistency(votes):
     # TODO: USE THIS EVERYWHERE TO ENSURE EQUALITY IN DATABASE.

@@ -14,7 +14,6 @@ if not test:
     conn = psy.connect(host='localhost', user='bachelor', password='gruppen1234', dbname='bachelorprojekt')
     mediator = "http://127.0.0.1:5100"
 
-
     def get_conn():
         global conn
         conn = psy.connect(host='localhost', user='bachelor', passwd='gruppen1234', dbname='bachelorprojekt')
@@ -120,22 +119,19 @@ else:
 
     # Create tables for the mediator
     cursor.execute('CREATE TABLE "http://127.0.0.1:5100/illegal"(sender TEXT, clients TEXT[])')
+    cursor.execute('CREATE TABLE "http://127.0.0.1:5100/inconsistency"(sender TEXT, reported1 TEXT, reported2 TEXT, values TEXT[], protocol TEXT)')
 
     cursor.close()
     conn.commit()
     print("DATABASES UP AND RUNNING\n")
 
-
-
     def get_conn():
         global conn
         conn = psy.connect(postgresql.dsn())
 
-
     def cleanup():
         print("cleanup")
         postgresql.stop()
-
 
     atexit.register(cleanup)
 
@@ -377,8 +373,9 @@ def insert_mediator_illegal_votes(clients: list, sender: str):
     conn.commit()
     return 1
 
+
 def get_mediator_illegal_votes():
-    cur  = get_cursor()
+    cur = get_cursor()
     cur.execute('SELECT sender, clients FROM "' + mediator + '/illegal' + '"')
     res = []
     for i in cur:
@@ -386,6 +383,29 @@ def get_mediator_illegal_votes():
     cur.close()
     conn.commit()
     return res
+
+
+def insert_mediator_inconsistency(sender: str, reported1: str, reported2: str, value1: np.ndarray, value2: np.ndarray, protocol: str):
+    value1 = util.vote_to_string(value1)
+    value2 = util.vote_to_string(value2)
+    values = [value1, value2]
+    cur = get_cursor()
+    cur.execute('INSERT INTO "' + mediator + '/inconsistency' + '" (sender, reported1, reported2, values, protocol) VALUES (%s, %s, %s, %s, %s)',(sender, reported1, reported2, values, protocol))
+    cur.close()
+    conn.commit()
+    return 1
+
+
+def get_mediator_inconsistency():
+    cur = get_cursor()
+    cur.execute('SELECT sender, reported1, reported2, values, protocol FROM "' + mediator + '/illegal' + '"')
+    res = []
+    for s, r1, r2, vs, p in cur:
+        res.append((s, r1, r2, vs[0], vs[1], p))
+    cur.close()
+    conn.commit()
+    return res
+
 
 def reset(db_name: str):
     cur = get_cursor()
