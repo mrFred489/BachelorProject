@@ -295,7 +295,7 @@ def sumdifferenceshareforzeroone():
                     differences = difference_matrix_list[i][j][x]
                     first_diff = np.array(differences[0])
                     for difference in differences[1:]:
-                        if not np.array_equal(first_diff, np.array(difference[0])):
+                        if not np.array_equal(first_diff[0], np.array(difference[0])):
                             # TODO: Do something with mediator
                             print("Disagreement in differences ")
                     res = res + first_diff[0]
@@ -377,9 +377,8 @@ def zeroone_sum_partition_finalize():
                             server = part_sum['server']
                             res[i][j][x] = val[0]
                 res[i][j] = sum(res[i][j])[0] % util.get_prime()
-        print("ZERO_ONE_PRODUCT:",np.array([list (map(np.sum, x) ) for x in res]))
-
-        sum_res = np.mod(np.array([list (map(np.sum, x) ) for x in res]), util.get_prime())
+        sum_res = [sum(x) for x in res]
+        sum_res = np.mod(np.array(sum_res), util.get_prime())
         if not np.array_equal(sum_res, np.zeros(sum_res.shape)):
             # Illegal vote.
             print(client, "is an illegal vote")
