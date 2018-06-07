@@ -239,9 +239,12 @@ class TestCommunication(unittest.TestCase):
 
     def test_new_product(self):
         reset_servers()
-        vote1 = client_util.create_vote([1])
+        vote1 = np.array([[1,0],[0,1]])
+        vote2 = np.array([[-2,3],[3,-2]])
         vote1_partitions = util.partition_and_secret_share_vote(vote1, local_servers)
-        client_util.postvote("test1", vote1_partitions, local_servers)
+        vote2_partitions = util.partition_and_secret_share_vote(vote2, local_servers)
+        client_util.postvote("legal", vote1_partitions, local_servers)
+        client_util.postvote("illegal", vote2_partitions, local_servers)
         for server in local_servers:
             util.get_url(server + "zero_one_consistency")
         time.sleep(1)

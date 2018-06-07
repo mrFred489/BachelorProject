@@ -58,6 +58,7 @@ else:
 
 found_malicious_server = False
 malicious_server = ""
+communication_number : int = 0
 
 @app.route("/reset", methods=["POST"])
 def reset():
@@ -261,22 +262,22 @@ def sumdifferenceshareforzeroone():
             difference_matrix_list[difference['i']][difference['j']][difference['x']].append((difference['diff'],difference['server_a'], difference['server_b'], difference['server']))
 
         # Ensure diff_a = diff_b and sum diff_shares
-        result = np.zeros((len(servers), len(servers)))
+        result = [[0 for j in range(len(servers))] for i in range(len(servers))]
         for i in range(len(servers)):
             for j in range(len(servers)):
                 res = 0
                 for x in range(len(servers)):
                     # Ensure equality
                     differences = difference_matrix_list[i][j][x]
-                    first_diff = differences[0]
+                    first_diff = np.array(differences[0])
                     for difference in differences[1:]:
-                        if first_diff[0] != difference[0]:
-                            # TODO: Do something with meditator
-                            print("Disagreement")
+                        if not np.array_equal(first_diff, np.array(difference[0])):
+                            # TODO: Do something with mediator
+                            print("Disagreement in differences ")
                     res = res + first_diff[0]
                 result[i][j] = res
-                if not (np.array_equal(np.mod(np.array(result),util.get_prime()), (np.zeros(result.shape)))):
-                    print("Disagreement")
+                if not (np.array_equal(np.mod(np.array(result[i][j]),util.get_prime()), (np.zeros(result[i][j].shape)))):
+                    print("Disagreement in diff not zero")
                     disagreed_clients.append((client, i, j, difference_matrix_list[i][j][x][1], difference_matrix_list[i][j][x][2]))
                 else:
                     print("Agreement")
@@ -290,7 +291,6 @@ def sumdifferenceshareforzeroone():
 
 def sum_product_zero_one_check():
     zero_partitions_dict = db.get_zero_partitions(my_name)
-    print("ZPD:", zero_partitions_dict)
     zero_partitions_clients = zero_partitions_dict.keys()
     sum_partition_array = [[[0 for x in range(len(servers))] for j in range(len(servers))] for i in range(len(servers))]
     for c in zero_partitions_clients:
@@ -301,9 +301,9 @@ def sum_product_zero_one_check():
             i = part['i']
             j = part['j']
             x = part['x']
-            if not (used_parts.__contains__((i, j, x))):
+            if (i, j, x) not in used_parts:
                 used_parts.add((i, j, x))
-                sum_partition_array[i][j][x] = sum_partition_array[i][j][x] + matrix
+                sum_partition_array[i][j][x] = np.mod(np.add(sum_partition_array[i][j][x], matrix),util.get_prime())
         server_util.broadcast(data=dict(sum_matrix=util.vote_to_string(sum_partition_array), server=my_name, client=c), servers=servers, url="/zeroone_sum_partition")
         db.insert_zero_partition_sum(matrix=sum_partition_array, server=my_name, client=c, db_name=my_name)
 
@@ -313,7 +313,6 @@ def sum_product_receive():
     if not verified:
         return make_response("Could not verify", 400)
     try:
-        print("I SUM")
         sum_matrix_ = data['sum_matrix']
         sum_matrix_ = util.string_to_vote(sum_matrix_)
         client_ = data['client']
@@ -329,35 +328,34 @@ def sum_product_receive():
 @app.route("/zeroone_sum_partition_finalize", methods=["GET"])
 def zeroone_sum_partition_finalize():
     partition_sums = db.get_zero_partition_sum(my_name)
-    print("PS:", partition_sums)
     partition_sums_clients = partition_sums.keys()
-    print("PSC:", partition_sums_clients)
     for client in partition_sums_clients:
-        part_sums = partition_sums[client]
+        part_sums = list(partition_sums[client])
+
         res = [[[[0] for x in range(len(servers))] for j in range(len(servers))] for i in range(len(servers))]
         for i in range(len(servers)):
             for j in range(len(servers)):
                 for x in range(len(servers)):
                     server = 0
-                    val = part_sums[0][i][j][x]
+                    val = part_sums[0]['matrix'][i][j][x]
                     for part_sum in part_sums[1:]:
-                        print("PS:", part_sum)
-                        if(part_sum[i][j][x] != 0):
-                            if not (val == part_sum[i][j][x]):
+                        part_sum_matrix = part_sum['matrix']
+                        if not np.array_equal(part_sum_matrix[i][j][x], np.zeros(part_sum_matrix[i][j][x].shape)):
+                            if not np.array_equal(val, part_sum_matrix[i][j][x]):
                                 # TODO: Disagreement
                                 print("Disagreement! MEDIATOR not implemented yet")
                             server = part_sum['server']
-                            res[i][j][x] = val
-                res[i][j] = sum(res[i][j])
-        print("MY PRINT:", sum([sum(res[i] for i in range(len(servers)))]))
+                            res[i][j][x] = val[0]
+                res[i][j] = sum(res[i][j])[0] % util.get_prime()
+        print("ZERO_ONE_PRODUCT:",np.array([list (map(np.sum, x) ) for x in res]))
 
-        if sum([sum(res[i]) for i in range(len(servers))]) != np.zeros((range(len(servers)), range(len(servers)))):
+        sum_res = np.mod(np.array([list (map(np.sum, x) ) for x in res]), util.get_prime())
+        if not np.array_equal(sum_res, np.zeros(sum_res.shape)):
             # Illegal vote.
             print(client, "is an illegal vote")
         else:
             print(client, "is a legal vote")
     return Response(status=200)
-
 
 
 @app.route("/ensure_vote_agreement", methods=["GET"])
@@ -497,6 +495,7 @@ def create_local(port):
     testing = True
     my_name = "http://127.0.0.1:" + str(port)
     server_nr = int(port)
+    communication_number = 0
     print("starting ", port)
     app.run(port=int(port), debug=False, use_reloader=False, threaded=True)
 
