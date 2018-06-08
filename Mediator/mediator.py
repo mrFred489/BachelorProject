@@ -20,6 +20,12 @@ test_servers = [
 
 servers = test_servers
 
+def timer(protocol, complaint):
+    util.get_keys("mediator")
+    pr = mp.Process(target=create_local, args=(protocol,complaint))
+    pr.start()
+
+
 
 def shutdown_server():
     func = request.environ.get('werkzeug.server.shutdown')
@@ -90,9 +96,16 @@ def message_inconsistency():
     if not verified:
         return make_response("Could not verify", 400)
     complaint: util.Complaint = util.string_to_vote(data["complaint"])
-
+    
     db.insert_mediator_inconsistency(complaint.sender, complaint, complaint.protocol)
+    
     return make_response("Done", 200)
+
+
+@app.route("/reset", methods=["POST"])
+def reset():
+    db.reset_mediator()
+    return make_response("ok", 200)
 
 
 @app.route("/test/printcomplaints", methods=["GET"])

@@ -415,9 +415,15 @@ def reset(db_name: str):
     cur.execute('DELETE FROM "' + db_name + '/zeropartitionsum"')
     cur.execute('DELETE FROM "' + db_name + '/zeroconsistency"')
     cur.execute('DELETE FROM "' + db_name + '/zeropartition"')
-    cur.execute('DELETE FROM "' + db_name + '/illegal"')
-    cur.execute('DELETE FROM "' + db_name + '/inconsistency"')
 
+    cur.close()
+    conn.commit()
+    return 1
+
+def reset_mediator():
+    cur = get_cursor()
+    cur.execute('DELETE FROM "' + mediator + '/illegal"')
+    cur.execute('DELETE FROM "' + mediator + '/inconsistency"')
     cur.close()
     conn.commit()
     return 1
