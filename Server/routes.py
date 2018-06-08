@@ -189,7 +189,7 @@ def check_votes():
 
 
     # TODO: Ensure agreement among servers regarding illegal_votes
-    
+
     list_illegal_votes = list(illegal_votes)
 
     # MEDIATOR
@@ -259,11 +259,9 @@ def sumdifferenceshareforzeroone():
     difference_dict_clients = difference_dict.keys()
     disagreed_clients = []
     for client in difference_dict_clients:
-        difference_matrix_list = [[[[] for h in range(len(servers))]
-                                   for j in range(len(servers))]
-                                  for i in range(len(servers))]
+        difference_matrix_list = [[[[] for h in range(len(servers))] for j in range(len(servers))] for i in range(len(servers))]
         for difference in difference_dict[client]:
-            difference_matrix_list[difference['i']][difference['j']][difference['x']].append((difference['diff'], difference['server_a'], difference['server_b'], difference['server']))
+            difference_matrix_list[difference['i']][difference['j']][difference['x']].append((difference['diff'],difference['server_a'], difference['server_b'], difference['server']))
 
         # Ensure diff_a = diff_b and sum diff_shares
         result = [[0 for j in range(len(servers))] for i in range(len(servers))]
@@ -271,17 +269,45 @@ def sumdifferenceshareforzeroone():
             for j in range(len(servers)):
                 res = []
                 server_difference_dict = defaultdict(list)
+                server_difference_x_dict = defaultdict(list)
                 for x in range(len(servers)):
                     differences = difference_matrix_list[i][j][x]
                     for difference in differences:
                         print(difference[1], "-:-", difference[2])
-                        server_difference_dict[difference[1] + difference[2]].append((difference[0], x))
+                        server_difference_dict[difference[1] + ":" + difference[2]].append((difference[0], x, difference[3]))
+                        server_difference_x_dict[difference[1] + difference[2] + str(x)].append(difference[0], difference[3])
 
-                # DIFF TESTS.
+                # SERVER PARTITION TESTS
+                server_difference_x_keys = server_difference_x_dict.keys()
+                for key in server_difference_x_keys[1:]:
+                    first_x_diff = server_difference_x_dict[key][0][0]
+                    first_x_server = server_difference_x_dict[key][0][1]
+                    diff_x_tuple_set = server_difference_x_dict[key][1:]
+                    for diff_x_tuple in diff_x_tuple_set:
+                        diff_x = diff_x_tuple[0]
+                        server_x = diff_x_tuple[1]
+                        if not np.array_equal(first_x_diff, diff):
+                            # Disagreement in diff partitions
+                            print("Disagreement in difference partitions")
 
 
-
-                # disagreed_clients.append((client, i, j, difference_matrix_list[i][j][x][1], difference_matrix_list[i][j][x][2]))
+                # DIFF TESTS
+                server_difference_keys = server_difference_dict.keys()
+                summed_diffs = []
+                for key in server_difference_keys:
+                    summed_diff = 0
+                    used_xs = set()
+                    for diff_tuple in server_difference_dict[key]:
+                        diff = diff_tuple[0]
+                        x = diff_tuple[1]
+                        server = diff_tuple[2]
+                        if x not in used_xs:
+                            used_xs.add(x)
+                            summed_diff = summed_diff + diff
+                    summed_diffs.append(summed_diff)
+                if not summed_diffs.count(summed_diffs[0]) == len(summed_diffs):
+                    print("Disagreement. Some differences are not equal!")
+                    # disagreed_clients.append((client, i, j, difference_matrix_list[i][j][x][1], difference_matrix_list[i][j][x][2]))
 
         if len(disagreed_clients) > 0:
             # TODO: Use mediator for each part
@@ -382,10 +408,12 @@ def ensure_agreement():
         print("removing vote", client)
         db.remove_vote(client, my_name)
 
+
     disagreed_illegal_votes = ["c3"]
     # Send disagreed illegal votes to mediator
     if(len(disagreed_illegal_votes) > 0):
         server_util.send_illegal_votes_to_mediator(illegal_votes=list(disagreed_illegal_votes), server=my_name, url=mediator, name=my_name.split(":")[-1])
+
 
     return Response(status=200)
 
@@ -422,6 +450,7 @@ def messageinconsistency():
 @app.route("/add", methods=["GET"])
 def add():
     votes = db.round_one(my_name)
+    summed_votes = server_util.sum_votes(votes)
     # TODO: Secret share summed votes
 
     # TODO: EXLUDE CORRUPT SERVER FROM TAKING PART.
