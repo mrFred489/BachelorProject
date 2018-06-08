@@ -119,7 +119,7 @@ else:
 
     # Create tables for the mediator
     cursor.execute('CREATE TABLE "http://127.0.0.1:5100/illegal"(sender TEXT, clients TEXT[])')
-    cursor.execute('CREATE TABLE "http://127.0.0.1:5100/inconsistency"(sender TEXT, complaint TEXT, protocol TEXT)')
+    cursor.execute('CREATE TABLE "http://127.0.0.1:5100/inconsistency"(sender TEXT, complaint TEXT, protocol INTEGER)')
 
     cursor.close()
     conn.commit()
@@ -385,10 +385,10 @@ def get_mediator_illegal_votes():
     return res
 
 
-def insert_mediator_inconsistency(sender: str, complaint: util.Complaint, protocol: str):
+def insert_mediator_inconsistency(sender: str, complaint: util.Complaint, protocol: util.Protocol):
     complaint = util.vote_to_string(complaint)
     cur = get_cursor()
-    cur.execute('INSERT INTO "' + mediator + '/inconsistency' + '" (sender, complaint, protocol) VALUES (%s, %s, %s)',(sender, complaint, protocol))
+    cur.execute('INSERT INTO "' + mediator + '/inconsistency' + '" (sender, complaint, protocol) VALUES (%s, %s, %s)',(sender, complaint, protocol.value))
     cur.close()
     conn.commit()
     return 1
@@ -399,7 +399,7 @@ def get_mediator_inconsistency():
     cur.execute('SELECT sender, complaint, protocol FROM "' + mediator + '/inconsistency' + '"')
     res = []
     for s, c, p in cur:
-        res.append((s, util.string_to_vote(c), p))
+        res.append((s, util.string_to_vote(c), util.Protocol(p)))
     cur.close()
     conn.commit()
     return res
@@ -415,6 +415,8 @@ def reset(db_name: str):
     cur.execute('DELETE FROM "' + db_name + '/zeropartitionsum"')
     cur.execute('DELETE FROM "' + db_name + '/zeroconsistency"')
     cur.execute('DELETE FROM "' + db_name + '/zeropartition"')
+    cur.execute('DELETE FROM "' + db_name + '/illegal"')
+
 
     cur.close()
     conn.commit()

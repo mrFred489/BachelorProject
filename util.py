@@ -7,14 +7,23 @@ import rsa
 import rsa.pkcs1
 import cryp.keys
 import json
+from enum import Enum
 
 
 privkey = None
 pubkey = None
 
 
+class Protocol(Enum):
+    check_votes = 1
+    sum_difference_zero_one = 2
+    zero_one_finalize = 3
+    ensure_vote_agreement = 4
+    compute_result = 5
+
+
 class Complaint:
-    def __init__(self, sender: str, data: dict, protocol: str, value_id: int):
+    def __init__(self, sender: str, data: dict, protocol: Protocol, value_id: int):
         self.sender = sender
         self.data = data
         self.protocol = protocol

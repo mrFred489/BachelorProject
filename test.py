@@ -297,7 +297,7 @@ class TestMediator(unittest.TestCase):
     def test_message_inconsistency(self):
         for num, server in enumerate(local_servers):
             util.post_url(dict(complaint=util.vote_to_string(util.Complaint(
-                server, dict(test="Hej"), "test", num+1 % 4
+                server, dict(test="Hej"), util.Protocol.check_votes, num+1 % 4
             )), server=server, sender=server.split(":")[-1][:-1]), mediator + "messageinconsistency")
         time.sleep(0.2)
         print(requests.get(mediator + "test/printcomplaints"))

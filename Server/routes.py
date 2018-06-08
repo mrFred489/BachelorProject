@@ -60,10 +60,12 @@ found_malicious_server = False
 malicious_server = ""
 communication_number: int = 0
 
+
 @app.route("/reset", methods=["POST"])
 def reset():
     db.reset(my_name)
     return Response(status=200)
+
 
 @app.route("/vote", methods=["POST"])
 def vote():
@@ -157,6 +159,7 @@ def zerocheck():
 
     return Response(status=200)
 
+
 @app.route("/zeroonepartitions", methods=["POST"])
 def zeroonepartions():
     verified, data = util.unpack_request(request, str(server_nr))
@@ -178,6 +181,7 @@ def zeroonepartions():
         return Response(status=400)
 
     return Response(status=200)
+
 
 @app.route("/check_votes", methods=["GET"])
 def check_votes():
@@ -203,8 +207,9 @@ def check_votes():
     server_util.broadcast_illegal_votes(list_illegal_votes, my_name, servers)
     return Response(status=200)
 
+
 @app.route("/zero_one_consistency", methods=["GET"])
-def zero_one_partitions_consistency_check():
+def zero_one_partitions_consistency_check():  # Create differences for secret shared values, sum later
     # Create three dimensional list which contains lists for each share of a part of a product
 
 
@@ -230,6 +235,7 @@ def zero_one_partitions_consistency_check():
                                 db.insert_zero_consistency_check(diff=difference, x=x, i=i, j=j, server_a=server_y, server_b=server_z, server=my_name, client_name=client, db_name=my_name)
     return Response(status=200)
 
+
 @app.route("/differenceshareforzeroone", methods=["POST"])
 def differenceshareforzeroone():
     verified, data = util.unpack_request(request, str(server_nr))
@@ -253,8 +259,9 @@ def differenceshareforzeroone():
         return Response(status=400)
     return Response(status=200)
 
+
 @app.route("/sumdifferenceshareforzeroone", methods=["GET"])
-def sumdifferenceshareforzeroone():
+def sumdifferenceshareforzeroone():  # Verify servers have calculated the same
     difference_dict = db.get_zero_consistency_check(my_name)
     difference_dict_clients = difference_dict.keys()
     disagreed_clients = []
@@ -322,6 +329,7 @@ def sumdifferenceshareforzeroone():
         sum_product_zero_one_check()
         return Response(status=200)
 
+
 def sum_product_zero_one_check():
     zero_partitions_dict = db.get_zero_partitions(my_name)
     zero_partitions_clients = zero_partitions_dict.keys()
@@ -339,6 +347,7 @@ def sum_product_zero_one_check():
                 sum_partition_array[i][j][x] = np.mod(np.add(sum_partition_array[i][j][x], matrix),util.get_prime())
         server_util.broadcast(data=dict(sum_matrix=util.vote_to_string(sum_partition_array), server=my_name, client=c), servers=servers, url="/zeroone_sum_partition")
         db.insert_zero_partition_sum(matrix=sum_partition_array, server=my_name, client=c, db_name=my_name)
+
 
 @app.route("/zeroone_sum_partition", methods=["POST"])
 def sum_product_receive():
@@ -358,8 +367,9 @@ def sum_product_receive():
 
     return Response(status=200)
 
+
 @app.route("/zeroone_sum_partition_finalize", methods=["GET"])
-def zeroone_sum_partition_finalize():
+def zeroone_sum_partition_finalize(): # check for vote validity
     partition_sums = db.get_zero_partition_sum(my_name)
     partition_sums_clients = partition_sums.keys()
     for client in partition_sums_clients:
@@ -422,12 +432,14 @@ def ensure_agreement():
 
     return Response(status=200)
 
+
 @app.route("/mediator_answer_votes", methods=["POST"])
 def mediator_answer_votes():
     global malicious_server, found_malicious_server
     verified, data = util.unpack_request(request, str(server_nr))
     if not verified:
         return make_response("Could not verify", 400)
+    # TODO: Check at mediator ikke er adversary
     malicious_server_ = data['malicious_server']
     if(malicious_server_ == ""):
         votes_for_deletion_ = data['votes_for_deletion']
@@ -451,6 +463,7 @@ def messageinconsistency():
         return make_response("Could not verify", 400)
     # TODO: send relevant data to mediator
     return make_response("delivered", 200)
+
 
 @app.route("/add", methods=["GET"])
 def add():
@@ -482,15 +495,10 @@ def summed_votes():
             id_ = [id_]
         client = data['client']
         server_name = data['server']
-        # print("vote_", client, round_, server_name, id, "start vote", vote_, "slut vote")
 
-        my_id = servers.index(my_name)
-
-        votes = dict()
         for i in range(len(vote_)):
             vote = util.string_to_vote(vote_[i])
             assert type(vote) == np.ndarray
-            votes[int(id_[i])] = vote
             db.insert_summed_votes(vote, int(id_[i]), client, server_name, my_name)
     except TypeError as e:
         print(vote_)
@@ -508,10 +516,10 @@ def compute_result():
     legal_votes = [x for x in all_votes if x[3] != malicious_server]
     # print("av", all_votes)
     s = server_util.calculate_result(legal_votes)
-
+    # TODO: compare results, maybe send to mediator
     # Broadcast result to other servers. If disagreement, then send to mediator.
 
-    return make_response(util.vote_to_string(s))  # Response(util.vote_to_string(s), status=200, mimetype='text/text')
+    return make_response(util.vote_to_string(s), 200)  # Response(util.vote_to_string(s), status=200, mimetype='text/text')
 
 
 @app.route("/illegal", methods=["POST"])

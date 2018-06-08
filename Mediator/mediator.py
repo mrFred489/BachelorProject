@@ -2,6 +2,8 @@ from flask import Flask, request, Response, make_response
 import logging
 import util
 from Server import database as db
+import multiprocessing as mp
+import time
 
 
 app = Flask(__name__)
@@ -20,10 +22,15 @@ test_servers = [
 
 servers = test_servers
 
-def timer(protocol, complaint):
+def timer(t, protocol, complaint):
     util.get_keys("mediator")
-    pr = mp.Process(target=create_local, args=(protocol,complaint))
+    pr = mp.Process(target=handle_complaint, args=(t, protocol,complaint))
     pr.start()
+
+
+def handle_complaint(t, protocol, complaint):
+    time.sleep(t)
+    # semaphore
 
 
 
