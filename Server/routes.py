@@ -227,7 +227,7 @@ def zero_one_partitions_consistency_check():
                                 # broadcast_difference_share
                                 data=dict(diff=util.vote_to_string(difference), x=x, i=i, j=j, server_a=server_y, server_b=server_z, server=my_name, client=client)
                                 server_util.broadcast(data=data, servers=servers, url="/differenceshareforzeroone")
-                                db.insert_zero_consistency_check(diff=util.vote_to_string(difference), x=x, i=i, j=j, server_a=server_y, server_b=server_z, server=my_name, client_name=client, db_name=my_name)
+                                db.insert_zero_consistency_check(diff=difference, x=x, i=i, j=j, server_a=server_y, server_b=server_z, server=my_name, client_name=client, db_name=my_name)
     return Response(status=200)
 
 @app.route("/differenceshareforzeroone", methods=["POST"])
@@ -269,22 +269,20 @@ def sumdifferenceshareforzeroone():
         result = [[0 for j in range(len(servers))] for i in range(len(servers))]
         for i in range(len(servers)):
             for j in range(len(servers)):
-                res = 0
+                res = []
+                server_difference_dict = defaultdict(list)
                 for x in range(len(servers)):
-                    # Ensure equality
                     differences = difference_matrix_list[i][j][x]
-                    first_diff = np.array(differences[0])
-                    for difference in differences[1:]:
-                        if not np.array_equal(first_diff[0], np.array(difference[0])):
-                            # TODO: Do something with mediator
-                            print("Disagreement in differences ")
-                    res = res + first_diff[0]
-                result[i][j] = res
-                if not (np.array_equal(np.mod(np.array(result[i][j]),util.get_prime()), (np.zeros(result[i][j].shape)))):
-                    print("Disagreement in diff not zero")
-                    disagreed_clients.append((client, i, j, difference_matrix_list[i][j][x][1], difference_matrix_list[i][j][x][2]))
-                else:
-                    print("Agreement")
+                    for difference in differences:
+                        print(difference[1], "-:-", difference[2])
+                        server_difference_dict[difference[1] + difference[2]].append((difference[0], x))
+
+                # DIFF TESTS.
+
+
+
+                # disagreed_clients.append((client, i, j, difference_matrix_list[i][j][x][1], difference_matrix_list[i][j][x][2]))
+
         if len(disagreed_clients) > 0:
             # TODO: Use mediator for each part
             print(disagreed_clients)
