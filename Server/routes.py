@@ -421,6 +421,7 @@ def ensure_agreement():
 
 @app.route("/mediator_answer_votes", methods=["POST"])
 def mediator_answer_votes():
+    global malicious_server, found_malicious_server
     if "mediator_answer_votes" in methods:
         methods.remove("mediator_answer_votes")
     verified, data = util.unpack_request(request, str(server_nr))
@@ -442,6 +443,14 @@ def mediator_answer_votes():
     return Response(status=200)
 
 
+@app.route("/messageinconsistency", methods=["POST"])
+def messageinconsistency():
+    verified, data = util.unpack_request(request, str(server_nr))
+    if not verified:
+        return make_response("Could not verify", 400)
+    # TODO: send relevant data to mediator
+    return make_response("delivered", 200)
+
 @app.route("/add", methods=["GET"])
 def add():
     if "add" in methods:
@@ -450,10 +459,7 @@ def add():
     # TODO: Secret share summed votes
 
     # TODO: EXLUDE CORRUPT SERVER FROM TAKING PART.
-    legal_votes = [x for x in votes if x[4] != malicious_server]  # list(filter(lambda a: a[4] != malicious_server, votes))
-
-    # for matrix, id, _, client, server in legal_votes:
-    #     db.insert_summed_votes(matrix, id, client, server, my_name)
+    legal_votes = [x for x in votes if x[4] != malicious_server]
 
     # ss_summed_votes = server_util.secret_share(summed_votes, servers)
 

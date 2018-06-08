@@ -89,8 +89,16 @@ def message_inconsistency():
     verified, data = util.unpack_request(request, my_name)
     if not verified:
         return make_response("Could not verify", 400)
-    db.insert_mediator_inconsistency(data["sender"], data["reported1"], data["reported2"], data["value1"], data["value2"], data["protocol"])
-    return make_response(200)
+    complaint: util.Complaint = util.string_to_vote(data["complaint"])
+
+    db.insert_mediator_inconsistency(complaint.sender, complaint, complaint.protocol)
+    return make_response("Done", 200)
+
+
+@app.route("/test/printcomplaints", methods=["GET"])
+def test_printComplaints():
+    print(db.get_mediator_inconsistency())
+    return make_response(str(db.get_mediator_inconsistency()), 200)
 
 
 def create_local(port):

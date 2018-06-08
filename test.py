@@ -294,6 +294,15 @@ class TestMediator(unittest.TestCase):
         server_util.send_illegal_votes_to_mediator([], "me", mediator[:-1], "test1")
         self.assertTrue(True)
 
+    def test_message_inconsistency(self):
+        for num, server in enumerate(local_servers):
+            util.post_url(dict(complaint=util.vote_to_string(util.Complaint(
+                server, dict(test="Hej"), "test", num+1 % 4
+            )), server=server, sender=server.split(":")[-1][:-1]), mediator + "messageinconsistency")
+        time.sleep(0.2)
+        print(requests.get(mediator + "test/printcomplaints"))
+
+
     @classmethod
     def tearDownClass(cls):
         requests.get(mediator + "shutdown")

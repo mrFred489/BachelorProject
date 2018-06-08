@@ -95,7 +95,7 @@ def send_illegal_votes_to_mediator(illegal_votes: list, server: str, url: str, n
 def complain_consistency(complaint: util.Complaint, servers, mediator, my_name):
     util.get_keys(my_name.split(":")[-1])
     for server in list_remove(servers, servers[complaint.value_id]) + [mediator]:
-        util.post_url(dict(complaint=util.vote_to_string(complaint), server=my_name), server + "messageinconsistency")
+        util.post_url(dict(complaint=util.vote_to_string(complaint), server=my_name, sender=my_name), server + "messageinconsistency")
 
 
 def verify_consistency(votes):

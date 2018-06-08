@@ -14,15 +14,17 @@ pubkey = None
 
 
 class Complaint:
-    def __init__(self, sender, reported1, reported2,
-                 value1, value2, protocol, value_id):
+    def __init__(self, sender: str, data: dict, protocol: str, value_id: int):
         self.sender = sender
-        self.reported1 = reported1
-        self.reported2 = reported2
-        self.value1 = value1
-        self.value2 = value2
+        self.data = data
         self.protocol = protocol
         self.value_id = value_id
+
+    def __repr__(self):
+        return "'Complaint: (sender: {}, data: {}, protocol: {}, value_id: {})'".format(self.sender, str(self.data), self.protocol, self.value_id)
+
+    def __str__(self):
+        return "'Complaint: (sender: {}, data: {}, protocol: {}, value_id: {})'".format(self.sender, str(self.data), self.protocol, self.value_id)
 
 
 def get_keys(name):
