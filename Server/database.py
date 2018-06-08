@@ -14,7 +14,6 @@ if not test:
     conn = psy.connect(host='localhost', user='bachelor', password='gruppen1234', dbname='bachelorprojekt')
     mediator = "http://127.0.0.1:5100"
 
-
     def get_conn():
         global conn
         conn = psy.connect(host='localhost', user='bachelor', passwd='gruppen1234', dbname='bachelorprojekt')
@@ -120,22 +119,19 @@ else:
 
     # Create tables for the mediator
     cursor.execute('CREATE TABLE "http://127.0.0.1:5100/illegal"(sender TEXT, clients TEXT[])')
+    cursor.execute('CREATE TABLE "http://127.0.0.1:5100/inconsistency"(sender TEXT, complaint TEXT, protocol TEXT)')
 
     cursor.close()
     conn.commit()
     print("DATABASES UP AND RUNNING\n")
 
-
-
     def get_conn():
         global conn
         conn = psy.connect(postgresql.dsn())
 
-
     def cleanup():
         print("cleanup")
         postgresql.stop()
-
 
     atexit.register(cleanup)
 
@@ -377,8 +373,9 @@ def insert_mediator_illegal_votes(clients: list, sender: str):
     conn.commit()
     return 1
 
+
 def get_mediator_illegal_votes():
-    cur  = get_cursor()
+    cur = get_cursor()
     cur.execute('SELECT sender, clients FROM "' + mediator + '/illegal' + '"')
     res = []
     for i in cur:
@@ -386,6 +383,27 @@ def get_mediator_illegal_votes():
     cur.close()
     conn.commit()
     return res
+
+
+def insert_mediator_inconsistency(sender: str, complaint: util.Complaint, protocol: str):
+    complaint = util.vote_to_string(complaint)
+    cur = get_cursor()
+    cur.execute('INSERT INTO "' + mediator + '/inconsistency' + '" (sender, complaint, protocol) VALUES (%s, %s, %s)',(sender, complaint, protocol))
+    cur.close()
+    conn.commit()
+    return 1
+
+
+def get_mediator_inconsistency():
+    cur = get_cursor()
+    cur.execute('SELECT sender, complaint, protocol FROM "' + mediator + '/inconsistency' + '"')
+    res = []
+    for s, c, p in cur:
+        res.append((s, util.string_to_vote(c), p))
+    cur.close()
+    conn.commit()
+    return res
+
 
 def reset(db_name: str):
     cur = get_cursor()
@@ -398,6 +416,7 @@ def reset(db_name: str):
     cur.execute('DELETE FROM "' + db_name + '/zeroconsistency"')
     cur.execute('DELETE FROM "' + db_name + '/zeropartition"')
     cur.execute('DELETE FROM "' + db_name + '/illegal"')
+    cur.execute('DELETE FROM "' + db_name + '/inconsistency"')
 
     cur.close()
     conn.commit()
