@@ -273,20 +273,19 @@ def sumdifferenceshareforzeroone():
                 for x in range(len(servers)):
                     differences = difference_matrix_list[i][j][x]
                     for difference in differences:
-                        print(difference[1], "-:-", difference[2])
                         server_difference_dict[difference[1] + ":" + difference[2]].append((difference[0], x, difference[3]))
-                        server_difference_x_dict[difference[1] + difference[2] + str(x)].append(difference[0], difference[3])
+                        server_difference_x_dict[difference[1] + difference[2] + str(x)].append((difference[0], difference[3]))
 
                 # SERVER PARTITION TESTS
                 server_difference_x_keys = server_difference_x_dict.keys()
-                for key in server_difference_x_keys[1:]:
+                for key in server_difference_x_keys:
                     first_x_diff = server_difference_x_dict[key][0][0]
                     first_x_server = server_difference_x_dict[key][0][1]
                     diff_x_tuple_set = server_difference_x_dict[key][1:]
                     for diff_x_tuple in diff_x_tuple_set:
                         diff_x = diff_x_tuple[0]
                         server_x = diff_x_tuple[1]
-                        if not np.array_equal(first_x_diff, diff):
+                        if not np.array_equal(first_x_diff, first_x_diff):
                             # Disagreement in diff partitions
                             print("Disagreement in difference partitions")
 
@@ -304,17 +303,17 @@ def sumdifferenceshareforzeroone():
                         if x not in used_xs:
                             used_xs.add(x)
                             summed_diff = summed_diff + diff
-                    summed_diffs.append(summed_diff)
-                if not summed_diffs.count(summed_diffs[0]) == len(summed_diffs):
+                    summed_diffs.append(summed_diff % util.get_prime())
+                equality = True
+                first_element = summed_diffs[0]
+                for element in summed_diffs[1:]:
+                    if not np.array_equal(element, first_element):
+                        equality = False
+                if not equality:
+                    # TODO: DO SOMETHING HERE
                     print("Disagreement. Some differences are not equal!")
                     # disagreed_clients.append((client, i, j, difference_matrix_list[i][j][x][1], difference_matrix_list[i][j][x][2]))
-
-        if len(disagreed_clients) > 0:
-            # TODO: Use mediator for each part
-            print(disagreed_clients)
-        else:
-            # TODO: Locally find sum of product
-            sum_product_zero_one_check()
+        sum_product_zero_one_check()
         return Response(status=200)
 
 def sum_product_zero_one_check():
