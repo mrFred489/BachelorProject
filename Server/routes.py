@@ -303,12 +303,18 @@ def sumdifferenceshareforzeroone():
                         if x not in used_xs:
                             used_xs.add(x)
                             summed_diff = summed_diff + diff
-                    summed_diffs.append(summed_diff % util.get_prime())
+                    summed_diffs.append((summed_diff % util.get_prime(), server, key, x))
                 equality = True
-                first_element = summed_diffs[0]
+                first_element = summed_diffs[0][0]
                 for element in summed_diffs[1:]:
-                    if not np.array_equal(element, first_element):
+                    if not np.array_equal(element[0], first_element[0]):
                         equality = False
+                        print("Use mediator")
+                        diffs = (element[0], first_element[0])
+                        server = (element[1], first_element[1])
+                        key = element[2]
+                        x = element[3]
+                        # TODO: SEND TO MEDIATOR
                 if not equality:
                     # TODO: DO SOMETHING HERE
                     print("Disagreement. Some differences are not equal!")
