@@ -221,6 +221,7 @@ def zero_one_partitions_consistency_check():  # Create differences for secret sh
             partition_matrix_list[partition['i']][partition['j']][partition['x']].append((partition['matrix'],partition['server']))
 
         # Ensure that two should-be-identical parts from different servers are, indeed, identical, that a - b = 0.
+        datas = []
         for i in range(len(servers)):
             for j in range(len(servers)):
                 for x in range(len(servers)):
@@ -230,9 +231,9 @@ def zero_one_partitions_consistency_check():  # Create differences for secret sh
                             if(y < z):
                                 difference = np.subtract(np.array(matrix_y), np.array(matrix_z))
                                 # broadcast_difference_share
-                                data=dict(diff=util.vote_to_string(difference), x=x, i=i, j=j, server_a=server_y, server_b=server_z, server=my_name, client=client)
-                                server_util.broadcast(data=data, servers=servers, url="/differenceshareforzeroone")
+                                datas.append(dict(diff=util.vote_to_string(difference), x=x, i=i, j=j, server_a=server_y, server_b=server_z, server=my_name, client=client))
                                 db.insert_zero_consistency_check(diff=difference, x=x, i=i, j=j, server_a=server_y, server_b=server_z, server=my_name, client_name=client, db_name=my_name)
+        server_util.broadcast(data=dict(datas=datas, server=my_name), servers=servers, url="/differenceshareforzeroone")
     return Response(status=200)
 
 
@@ -242,18 +243,20 @@ def differenceshareforzeroone():
     if not verified:
         return make_response("Could not verify", 400)
     try:
-        diff_ = data['diff']
-        diff_ = util.string_to_vote(diff_)
-        x_ = data['x']
-        i_ = data['i']
-        j_ = data['j']
-        server_a_ = data['server_a']
-        server_b_ = data['server_b']
-        client_ = data['client']
-        server_ = data['server']
+        datas_ = data['datas']
+        for data_ in datas_:
+            diff_ = data_['diff']
+            diff_ = util.string_to_vote(diff_)
+            x_ = data_['x']
+            i_ = data_['i']
+            j_ = data_['j']
+            server_a_ = data_['server_a']
+            server_b_ = data_['server_b']
+            client_ = data_['client']
+            server_ = data_['server']
 
-        # Save each difference in database
-        db.insert_zero_consistency_check(diff=diff_, x=x_, i=i_, j=j_, server_a=server_a_, server_b=server_b_, client_name=client_, server=server_, db_name=my_name)
+            # Save each difference in database
+            db.insert_zero_consistency_check(diff=diff_, x=x_, i=i_, j=j_, server_a=server_a_, server_b=server_b_, client_name=client_, server=server_, db_name=my_name)
     except TypeError as e:
         print(e)
         return Response(status=400)
@@ -310,17 +313,16 @@ def sumdifferenceshareforzeroone():  # Verify servers have calculated the same
                         if x not in used_xs:
                             used_xs.add(x)
                             summed_diff = summed_diff + diff
-                    summed_diffs.append((summed_diff % util.get_prime(), server, key, x))
+                    summed_diffs.append((summed_diff % util.get_prime(), server, key))
                 equality = True
-                first_element = summed_diffs[0][0]
+                first_element = summed_diffs[0]
                 for element in summed_diffs[1:]:
-                    if not np.array_equal(element[0], first_element[0]):
-                        equality = False
+                    if not np.array_equal(np.array(element[0]), np.array(first_element[0])):
                         print("Use mediator")
+                        equality = False
                         diffs = (element[0], first_element[0])
                         server = (element[1], first_element[1])
                         key = element[2]
-                        x = element[3]
                         # TODO: SEND TO MEDIATOR
                 if not equality:
                     # TODO: DO SOMETHING HERE
