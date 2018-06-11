@@ -125,7 +125,7 @@ def reset():
 
 @app.route("/test/printcomplaints", methods=["GET"])
 def test_printComplaints():
-    print(db.get_mediator_inconsistency())
+    # print(db.get_mediator_inconsistency())
     return make_response(str(db.get_mediator_inconsistency()), 200)
 
 

@@ -62,7 +62,9 @@ def make_post_signature(data):
 
 
 def post_url(data: dict, url: str):
-    return requests.post(url, make_post_signature(data))
+    signature = make_post_signature(data)
+    ret = requests.post(url, signature)
+    return ret
 
 
 def verify(sig, data, pub):

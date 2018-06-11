@@ -159,7 +159,7 @@ class TestCommunication(unittest.TestCase):
         r2 = (np.array([0, 0, 1, 0]), 1, "row", 'c1')
         r3 = (np.array([0, 1, 0, 0]), 2, "row", 'c1')
         r4 = (np.array([1, 0, 0, 0]), 3, "row", 'c1')
-        illegal_votes = server_util.verify_sums([r1, r2, r3, r4])
+        illegal_votes = server_util.verify_sums([r1, r2, r3, r4], "5000")
         self.assertEqual(set(), illegal_votes)
 
 
@@ -168,7 +168,7 @@ class TestCommunication(unittest.TestCase):
         r1 = (np.array([1,1,1,1]),0,"row", 'c1')
         r2 = (np.array([0,0,0,1]),1,"row", 'c1')
         r3 = (np.array([1,1,1,1]),2,"row", 'c1')
-        illegal_votes = server_util.verify_sums([r1,r2,r3])
+        illegal_votes = server_util.verify_sums([r1,r2,r3], "5000")
         self.assertEqual({'c1'}, illegal_votes)
 
 
@@ -332,11 +332,22 @@ class TestCheater(unittest.TestCase):
         client_util.send_vote([1, 2, 3, 4], 'c2', local_servers)
         for s in local_servers:
             response = util.get_url(s + 'check_votes')
+        self.assertTrue(len(requests.get(mediator + "test/printcomplaints").text) > 0)
 
+    def test_row_sum_neg(self):
+        create_local_server(5003)
+        time.sleep(1)
+        client_util.send_vote([4, 2, 1, 3], 'c1', local_servers)
+        client_util.send_vote([1, 2, 3, 4], 'c2', local_servers)
+        for s in local_servers:
+            response = util.get_url(s + 'check_votes')
+        self.assertTrue(len(requests.get(mediator + "test/printcomplaints").text) <= 2, msg=requests.get(mediator + "test/printcomplaints").text)
+        requests.get(baseurl4 + "shutdown")
+        time.sleep(0.5)
 
     @classmethod
     def tearDownClass(cls):
-        for i in local_servers:
+        for i in local_servers[:-1]:
             requests.get(i + "shutdown")
         requests.get(mediator + "shutdown")
         time.sleep(1)
