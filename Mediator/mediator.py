@@ -1,4 +1,4 @@
-from flask import Flask, request, Response, make_response
+from flask import Flask, request, make_response
 import logging
 import util
 from Server import database as db
@@ -96,6 +96,14 @@ def decide_validity():
     else:
         broadcast_to_servers(dict(malicious_server=malicious_server, votes_for_deletion=[]), url="/mediator_answer_votes")
 
+
+    # check_votes = 1
+    # sum_difference_zero_one = 2
+    # zero_one_finalize = 3
+    # ensure_vote_agreement = 4
+    # compute_result = 5
+
+        
 
 @app.route("/messageinconsistency", methods=["POST"])
 def message_inconsistency():

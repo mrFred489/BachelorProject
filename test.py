@@ -246,10 +246,10 @@ class TestCommunication(unittest.TestCase):
         client_util.postvote("illegal", vote2_partitions, local_servers)
         for server in local_servers:
             util.get_url(server + "zero_one_consistency")
-        time.sleep(60)
+        time.sleep(1)
         for server in local_servers:
             util.get_url(server + "sumdifferenceshareforzeroone")
-        time.sleep(60)
+        time.sleep(1)
         for server in local_servers:
             util.get_url(server + "zeroone_sum_partition_finalize")
         self.assertTrue(True)

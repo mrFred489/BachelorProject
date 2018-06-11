@@ -100,17 +100,17 @@ def complain_consistency(complaint: util.Complaint, servers, mediator, my_name):
 
 def verify_consistency(votes):
     # TODO: USE THIS EVERYWHERE TO ENSURE EQUALITY IN DATABASE.
-    votes_sorted = sorted(votes, key=lambda x: x[1])
+    votes_sorted = sorted(votes, key=lambda x: x[1])  # x[1] is the id
     prev = votes_sorted[0]
     for vote in votes_sorted:
         if vote[1] == prev[1] and not np.array_equal(vote[0], prev[0]):
             print("not equal", vote, prev)
-            return False
+            return False, vote, prev
         prev = vote
-    return True
+    return True, [], []
 
 
-def verify_sums(data):
+def verify_sums(data, my_name):
     illegal_votes = set()
     sorted(data, key=lambda x: x[3])
     diff_clients = []
@@ -119,7 +119,8 @@ def verify_sums(data):
             diff_clients.append(x[3])
     for client in diff_clients:
         client_rows = [x for x in data if x[3] == client]
-        if verify_consistency(client_rows):
+        verify = verify_consistency(client_rows)
+        if verify[0]:
             res = 0
             used_rows = []
             for row in client_rows:
@@ -131,7 +132,14 @@ def verify_sums(data):
             for sum in sums:
                 if (sum != 1) & (client not in illegal_votes):
                     illegal_votes.add(client)
-
+        else:
+             print("verify_sums complaint")
+             # TODO: Send complaint her eller returner og complain? Hvad med verify_sums?
+             complain_consistency(
+                 util.Complaint(my_name,
+                                dict(votes=verify[1:]),
+                                util.Protocol.check_votes,
+                                verify[1][1]))
     print(illegal_votes)
     return illegal_votes
 

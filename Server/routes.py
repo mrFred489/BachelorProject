@@ -188,8 +188,8 @@ def check_votes():
     # COLUMN ROW CHECK
     cols = db.get_cols(my_name)
     rows = db.get_rows(my_name)
-    illegal_votes = set(server_util.verify_sums(rows))
-    illegal_votes = illegal_votes.union(server_util.verify_sums(cols))
+    illegal_votes = set(server_util.verify_sums(rows, my_name))
+    illegal_votes = illegal_votes.union(server_util.verify_sums(cols, my_name))
 
 
     # TODO: Ensure agreement among servers regarding illegal_votes
