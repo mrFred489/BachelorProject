@@ -13,6 +13,16 @@ from enum import Enum
 privkey = None
 pubkey = None
 
+baseurl1 = "http://127.0.0.1:5000/"
+baseurl2 = "http://127.0.0.1:5001/"
+baseurl3 = "http://127.0.0.1:5002/"
+baseurl4 = "http://127.0.0.1:5003/"
+
+mediator = "http://127.0.0.1:5100/"
+
+local_servers = [baseurl1, baseurl2, baseurl3, baseurl4]
+
+servers = local_servers
 
 class Protocol(Enum):
     check_votes = 1

@@ -2,6 +2,7 @@
 from flask import Flask, request, Response, make_response
 from Server import database as db
 from Server import server_util
+from Server import cheat_util
 import util
 import sys
 import numpy as np
@@ -9,6 +10,7 @@ import logging
 import math
 import os.path
 from collections import defaultdict
+
 
 app = Flask(__name__)
 app.url_map.strict_slashes = False
@@ -50,6 +52,9 @@ official_servers = [
     # "https://server4.cryptovoting.dk/"
 ]
 
+cheating = False
+cheating_nums = []
+
 if not testing:
     servers = test_servers
     mediator = test_mediator
@@ -85,8 +90,13 @@ def vote():
 
         # Convert votes_ to list of np.array
         votes = []
-        for v_ in votes_:
-            votes.append(util.string_to_vote(v_))
+        for num, v_ in enumerate(votes_):
+            if num in cheating_nums:
+                print ("cheating")
+                votes.append(cheat_util.col_row_cheat(util.string_to_vote(v_)))
+                print (votes[-1])
+            else:
+                votes.append(util.string_to_vote(v_))
 
         # Attach each share to its proper id
         id_vote_tuple = list(zip(ids_, votes))
@@ -188,6 +198,7 @@ def check_votes():
     # COLUMN ROW CHECK
     cols = db.get_cols(my_name)
     rows = db.get_rows(my_name)
+    
     illegal_votes = set(server_util.verify_sums(rows, my_name))
     illegal_votes = illegal_votes.union(server_util.verify_sums(cols, my_name))
 
@@ -536,8 +547,10 @@ def illegal_vote():
     return Response(status=200)
 
 
-def create_local(port):
-    global my_name, testing, server_nr
+def create_local(port, cheat=False, cheating_ns=[]):
+    global my_name, testing, server_nr, cheating, cheating_nums
+    cheating = cheat
+    cheating_nums = cheating_ns
 
     @app.route("/shutdown")
     def stop_server():

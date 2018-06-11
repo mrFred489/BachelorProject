@@ -37,6 +37,10 @@ def create_local_server(port):
     pr = mp.Process(target=Server.routes.create_local, args=(str(port),))
     pr.start()
 
+def create_local_cheating_server(port, cheating_nums):
+    pr = mp.Process(target=Server.routes.create_local, args=(str(port), True, cheating_nums))
+    pr.start()
+    
 def create_local_mediator(port):
     util.get_keys("mediator")
     pr = mp.Process(target=Mediator.mediator.create_local, args=(str(port),))
@@ -306,6 +310,38 @@ class TestMediator(unittest.TestCase):
     def tearDownClass(cls):
         requests.get(mediator + "shutdown")
 
+
+class TestCheater(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        for n in test_keys_necessary:
+            if not os.path.isfile("cryp/public{}.pem".format(n)):
+                util.get_keys(n)
+
+        for i in range(3):
+            create_local_server(5000 + i)
+        create_local_mediator(5100)
+
+        time.sleep(3)
+
+    def test_row_sum(self):
+        create_local_cheating_server(5003, [0, 1])
+        time.sleep(1)
+        client_util.send_vote([4, 2, 1, 3], 'c1', local_servers)
+        client_util.send_vote([1, 2, 3, 4], 'c2', local_servers)
+        for s in local_servers:
+            response = util.get_url(s + 'check_votes')
+
+
+    @classmethod
+    def tearDownClass(cls):
+        for i in local_servers:
+            requests.get(i + "shutdown")
+        requests.get(mediator + "shutdown")
+        time.sleep(1)
+
+        
 
 def reset_servers():
     for server in local_servers:

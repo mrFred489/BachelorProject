@@ -133,13 +133,14 @@ def verify_sums(data, my_name):
                 if (sum != 1) & (client not in illegal_votes):
                     illegal_votes.add(client)
         else:
-             print("verify_sums complaint")
+             print("verify_sums complaint, someone is cheating")
              # TODO: Send complaint her eller returner og complain? Hvad med verify_sums?
              complain_consistency(
                  util.Complaint(my_name,
                                 dict(votes=verify[1:]),
                                 util.Protocol.check_votes,
-                                verify[1][1]))
+                                verify[1][1]),
+                 util.servers, util.mediator, my_name.split(":")[-1])
     print(illegal_votes)
     return illegal_votes
 
