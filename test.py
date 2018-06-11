@@ -242,15 +242,11 @@ class TestCommunication(unittest.TestCase):
 
     def test_new_product(self):
         reset_servers()
-        vote1 = np.array([[1,0],[0,1]])
-        vote2 = np.array([[-2,3],[3,-2]])
-        vote3 = np.array([[0,1],[1,0]])
-        vote1_partitions = util.partition_and_secret_share_vote(vote1, local_servers)
-        vote3_partitions = util.partition_and_secret_share_vote(vote3, local_servers)
-        vote2_partitions = util.partition_and_secret_share_vote(vote2, local_servers)
-        client_util.postvote("legal1", vote1_partitions, local_servers)
-        client_util.postvote("illegal", vote2_partitions, local_servers)
-        client_util.postvote("legal2", vote3_partitions, local_servers)
+        client_util.send_vote([1,2], 'c1', local_servers)
+        illegal_vote = np.array([[3,-2],[-2,3]])
+        illegal_vote_partitions = util.partition_and_secret_share_vote(illegal_vote, local_servers)
+        client_util.postvote("ic3", illegal_vote_partitions, local_servers)
+        client_util.send_vote([2,1], 'c2', local_servers)
         for server in local_servers:
             util.get_url(server + "zero_one_consistency")
         time.sleep(1)
@@ -274,7 +270,7 @@ class TestCommunication(unittest.TestCase):
         for server in local_servers:
             response = util.get_url(server + 'get_comms')
             print(server, response.text)
-        self.assertTrue(np.array_equal(np.array([[2,0],[0,2]]),result))
+        self.assertTrue(np.array_equal(np.array([[1,1],[1,1]]),result))
 
     # def test_many_votes(self):
     #     reset_servers()
