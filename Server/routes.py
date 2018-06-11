@@ -399,10 +399,11 @@ def zeroone_sum_partition_finalize(): # check for vote validity
         part_sums = list(partition_sums[client])
 
         res = [[[[0] for x in range(len(servers))] for j in range(len(servers))] for i in range(len(servers))]
+        res2 = [[[0] for j in range(len(servers))] for i in range(len(servers))]
+        print(client, res2)
         for i in range(len(servers)):
             for j in range(len(servers)):
                 for x in range(len(servers)):
-                    server = 0
                     val = part_sums[0]['matrix'][i][j][x]
                     for part_sum in part_sums[1:]:
                         part_sum_matrix = part_sum['matrix']
@@ -411,11 +412,14 @@ def zeroone_sum_partition_finalize(): # check for vote validity
                                 # TODO: Disagreement
                                 print("Disagreement! MEDIATOR not implemented yet")
                             server = part_sum['server']
-                            res[i][j][x] = val[0]
-                res[i][j] = sum(res[i][j])[0] % util.get_prime()
-        sum_res = [sum(x) for x in res]
+                        res[i][j][x] = val[0]
+                res2[i][j] = sum(res[i][j])[0] % util.get_prime()
+        print(client, res)
+        print(client, res2)
+        sum_res = []
+        sum_res = [sum(ij) for ij in res2]
         sum_res = np.mod(np.array(sum_res), util.get_prime())
-        print(client, sum_res)
+        print("SUM_RES:", sum_res)
         if not np.array_equal(sum_res, np.zeros(sum_res.shape)):
             # Illegal vote.
             illegal_votes.append(client)
