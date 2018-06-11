@@ -177,22 +177,25 @@ def matrix_mult_secret_share(id, xs):
 def matrix_zero_one_check(id, servers: list, xs, my_name, client):
     # xs = dict: (id) => x_i
     local_parts = []
+    communications = 0
     for i, j in to_mult(id):
         # TODO: Secretshare each part
         to_be_secret_shared = xs[i] * (xs[j]-(1/4))
         partioned = util.partition_and_secret_share_vote(to_be_secret_shared, servers)
-        send_zero_one_secret_shares(id, i, j, partioned, servers, my_name, client)
+        communications += send_zero_one_secret_shares(id, i, j, partioned, servers, my_name, client)
         local_parts.append((id, i, j, partioned, my_name, client))
-    return local_parts
+    return local_parts, communications
 
 
 
     # res = dict: (matrix, i, j) => x'_i
 
 def send_zero_one_secret_shares(id, i, j, ss: list, servers: list, my_name, client):
+    communcations = 0
     for x, server in enumerate(servers):
+        communcations += 3
         broadcast(data=dict(ss=[(y, util.vote_to_string(s))for y, s in enumerate(ss) if y != x], id=id, i=i, j=j, server=my_name, client=client), servers=servers, url="/zeroonepartitions")
-
+    return communcations
 
 def zero_one_check(xs):
     res = 0

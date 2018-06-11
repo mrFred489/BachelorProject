@@ -74,6 +74,7 @@ def reset():
 
 @app.route("/vote", methods=["POST"])
 def vote():
+    global communication_number
     verified, data = util.unpack_request(request, str(server_nr))
     if not verified:
         return make_response("Could not verify", 400)
@@ -120,7 +121,8 @@ def vote():
         for id, v in id_vote_tuple:
             votes_dict[id] = v
 
-        local_parts = server_util.matrix_zero_one_check(my_id, servers, votes_dict, my_name, client)
+        local_parts, communcations = server_util.matrix_zero_one_check(my_id, servers, votes_dict, my_name, client)
+        communication_number += communcations
         for local_part in local_parts:
             for x, ss in enumerate(local_part[3]):
                 db.insert_zero_partition(matrix=ss, x=x, i=local_part[1], j=local_part[2], client_name=local_part[5], server=my_name, db_name=my_name)
@@ -195,6 +197,8 @@ def zeroonepartions():
 
 @app.route("/check_votes", methods=["GET"])
 def check_votes():
+    global communication_number
+
     # COLUMN ROW CHECK
     cols = db.get_cols(my_name)
     rows = db.get_rows(my_name)
@@ -202,20 +206,23 @@ def check_votes():
     illegal_votes = set(server_util.verify_sums(rows, my_name))
     illegal_votes = illegal_votes.union(server_util.verify_sums(cols, my_name))
 
+    zero_one_illegal_votes = zeroone_sum_partition_finalize()
+
+    illegal_votes = illegal_votes.union(zero_one_illegal_votes)
 
     # TODO: Ensure agreement among servers regarding illegal_votes
 
     list_illegal_votes = list(illegal_votes)
 
-    # MEDIATOR
 
-    # TODO: ADD ZERO ONE CHECK
+
 
     # Save own illegal votes
     db.insert_illegal_votes(list_illegal_votes, my_name, my_name)
 
     # Broadcast own illegal votes to others
     server_util.broadcast_illegal_votes(list_illegal_votes, my_name, servers)
+    communication_number += 3
     return Response(status=200)
 
 
@@ -223,7 +230,7 @@ def check_votes():
 def zero_one_partitions_consistency_check():  # Create differences for secret shared values, sum later
     # Create three dimensional list which contains lists for each share of a part of a product
 
-
+    global communication_number
     partition_dict = db.get_zero_partitions(my_name)
     partition_dict_clients = partition_dict.keys()
     for client in partition_dict_clients:
@@ -244,6 +251,7 @@ def zero_one_partitions_consistency_check():  # Create differences for secret sh
                                 # broadcast_difference_share
                                 datas.append(dict(diff=util.vote_to_string(difference), x=x, i=i, j=j, server_a=server_y, server_b=server_z, server=my_name, client=client))
                                 db.insert_zero_consistency_check(diff=difference, x=x, i=i, j=j, server_a=server_y, server_b=server_z, server=my_name, client_name=client, db_name=my_name)
+        communication_number += 3
         server_util.broadcast(data=dict(datas=datas, server=my_name), servers=servers, url="/differenceshareforzeroone")
     return Response(status=200)
 
@@ -344,6 +352,7 @@ def sumdifferenceshareforzeroone():  # Verify servers have calculated the same
 
 
 def sum_product_zero_one_check():
+    global communication_number
     zero_partitions_dict = db.get_zero_partitions(my_name)
     zero_partitions_clients = zero_partitions_dict.keys()
     sum_partition_array = [[[0 for x in range(len(servers))] for j in range(len(servers))] for i in range(len(servers))]
@@ -358,6 +367,7 @@ def sum_product_zero_one_check():
             if (i, j, x) not in used_parts:
                 used_parts.add((i, j, x))
                 sum_partition_array[i][j][x] = np.mod(np.add(sum_partition_array[i][j][x], matrix),util.get_prime())
+        communication_number += 3
         server_util.broadcast(data=dict(sum_matrix=util.vote_to_string(sum_partition_array), server=my_name, client=c), servers=servers, url="/zeroone_sum_partition")
         db.insert_zero_partition_sum(matrix=sum_partition_array, server=my_name, client=c, db_name=my_name)
 
@@ -381,10 +391,10 @@ def sum_product_receive():
     return Response(status=200)
 
 
-@app.route("/zeroone_sum_partition_finalize", methods=["GET"])
 def zeroone_sum_partition_finalize(): # check for vote validity
     partition_sums = db.get_zero_partition_sum(my_name)
     partition_sums_clients = partition_sums.keys()
+    illegal_votes = []
     for client in partition_sums_clients:
         part_sums = list(partition_sums[client])
 
@@ -407,14 +417,16 @@ def zeroone_sum_partition_finalize(): # check for vote validity
         sum_res = np.mod(np.array(sum_res), util.get_prime())
         if not np.array_equal(sum_res, np.zeros(sum_res.shape)):
             # Illegal vote.
+            illegal_votes.append(client)
             print(client, "is an illegal vote")
         else:
             print(client, "is a legal vote")
-    return Response(status=200)
+    return illegal_votes
 
 
 @app.route("/ensure_vote_agreement", methods=["GET"])
 def ensure_agreement():
+    global communication_number
     illegal_votes = []
 
     for server in servers:
@@ -440,6 +452,7 @@ def ensure_agreement():
     disagreed_illegal_votes = ["c3"]
     # Send disagreed illegal votes to mediator
     if(len(disagreed_illegal_votes) > 0):
+        communication_number += 1
         server_util.send_illegal_votes_to_mediator(illegal_votes=list(disagreed_illegal_votes), server=my_name, url=mediator, name=my_name.split(":")[-1])
 
 
@@ -480,6 +493,7 @@ def messageinconsistency():
 
 @app.route("/add", methods=["GET"])
 def add():
+    global communication_number
     votes = db.round_one(my_name)
     summed_votes = server_util.sum_votes(votes)
     # TODO: Secret share summed votes
@@ -490,6 +504,7 @@ def add():
     # ss_summed_votes = server_util.secret_share(summed_votes, servers)
 
     summed_votes = server_util.sum_votes(legal_votes)
+    communication_number += 3
     server_util.broadcast_values(summed_votes, 2, servers, my_name)
     return Response(status=200)
 
@@ -534,6 +549,10 @@ def compute_result():
 
     return make_response(util.vote_to_string(s), 200)  # Response(util.vote_to_string(s), status=200, mimetype='text/text')
 
+@app.route("/get_comms", methods=["GET"])
+def get_comms():
+    global communication_number
+    return make_response(str(communication_number), 200)
 
 @app.route("/illegal", methods=["POST"])
 def illegal_vote():
