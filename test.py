@@ -244,10 +244,13 @@ class TestCommunication(unittest.TestCase):
         reset_servers()
         vote1 = np.array([[1,0],[0,1]])
         vote2 = np.array([[-2,3],[3,-2]])
+        vote3 = np.array([[0,1],[1,0]])
         vote1_partitions = util.partition_and_secret_share_vote(vote1, local_servers)
+        vote3_partitions = util.partition_and_secret_share_vote(vote3, local_servers)
         vote2_partitions = util.partition_and_secret_share_vote(vote2, local_servers)
-        client_util.postvote("legal", vote1_partitions, local_servers)
+        client_util.postvote("legal1", vote1_partitions, local_servers)
         client_util.postvote("illegal", vote2_partitions, local_servers)
+        client_util.postvote("legal2", vote3_partitions, local_servers)
         for server in local_servers:
             util.get_url(server + "zero_one_consistency")
         time.sleep(1)
@@ -255,8 +258,23 @@ class TestCommunication(unittest.TestCase):
             util.get_url(server + "sumdifferenceshareforzeroone")
         time.sleep(1)
         for server in local_servers:
-            util.get_url(server + "zeroone_sum_partition_finalize")
-        self.assertTrue(True)
+            util.get_url(server + 'check_votes')
+        time.sleep(1)
+        for server in local_servers:
+            util.get_url(server + 'ensure_vote_agreement')
+        time.sleep(1)
+        for server in local_servers:
+            util.get_url(server + 'add')
+        time.sleep(1)
+        for server in local_servers:
+            response = util.get_url(server + 'compute_result')
+            result = np.rint(util.string_to_vote(response.text))
+            print(server, result)
+        time.sleep(1)
+        for server in local_servers:
+            response = util.get_url(server + 'get_comms')
+            print(server, response.text)
+        self.assertTrue(np.array_equal(np.array([[2,0],[0,2]]),result))
 
     # def test_many_votes(self):
     #     reset_servers()
