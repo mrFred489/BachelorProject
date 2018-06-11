@@ -416,6 +416,7 @@ def zeroone_sum_partition_finalize(): # check for vote validity
                 res[i][j] = sum(res[i][j])[0] % util.get_prime()
         sum_res = [sum(x) for x in res]
         sum_res = np.mod(np.array(sum_res), util.get_prime())
+        print(client, sum_res)
         if not np.array_equal(sum_res, np.zeros(sum_res.shape)):
             # Illegal vote.
             illegal_votes.append(client)
