@@ -54,6 +54,7 @@ official_servers = [
 
 cheating = False
 cheating_nums = []
+cheat_id = 0
 
 if not testing:
     servers = test_servers
@@ -92,7 +93,7 @@ def vote():
         # Convert votes_ to list of np.array
         votes = []
         for num, v_ in enumerate(votes_):
-            if num in cheating_nums:
+            if num in cheating_nums and cheat_id == 1:
                 print ("cheating")
                 votes.append(cheat_util.col_row_cheat(util.string_to_vote(v_)))
                 print (votes[-1])
@@ -566,10 +567,11 @@ def illegal_vote():
     return Response(status=200)
 
 
-def create_local(port, cheat=False, cheating_ns=[]):
-    global my_name, testing, server_nr, cheating, cheating_nums
+def create_local(port, cheat=False, cheating_ns=[], cheatid=0):
+    global my_name, testing, server_nr, cheating, cheating_nums, cheat_id
     cheating = cheat
     cheating_nums = cheating_ns
+    cheat_id = cheatid
 
     @app.route("/shutdown")
     def stop_server():

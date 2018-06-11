@@ -344,7 +344,7 @@ class TestCheater(unittest.TestCase):
         time.sleep(3)
 
     def test_row_sum(self):
-        create_local_cheating_server(5003, [0, 1])
+        create_local_cheating_server(5003, [0, 1], 1)
         time.sleep(1)
         client_util.send_vote([4, 2, 1, 3], 'c1', local_servers)
         client_util.send_vote([1, 2, 3, 4], 'c2', local_servers)
