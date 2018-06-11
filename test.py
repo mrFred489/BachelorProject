@@ -37,8 +37,8 @@ def create_local_server(port):
     pr = mp.Process(target=Server.routes.create_local, args=(str(port),))
     pr.start()
 
-def create_local_cheating_server(port, cheating_nums):
-    pr = mp.Process(target=Server.routes.create_local, args=(str(port), True, cheating_nums))
+def create_local_cheating_server(port, cheating_nums, cheating_id):
+    pr = mp.Process(target=Server.routes.create_local, args=(str(port), True, cheating_nums, cheating_id))
     pr.start()
     
 def create_local_mediator(port):
@@ -350,6 +350,8 @@ class TestCheater(unittest.TestCase):
         for s in local_servers:
             response = util.get_url(s + 'check_votes')
         self.assertTrue(len(requests.get(mediator + "test/printcomplaints").text) > 0)
+        requests.get(baseurl4 + "shutdown")
+        time.sleep(0.5)
 
     def test_row_sum_neg(self):
         create_local_server(5003)

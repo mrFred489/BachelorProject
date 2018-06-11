@@ -12,6 +12,7 @@ import os.path
 from collections import defaultdict
 
 
+
 app = Flask(__name__)
 app.url_map.strict_slashes = False
 log = logging.getLogger('werkzeug')
@@ -550,6 +551,30 @@ def compute_result():
     # Broadcast result to other servers. If disagreement, then send to mediator.
 
     return make_response(util.vote_to_string(s), 200)  # Response(util.vote_to_string(s), status=200, mimetype='text/text')
+
+
+@app.route("/save_result", methods=["POST"])
+def save_result():
+    verified, data = util.unpack_request(request, str(server_nr))
+    if not verified:
+        return make_response("Could not verify", 400)
+    try:
+        vote_ = data['result']
+        if type(vote_) == str:
+            vote_ = [vote_]
+        server_name = data['server']
+
+        for i in range(len(vote_)):
+            vote = util.string_to_vote(vote_[i])
+            assert type(vote) == np.ndarray
+            db.insert_result(vote, server_name, my_name)
+    except TypeError as e:
+        print(vote_)
+        print(e)
+        return Response(status=400)
+
+    return Response(status=200)
+
 
 @app.route("/get_comms", methods=["GET"])
 def get_comms():

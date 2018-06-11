@@ -25,7 +25,7 @@ else:
     mediator = "http://127.0.0.1:5100"
 
 
-    # Create table for votes
+    # Create tables for votes
     cursor.execute(
         'CREATE TABLE "http://127.0.0.1:5000"(matrix TEXT, id INTEGER, round INTEGER, client TEXT, server TEXT)')
     cursor.execute(
@@ -36,6 +36,19 @@ else:
         'CREATE TABLE "http://127.0.0.1:5003"(matrix TEXT, id INTEGER, round INTEGER, client TEXT, server TEXT)')
     cursor.execute(
         'CREATE TABLE "http://127.0.0.1:5004"(matrix TEXT, id INTEGER, round INTEGER, client TEXT, server TEXT)')
+
+    #Create tables for results
+    cursor.execute(
+        'CREATE TABLE "http://127.0.0.1:5000/result"(matrix TEXT, server TEXT)')
+    cursor.execute(
+        'CREATE TABLE "http://127.0.0.1:5001/result"(matrix TEXT, server TEXT)')
+    cursor.execute(
+        'CREATE TABLE "http://127.0.0.1:5002/result"(matrix TEXT, server TEXT)')
+    cursor.execute(
+        'CREATE TABLE "http://127.0.0.1:5003/result"(matrix TEXT, server TEXT)')
+    cursor.execute(
+        'CREATE TABLE "http://127.0.0.1:5004/result"(matrix TEXT, server TEXT)')
+
 
     # Create table for sums of rows
     cursor.execute(
@@ -227,12 +240,19 @@ def insert_col(col: np.ndarray, id: int, type_: str, client_name, server, my_nam
 def insert_vote(matrix: np.ndarray, id: int, round: int, client_name: str, server: str, db_name: str):
     cur = get_cursor()
     matrix = util.vote_to_string(matrix)
-    cur.execute('SELECT matrix FROM "' + db_name + '" WHERE id = ' + str(id) + ' AND client = \'' + str(client_name) + '\' AND server = \'' + str(server) + '\' AND round = ' + str(round))
+    cur.execute('SELECT matrix FROM "' + db_name + '" WHERE id = ' + str(id)
+                + ' AND client = \'' + str(client_name)
+                + '\' AND server = \'' + str(server)
+                + '\' AND round = ' + str(round))
     if len(cur.fetchall()) == 0:
         cur.execute('INSERT INTO "' + db_name + '" (matrix, id, round, client, server) VALUES (%s, %s, %s, %s, %s)',
                 (matrix, id, round, client_name, server))
     else:
-        cur.execute('UPDATE "' + db_name + '" SET matrix = \'' + matrix + '\' WHERE id = ' + str(id) + ' AND client = \'' + str(client_name) + '\' AND server = \'' + str(server) + '\' AND round = ' + str(round))
+        cur.execute('UPDATE "' + db_name + '" SET matrix = \'' + matrix
+                    + '\' WHERE id = ' + str(id)
+                    + ' AND client = \'' + str(client_name)
+                    + '\' AND server = \'' + str(server)
+                    + '\' AND round = ' + str(round))
     cur.close()
     conn.commit()
     return 1
@@ -254,6 +274,28 @@ def insert_summed_votes(matrix: np.ndarray, id: int, client_name: str, server: s
     cur.close()
     conn.commit()
     return 1
+
+def insert_result(matrix: np.ndarray, server: str, db_name: str):
+    cur = get_cursor()
+    matrix = util.vote_to_string(matrix)
+    cur.execute('INSERT INTO "' + db_name + '/result" (matrix, server) '
+                + 'VALUES (%s, %s)',
+                (matrix, server))
+    cur.close()
+    conn.commit()
+    return 1
+
+
+def get_results(db_name: str):
+    cur = get_cursor()
+    cur.execute('SELECT matrix, server FROM "' + db_name + '/result"')
+    res = []
+    for m, s in cur:
+        m = util.string_to_vote(m)
+        res.append(m, s)
+    cur.close()
+    conn.commit()
+    return res
 
 
 def insert_zero_partition(matrix: np.ndarray, x: int, i: int, j: int, client_name: str, server: str, db_name: str):
