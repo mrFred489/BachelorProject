@@ -357,8 +357,8 @@ def sum_product_zero_one_check():
     global communication_number
     zero_partitions_dict = db.get_zero_partitions(my_name)
     zero_partitions_clients = zero_partitions_dict.keys()
-    sum_partition_array = [[[0 for x in range(len(servers))] for j in range(len(servers))] for i in range(len(servers))]
     for c in zero_partitions_clients:
+        sum_partition_array = [[[0 for x in range(len(servers))] for j in range(len(servers))] for i in range(len(servers))]
         client_parts = zero_partitions_dict[c]
         used_parts = set()
         for part in client_parts:
@@ -402,7 +402,6 @@ def zeroone_sum_partition_finalize(): # check for vote validity
 
         res = [[[[0] for x in range(len(servers))] for j in range(len(servers))] for i in range(len(servers))]
         res2 = [[[0] for j in range(len(servers))] for i in range(len(servers))]
-        print(client, res2)
         for i in range(len(servers)):
             for j in range(len(servers)):
                 for x in range(len(servers)):
@@ -416,13 +415,9 @@ def zeroone_sum_partition_finalize(): # check for vote validity
                             server = part_sum['server']
                         res[i][j][x] = val[0]
                 res2[i][j] = sum(res[i][j])[0] % util.get_prime()
-        print(client, res)
-        print(client, res2)
-        sum_res = []
         sum_res = [sum(ij) for ij in res2]
         sum_res = np.mod(np.array(sum_res), util.get_prime())
-        print("SUM_RES:", sum_res)
-        if not np.array_equal(sum_res, np.zeros(sum_res.shape)):
+        if not np.mod(np.sum(sum_res),util.get_prime()) == 0.0:
             # Illegal vote.
             illegal_votes.append(client)
             print(client, "is an illegal vote")

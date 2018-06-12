@@ -257,10 +257,10 @@ class TestCommunication(unittest.TestCase):
             self.assertTrue(response.ok)
 
     def test_new_product(self):
-        client_util.send_vote([1,2], 'c1', local_servers)
         illegal_vote = np.array([[3,-2],[-2,3]])
         illegal_vote_partitions = util.partition_and_secret_share_vote(illegal_vote, local_servers)
         client_util.postvote("ic3", illegal_vote_partitions, local_servers)
+        client_util.send_vote([1,2], 'c1', local_servers)
         client_util.send_vote([2,1], 'c2', local_servers)
         illegal_vote = np.array([[2, -1], [-1, 2]])
         illegal_vote_partitions = util.partition_and_secret_share_vote(illegal_vote, local_servers)
