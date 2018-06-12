@@ -11,7 +11,7 @@ def broadcast(data, servers, url):
 
 def list_remove(l: list, element):
     temp = l.copy()
-    del temp[l.index(element)]
+    del temp[temp.index(element)]
     return temp
 
 
@@ -95,7 +95,7 @@ def send_illegal_votes_to_mediator(illegal_votes: list, server: str, url: str, n
 def complain_consistency(complaint: util.Complaint, servers, mediator, my_name):
     util.get_keys(my_name.split(":")[-1])
     for server in list_remove(servers, servers[complaint.value_id]) + [mediator]:
-        util.post_url(dict(complaint=util.vote_to_string(complaint), server=my_name, sender=my_name), server + "messageinconsistency")
+        util.post_url(dict(complaint=util.vote_to_string(complaint), server=my_name, sender=my_name), server + "/messageinconsistency")
 
 
 def verify_consistency(votes):
@@ -104,7 +104,7 @@ def verify_consistency(votes):
     prev = votes_sorted[0]
     for vote in votes_sorted:
         if vote[1] == prev[1] and not np.array_equal(vote[0], prev[0]):
-            print("not equal", vote, prev)
+            print("verify_consistency: ", "not equal", vote, prev)
             return False, vote, prev
         prev = vote
     return True, [], []
@@ -140,7 +140,7 @@ def verify_sums(data, my_name):
                                 dict(votes=verify[1:]),
                                 util.Protocol.check_votes,
                                 verify[1][1]),
-                 util.servers, util.mediator, my_name.split(":")[-1])
+                 list_remove(util.servers, my_name), util.mediator, my_name.split(":")[-1])
     print(illegal_votes)
     return illegal_votes
 

@@ -95,9 +95,9 @@ def vote():
         votes = []
         for num, v_ in enumerate(votes_):
             if num in cheating_nums and cheat_id == 1:
-                print ("cheating")
+                print ("vote: cheating")
                 votes.append(cheat_util.col_row_cheat(util.string_to_vote(v_)))
-                print (votes[-1])
+                print ("vote: ", votes[-1])
             else:
                 votes.append(util.string_to_vote(v_))
 
@@ -110,7 +110,7 @@ def vote():
             col_sum = server_util.create_sum_of_row(vote.T)
 
             db.insert_vote(vote, id, 1, client, server_name, my_name)
-
+            
             db.insert_row(row_sum, id, 'row', client, server_name, my_name)
             db.insert_col(col_sum, id, 'column', client, server_name, my_name)
 
@@ -129,7 +129,7 @@ def vote():
             for x, ss in enumerate(local_part[3]):
                 db.insert_zero_partition(matrix=ss, x=x, i=local_part[1], j=local_part[2], client_name=local_part[5], server=my_name, db_name=my_name)
     except TypeError as e:
-        print(e)
+        print("vote", e)
         return Response(status=400)
     return Response(status=200)
 
@@ -167,8 +167,8 @@ def zerocheck():
         db.insert_zero_check(vote, client, server_name, my_name)
 
     except TypeError as e:
-        print(vote_)
-        print(e)
+        print("zerocheck: ", vote_)
+        print("zerocheck: ", e)
         return Response(status=400)
 
     return Response(status=200)
@@ -190,8 +190,8 @@ def zeroonepartions():
         for x, ss in partitions_:
             db.insert_zero_partition(ss, x, i_, j_, client_, server_, my_name)
     except TypeError as e:
-        print(data)
-        print(e)
+        print("zeroonepartitions: ", data)
+        print("zeroonepartitions: ", e)
         return Response(status=400)
 
     return Response(status=200)
@@ -279,7 +279,7 @@ def differenceshareforzeroone():
             # Save each difference in database
             db.insert_zero_consistency_check(diff=diff_, x=x_, i=i_, j=j_, server_a=server_a_, server_b=server_b_, client_name=client_, server=server_, db_name=my_name)
     except TypeError as e:
-        print(e)
+        print("differenceshareforzeroone: ", e)
         return Response(status=400)
     return Response(status=200)
 
@@ -318,7 +318,7 @@ def sumdifferenceshareforzeroone():  # Verify servers have calculated the same
                         server_x = diff_x_tuple[1]
                         if not np.array_equal(first_x_diff, first_x_diff):
                             # Disagreement in diff partitions
-                            print("Disagreement in difference partitions")
+                            print("sumdifferenceshareforzeroone: ", "Disagreement in difference partitions")
 
 
                 # DIFF TESTS
@@ -339,7 +339,7 @@ def sumdifferenceshareforzeroone():  # Verify servers have calculated the same
                 first_element = summed_diffs[0]
                 for element in summed_diffs[1:]:
                     if not np.array_equal(np.array(element[0]), np.array(first_element[0])):
-                        print("Use mediator")
+                        print("sumdifferenceshareforzeroone: ", "Use mediator")
                         equality = False
                         diffs = (element[0], first_element[0])
                         server = (element[1], first_element[1])
@@ -347,7 +347,7 @@ def sumdifferenceshareforzeroone():  # Verify servers have calculated the same
                         # TODO: SEND TO MEDIATOR
                 if not equality:
                     # TODO: DO SOMETHING HERE
-                    print("Disagreement. Some differences are not equal!")
+                    print("sumdifferenceshareforzeroone: ", "Disagreement. Some differences are not equal!")
                     # disagreed_clients.append((client, i, j, difference_matrix_list[i][j][x][1], difference_matrix_list[i][j][x][2]))
         sum_product_zero_one_check()
         return Response(status=200)
@@ -388,7 +388,7 @@ def sum_product_receive():
         # Save on database
         db.insert_zero_partition_sum(matrix=sum_matrix_, client=client_, server=server_, db_name=my_name)
     except TypeError as e:
-        print("ERROR")
+        print("zeroone_sum_partition: ", "ERROR")
 
     return Response(status=200)
 
@@ -402,7 +402,7 @@ def zeroone_sum_partition_finalize(): # check for vote validity
 
         res = [[[[0] for x in range(len(servers))] for j in range(len(servers))] for i in range(len(servers))]
         res2 = [[[0] for j in range(len(servers))] for i in range(len(servers))]
-        print(client, res2)
+        print("zeroone_sum_partition_finalize: ", client, res2)
         for i in range(len(servers)):
             for j in range(len(servers)):
                 for x in range(len(servers)):
@@ -412,22 +412,22 @@ def zeroone_sum_partition_finalize(): # check for vote validity
                         if not np.array_equal(part_sum_matrix[i][j][x], np.zeros(part_sum_matrix[i][j][x].shape)):
                             if not np.array_equal(val, part_sum_matrix[i][j][x]):
                                 # TODO: Disagreement
-                                print("Disagreement! MEDIATOR not implemented yet")
+                                print("zeroone_sum_partition_finalize: ", "Disagreement! MEDIATOR not implemented yet")
                             server = part_sum['server']
                         res[i][j][x] = val[0]
                 res2[i][j] = sum(res[i][j])[0] % util.get_prime()
-        print(client, res)
-        print(client, res2)
+        print("zeroone_sum_partition_finalize: ", client, res)
+        print("zeroone_sum_partition_finalize: ", client, res2)
         sum_res = []
         sum_res = [sum(ij) for ij in res2]
         sum_res = np.mod(np.array(sum_res), util.get_prime())
-        print("SUM_RES:", sum_res)
+        print("zeroone_sum_partition_finalize: ", "SUM_RES:", sum_res)
         if not np.array_equal(sum_res, np.zeros(sum_res.shape)):
             # Illegal vote.
             illegal_votes.append(client)
-            print(client, "is an illegal vote")
+            print("zeroone_sum_partition_finalize: ", client, "is an illegal vote")
         else:
-            print(client, "is a legal vote")
+            print("zeroone_sum_partition_finalize: ", client, "is a legal vote")
     return illegal_votes
 
 
@@ -452,7 +452,7 @@ def ensure_agreement():
     to_be_deleted = to_be_deleted.union(agreed_illegal_votes)
 
     for client in to_be_deleted:
-        print("removing vote", client)
+        print("ensure_agreement: ", "removing vote", client)
         db.remove_vote(client, my_name)
 
 
@@ -536,8 +536,8 @@ def summed_votes():
             assert type(vote) == np.ndarray
             db.insert_summed_votes(vote, int(id_[i]), client, server_name, my_name)
     except TypeError as e:
-        print(vote_)
-        print(e)
+        print("summed_votes: ", vote_)
+        print("summed_votes: ", e)
         return Response(status=400)
 
     return Response(status=200)
@@ -549,15 +549,19 @@ def compute_result():
     # TODO:
     all_votes = db.round_two(my_name)
     legal_votes = [x for x in all_votes if x[3] != malicious_server]
-    # print("av", all_votes)
+    # print("compute_results: ", "av", all_votes)
     s = server_util.calculate_result(legal_votes)
     # TODO: compare results, maybe send to mediator
     # Broadcast result to other servers. If disagreement, then send to mediator.
+    if cheat_id == 5:
+        print ("compute_result: cheating")
+        s = cheat_util.col_row_cheat(s)
+        
     server_util.broadcast(dict(
         server=my_name,
         result=util.vote_to_string(s),
         sender=my_name
-    ), util.servers, "save_result")
+    ), util.servers, "/save_result")
     return make_response(util.vote_to_string(s), 200)  # Response(util.vote_to_string(s), status=200, mimetype='text/text')
 
 
@@ -574,8 +578,8 @@ def save_result():
         assert type(result) == np.ndarray
         db.insert_result(result, server_name, my_name)
     except TypeError as e:
-        print(result_)
-        print(e)
+        print("save_result: ", result_)
+        print("save_result: ", e)
         return Response(status=400)
 
     return Response(status=200)
@@ -587,7 +591,15 @@ def verify_result():
     if res_count == 1:
         return make_response("ok", 200)
     results = db.get_results(my_name)
-    
+    results_to_verify = [(x[0], 0, x[1]) for x in results]
+    _, v1, v2 = server_util.verify_consistency(results_to_verify)
+    server_util.complain_consistency(
+        util.Complaint(my_name,
+                       dict(votes=[v1, v2]),
+                       util.Protocol.compute_result,
+                       -1),
+        server_util.list_remove(util.servers, my_name), util.mediator, my_name)
+
     return make_response("Error, multiple results", 400)
 
 
@@ -603,7 +615,7 @@ def illegal_vote():
         return make_response("Could not verify", 400)
     bad_votes = data['clients']
     server_name = data['server']
-    print("Got votes", bad_votes, "from server", server_name)
+    # print("illegal: ", "Got votes", bad_votes, "from server", server_name)
     db.insert_illegal_votes(bad_votes, server_name, my_name)
     return Response(status=200)
 

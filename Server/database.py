@@ -468,6 +468,8 @@ def reset(db_name: str):
     cur.execute('DELETE FROM "' + db_name + '/zeroconsistency"')
     cur.execute('DELETE FROM "' + db_name + '/zeropartition"')
     cur.execute('DELETE FROM "' + db_name + '/illegal"')
+    cur.execute('DELETE FROM "' + db_name + '/summed_votes"')
+    cur.execute('DELETE FROM "' + db_name + '/result"')
 
 
     cur.close()
