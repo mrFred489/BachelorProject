@@ -43,11 +43,11 @@ def postvote(client_name: str, vote: list, servers: list):
             rest_strings.append(util.vote_to_string(vote_partition))
         m = dict(client=client_name, ids=ids, server=servers[i], votes=rest_strings, sender=client_name)
         util.get_keys(client_name)
-        util.post_url(m, servers[i] + 'vote')
+        util.post_url(m, servers[i] + '/vote')
 
 def zero_sum_db_print(servers: list):
     for s in servers:
-        util.post_url(data=dict(), url=s + 'z0print')
+        util.post_url(data=dict(), url=s + '/z0print')
 
 def submit(client_name: str, vote: list, servers: list):
     ### Parameters:
@@ -67,7 +67,7 @@ def submit(client_name: str, vote: list, servers: list):
         m = dict(client=client_name, id=division, round=1, server=recipient,
                  vote=server_values, sender=client_name)
         util.get_keys(client_name)
-        util.post_url(m, recipient + 'submit')
+        util.post_url(m, recipient + '/submit')
 
 
 def divide_secret_shares():
@@ -78,29 +78,29 @@ def get_total(urls: list):
     sums = []
     sums_check = []
     for url in urls:
-        var = eval(requests.get(url + 'total').text)
-        print(url, var)
+        var = eval(requests.get(url + '/total').text)
+        print("get_total: ", url, var)
         sums.append(var)
         sums_check += var
     sums_check = set(sums_check)
     total = 0
     if len(set(sums_check)) == len(urls):
-        print("success")
+        print("get_total: ", "success")
         for name, num in sums_check:
             total += num
     else:
-        print("something is wrong")
+        print("get_total: ", "something is wrong")
     return total % int(util.get_prime())
 
 
 def voting_done(servers):
     for server in servers:
-        util.get_url(server + 'add')
+        util.get_url(server + '/add')
 
 
 def calculate_vote_result(servers):
     for server in servers:
-        util.get_url(server + 'compute_result')
+        util.get_url(server + '/compute_result')
 
 
 def create_multiplication_secret(x: int, n: int, cs=2):

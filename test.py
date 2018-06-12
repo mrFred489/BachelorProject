@@ -11,21 +11,21 @@ import os.path
 import Mediator.mediator
 
 
-baseurl1 = "http://127.0.0.1:5000/"
-baseurl2 = "http://127.0.0.1:5001/"
-baseurl3 = "http://127.0.0.1:5002/"
-baseurl4 = "http://127.0.0.1:5003/"
-mediator = "http://127.0.0.1:5100/"
+baseurl1 = "http://127.0.0.1:5000"
+baseurl2 = "http://127.0.0.1:5001"
+baseurl3 = "http://127.0.0.1:5002"
+baseurl4 = "http://127.0.0.1:5003"
+mediator = "http://127.0.0.1:5100"
 
 local_servers = [baseurl1, baseurl2, baseurl3, baseurl4]
 
 local_servers_and_med = local_servers + [mediator]
 
-official_server = "https://cryptovoting.dk/"
-official_server1 = "https://server1.cryptovoting.dk/"
-official_server2 = "https://server2.cryptovoting.dk/"
-official_server3 = "https://server3.cryptovoting.dk/"
-official_server4 = "https://server4.cryptovoting.dk/"
+official_server = "https://cryptovoting.dk"
+official_server1 = "https://server1.cryptovoting.dk"
+official_server2 = "https://server2.cryptovoting.dk"
+official_server3 = "https://server3.cryptovoting.dk"
+official_server4 = "https://server4.cryptovoting.dk"
 
 n_servers = [baseurl1, baseurl2, baseurl3,
              official_server, official_server1,
@@ -121,6 +121,7 @@ class TestCommunication(unittest.TestCase):
     @classmethod
     def setUp(cls):
         reset_servers()
+        time.sleep(0.1)
 
     def test_vote_format(self):
         vote = client_util.create_vote([4, 2, 1, 3])
@@ -170,9 +171,6 @@ class TestCommunication(unittest.TestCase):
         illegal_votes = server_util.verify_sums([r1,r2,r3], "5000")
         self.assertEqual({'c1'}, illegal_votes)
 
-
-    # TODO: add test that checks that server actually sorts away illegal votes
-
     def test_create_sum_of_row(self):
         vote = client_util.create_vote([2, 1, 3, 4])
         summed_rows = server_util.create_sum_of_row(vote)
@@ -195,24 +193,25 @@ class TestCommunication(unittest.TestCase):
     def test_single_vote(self):
         client_util.send_vote([4, 2, 1, 3], 'c1', local_servers)
         for s in local_servers:
-            response = util.get_url(s + 'check_votes')
+            response = util.get_url(s + '/check_votes')
         for s in local_servers:
-            response = util.get_url(s + 'ensure_vote_agreement')
+            response = util.get_url(s + '/ensure_vote_agreement')
         for server in local_servers:
-            util.get_url(server + 'add')
+            util.get_url(server + '/add')
         time.sleep(.5)
         for s in local_servers:
-            response = util.get_url(s + 'compute_result')
+            response = util.get_url(s + '/compute_result')
             result = np.rint(util.string_to_vote(response.text))
             print(result)
             self.assertTrue(np.array_equal(result, np.array([[0, 0, 0, 1],
                                                              [0, 1, 0, 0],
                                                              [1, 0, 0, 0],
-                                                             [0, 0, 1, 0]])))
-            self.assertTrue(response.ok)
+                                                             [0, 0, 1, 0]])),
+                            msg="wrong result: " + str(result))
+            self.assertTrue(response.ok, msg="server does not ok")
         for s in local_servers:
-            response = util.get_url(s + "verify_result")
-            self.assertTrue(response.ok)
+            response = util.get_url(s + "/verify_result")
+            self.assertTrue(response.ok, msg="Servers don't agree on result")
             
     def test_adding_votes(self):
         client_util.send_vote([4, 2, 1, 3], 'c1', local_servers)
@@ -221,14 +220,14 @@ class TestCommunication(unittest.TestCase):
         client_util.send_vote([1, 1, 1, 1], 'c3', local_servers)
         client_util.send_vote([2, 2, 2, 2], 'c4', local_servers)
         for s in local_servers:
-            response = util.get_url(s + 'check_votes')
+            response = util.get_url(s + '/check_votes')
         for s in local_servers:
-            response = util.get_url(s + 'ensure_vote_agreement')
+            response = util.get_url(s + '/ensure_vote_agreement')
         for server in local_servers:
-            util.get_url(server + 'add')
+            util.get_url(server + '/add')
         time.sleep(.5)
         for s in local_servers:
-            response = util.get_url(s + 'compute_result')
+            response = util.get_url(s + '/compute_result')
             result = np.rint(util.string_to_vote(response.text))
             print(result)
             self.assertTrue(np.array_equal(result, np.array([[1, 0, 0, 1],
@@ -241,14 +240,14 @@ class TestCommunication(unittest.TestCase):
         client_util.send_vote([4, 2, 1, 3], 'c1', local_servers)
         client_util.send_vote([1, 2, 3, 4], 'c1', local_servers)
         for s in local_servers:
-            response = util.get_url(s + 'check_votes')
+            response = util.get_url(s + '/check_votes')
         for s in local_servers:
-            response = util.get_url(s + 'ensure_vote_agreement')
+            response = util.get_url(s + '/ensure_vote_agreement')
         for server in local_servers:
-            util.get_url(server + 'add')
+            util.get_url(server + '/add')
         time.sleep(.5)
         for s in local_servers:
-            response = util.get_url(s + 'compute_result')
+            response = util.get_url(s + '/compute_result')
             result = np.rint(util.string_to_vote(response.text))
             self.assertTrue(np.array_equal(result, np.array([[1, 0, 0, 0],
                                                              [0, 1, 0, 0],
@@ -266,27 +265,27 @@ class TestCommunication(unittest.TestCase):
         illegal_vote_partitions = util.partition_and_secret_share_vote(illegal_vote, local_servers)
         client_util.postvote("ic4", illegal_vote_partitions, local_servers)
         for server in local_servers:
-            util.get_url(server + "zero_one_consistency")
+            util.get_url(server + "/zero_one_consistency")
         time.sleep(1)
         for server in local_servers:
-            util.get_url(server + "sumdifferenceshareforzeroone")
+            util.get_url(server + "/sumdifferenceshareforzeroone")
         time.sleep(1)
         for server in local_servers:
-            util.get_url(server + 'check_votes')
+            util.get_url(server + '/check_votes')
         time.sleep(1)
         for server in local_servers:
-            util.get_url(server + 'ensure_vote_agreement')
+            util.get_url(server + '/ensure_vote_agreement')
         time.sleep(1)
         for server in local_servers:
-            util.get_url(server + 'add')
+            util.get_url(server + '/add')
         time.sleep(1)
         for server in local_servers:
-            response = util.get_url(server + 'compute_result')
+            response = util.get_url(server + '/compute_result')
             result = np.rint(util.string_to_vote(response.text))
             print(server, result)
         time.sleep(1)
         for server in local_servers:
-            response = util.get_url(server + 'get_comms')
+            response = util.get_url(server + '/get_comms')
             print(server, response.text)
         self.assertTrue(np.array_equal(np.array([[1,1],[1,1]]),result))
 
@@ -296,9 +295,9 @@ class TestCommunication(unittest.TestCase):
     #         client = 'c' + str(i)
     #         client_util.send_vote([1, 2, 3, 4], client, local_servers)
     #     for server in local_servers:
-    #         util.get_url(server + 'add')
+    #         util.get_url(server + '/add')
     #     for s in local_servers:
-    #         response = util.get_url(s + 'compute_result')
+    #         response = util.get_url(s + '/compute_result')
     #         self.assertTrue(np.array_equal(util.string_to_vote(response.text), np.array([
     #             [10, 0, 0, 0],
     #             [0, 10, 0, 0],
@@ -309,8 +308,8 @@ class TestCommunication(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         for i in local_servers:
-            requests.get(i + "shutdown")
-        requests.get(mediator + "shutdown")
+            requests.get(i + "/shutdown")
+        requests.get(mediator + "/shutdown")
         time.sleep(1)
 
 
@@ -326,21 +325,21 @@ class TestMediator(unittest.TestCase):
         time.sleep(3)
 
     def test_todo(self):
-        server_util.send_illegal_votes_to_mediator([], "me", mediator[:-1], "test1")
+        server_util.send_illegal_votes_to_mediator([], "me", mediator, "test1")
         self.assertTrue(True)
 
     def test_message_inconsistency(self):
         for num, server in enumerate(local_servers):
             util.post_url(dict(complaint=util.vote_to_string(util.Complaint(
-                server, dict(test="Hej"), util.Protocol.check_votes, num+1 % 4
-            )), server=server, sender=server.split(":")[-1][:-1]), mediator + "messageinconsistency")
+                server, dict(test="test1"), util.Protocol.check_votes, num+1 % 4
+            )), server=server, sender=server.split(":")[-1]), mediator + "/messageinconsistency")
         time.sleep(0.2)
-        print(requests.get(mediator + "test/printcomplaints"))
+        print(requests.get(mediator + "/test/printcomplaints"))
 
 
     @classmethod
     def tearDownClass(cls):
-        requests.get(mediator + "shutdown")
+        requests.get(mediator + "/shutdown")
 
 
 class TestCheater(unittest.TestCase):
@@ -359,11 +358,11 @@ class TestCheater(unittest.TestCase):
 
     @classmethod
     def setUp(cls):
-        reset_servers()
+        reset_servers_not_cheater()
 
     @classmethod
     def tearDown(cls):
-        requests.get(baseurl4 + "shutdown")
+        requests.get(baseurl4 + "/shutdown")
         time.sleep(0.5)
         
     def test_row_sum(self):
@@ -372,8 +371,8 @@ class TestCheater(unittest.TestCase):
         client_util.send_vote([4, 2, 1, 3], 'c1', local_servers)
         client_util.send_vote([1, 2, 3, 4], 'c2', local_servers)
         for s in local_servers:
-            response = util.get_url(s + 'check_votes')
-        self.assertTrue(len(requests.get(mediator + "test/printcomplaints").text) > 0)
+            response = util.get_url(s + '/check_votes')
+        self.assertTrue(len(requests.get(mediator + "/test/printcomplaints").text) > 0)
 
     def test_row_sum_neg(self):
         create_local_server(5003)
@@ -381,22 +380,47 @@ class TestCheater(unittest.TestCase):
         client_util.send_vote([4, 2, 1, 3], 'c1', local_servers)
         client_util.send_vote([1, 2, 3, 4], 'c2', local_servers)
         for s in local_servers:
-            response = util.get_url(s + 'check_votes')
-        self.assertTrue(len(requests.get(mediator + "test/printcomplaints").text) <= 2, msg=requests.get(mediator + "test/printcomplaints").text)
+            response = util.get_url(s + '/check_votes')
+        self.assertTrue(len(requests.get(mediator + "/test/printcomplaints").text) <= 2, msg=requests.get(mediator + "/test/printcomplaints").text)
 
+    def test_cheat_final_result(self):
+        create_local_cheating_server(5003, [0], 5)
+        client_util.send_vote([4, 2, 1, 3], 'c1', local_servers)
+        client_util.send_vote([1, 2, 3, 4], 'c2', local_servers)
+        for s in local_servers:
+            response = util.get_url(s + '/check_votes')
+        for s in local_servers:
+            response = util.get_url(s + '/ensure_vote_agreement')
+        for server in local_servers:
+            util.get_url(server + '/add')
+        time.sleep(.5)
+        for s in local_servers:
+            response = util.get_url(s + '/compute_result')
+        time.sleep(.5)
+        for s in local_servers:
+            response = util.get_url(s + "/verify_result")
+            self.assertFalse(response.ok, msg="Servers don't agree on result, " + response.text)
+
+        
     @classmethod
     def tearDownClass(cls):
         for i in local_servers[:-1]:
-            requests.get(i + "shutdown")
-        requests.get(mediator + "shutdown")
+            requests.get(i + "/shutdown")
+        requests.get(mediator + "/shutdown")
         time.sleep(1)
 
         
 
 def reset_servers():
     for server in local_servers:
-        requests.post(server + "reset")
-    requests.post(mediator + "reset")
+        requests.post(server + "/reset")
+    requests.post(mediator + "/reset")
+
+
+def reset_servers_not_cheater():
+    for server in local_servers[:-1]:
+        requests.post(server + "/reset")
+    requests.post(mediator + "/reset")
 
 
 if __name__ == '__main__':
