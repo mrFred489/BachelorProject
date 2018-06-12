@@ -104,7 +104,7 @@ def verify_consistency(votes):
     prev = votes_sorted[0]
     for vote in votes_sorted:
         if vote[1] == prev[1] and not np.array_equal(vote[0], prev[0]):
-            print("verify_consistency: ", "not equal", vote, prev)
+            print("verify_consistency: ", "not equal", vote[0], prev[0])
             return False, vote, prev
         prev = vote
     return True, [], []
@@ -141,7 +141,7 @@ def verify_sums(data, my_name):
                                 util.Protocol.check_votes,
                                 verify[1][1]),
                  list_remove(util.servers, my_name), util.mediator, my_name.split(":")[-1])
-    print(illegal_votes)
+    print("verify_sums: ", illegal_votes)
     return illegal_votes
 
 
@@ -207,7 +207,7 @@ def zero_one_check(xs):
 
 def zero_one_illegal_check(values):
     # values = [(matrix, client, server), ...]
-    # print(values)
+    # print("zero_one_illegal_check: ", values)
     zerocheck_secrets = defaultdict(list)
 
     for check in values:

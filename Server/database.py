@@ -292,7 +292,7 @@ def get_results(db_name: str):
     res = []
     for m, s in cur:
         m = util.string_to_vote(m)
-        res.append(m, s)
+        res.append((m, s))
     cur.close()
     conn.commit()
     return res

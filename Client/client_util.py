@@ -79,17 +79,17 @@ def get_total(urls: list):
     sums_check = []
     for url in urls:
         var = eval(requests.get(url + '/total').text)
-        print(url, var)
+        print("get_total: ", url, var)
         sums.append(var)
         sums_check += var
     sums_check = set(sums_check)
     total = 0
     if len(set(sums_check)) == len(urls):
-        print("success")
+        print("get_total: ", "success")
         for name, num in sums_check:
             total += num
     else:
-        print("something is wrong")
+        print("get_total: ", "something is wrong")
     return total % int(util.get_prime())
 
 

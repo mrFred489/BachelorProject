@@ -24,5 +24,8 @@ def get_public_key(name):
             pubkey = rsa.PublicKey.load_pkcs1(keydata2)
 
     except:
-        print("missing public key for {}".format(name))
+        print("get_public_key: ", "missing public key for {}".format(name))
     return pubkey
+
+
+

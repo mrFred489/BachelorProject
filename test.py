@@ -325,14 +325,14 @@ class TestMediator(unittest.TestCase):
         time.sleep(3)
 
     def test_todo(self):
-        server_util.send_illegal_votes_to_mediator([], "me", mediator[:-1], "test1")
+        server_util.send_illegal_votes_to_mediator([], "me", mediator, "test1")
         self.assertTrue(True)
 
     def test_message_inconsistency(self):
         for num, server in enumerate(local_servers):
             util.post_url(dict(complaint=util.vote_to_string(util.Complaint(
-                server, dict(test="Hej"), util.Protocol.check_votes, num+1 % 4
-            )), server=server, sender=server.split(":")[-1][:-1]), mediator + "/messageinconsistency")
+                server, dict(test="test1"), util.Protocol.check_votes, num+1 % 4
+            )), server=server, sender=server.split(":")[-1]), mediator + "/messageinconsistency")
         time.sleep(0.2)
         print(requests.get(mediator + "/test/printcomplaints"))
 
@@ -381,7 +381,7 @@ class TestCheater(unittest.TestCase):
         client_util.send_vote([1, 2, 3, 4], 'c2', local_servers)
         for s in local_servers:
             response = util.get_url(s + '/check_votes')
-        self.assertTrue(len(requests.get(mediator + "/test/printcomplaints").text) <= 2, msg=requests.get(mediator + "test/printcomplaints").text)
+        self.assertTrue(len(requests.get(mediator + "/test/printcomplaints").text) <= 2, msg=requests.get(mediator + "/test/printcomplaints").text)
 
     def test_cheat_final_result(self):
         create_local_cheating_server(5003, [0], 5)
