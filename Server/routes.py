@@ -553,7 +553,11 @@ def compute_result():
     s = server_util.calculate_result(legal_votes)
     # TODO: compare results, maybe send to mediator
     # Broadcast result to other servers. If disagreement, then send to mediator.
-
+    server_util.broadcast(dict(
+        server=my_name,
+        result=util.vote_to_string(s),
+        sender=my_name
+    ), util.servers, "save_result")
     return make_response(util.vote_to_string(s), 200)  # Response(util.vote_to_string(s), status=200, mimetype='text/text')
 
 
@@ -563,21 +567,28 @@ def save_result():
     if not verified:
         return make_response("Could not verify", 400)
     try:
-        vote_ = data['result']
-        if type(vote_) == str:
-            vote_ = [vote_]
+        result_ = data['result']
         server_name = data['server']
-
-        for i in range(len(vote_)):
-            vote = util.string_to_vote(vote_[i])
-            assert type(vote) == np.ndarray
-            db.insert_result(vote, server_name, my_name)
+        
+        result = util.string_to_vote(result_)
+        assert type(result) == np.ndarray
+        db.insert_result(result, server_name, my_name)
     except TypeError as e:
-        print(vote_)
+        print(result_)
         print(e)
         return Response(status=400)
 
     return Response(status=200)
+
+
+@app.route("/verify_result", methods=["GET"])
+def verify_result():
+    res_count = db.get_results_count(my_name)
+    if res_count == 1:
+        return make_response("ok", 200)
+    results = db.get_results(my_name)
+    
+    return make_response("Error, multiple results", 400)
 
 
 @app.route("/get_comms", methods=["GET"])

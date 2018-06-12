@@ -118,13 +118,15 @@ class TestCommunication(unittest.TestCase):
 
         time.sleep(3)
 
-    def test_vote_format(self):
+    @classmethod
+    def setUp(cls):
         reset_servers()
+
+    def test_vote_format(self):
         vote = client_util.create_vote([4, 2, 1, 3])
         self.assertEqual(1, vote[0][3])
 
     def test_r_i_matrices(self):
-        reset_servers()
         vote = client_util.create_vote([4, 2, 1, 3])
         secret_shared_matrices = util.partition_and_secret_share_vote(vote, local_servers)
         res = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]
@@ -136,7 +138,6 @@ class TestCommunication(unittest.TestCase):
         self.assertTrue(np.array_equal(vote, np.array(res)))
 
     def test_check_vote(self):
-        reset_servers()
         vote = client_util.create_vote([4, 2, 1, 3])
         ss_vote_partitions = util.partition_and_secret_share_vote(vote, local_servers)
         res = 0
@@ -145,7 +146,6 @@ class TestCommunication(unittest.TestCase):
         self.assertTrue(server_util.check_rows_and_columns(res))
 
     def test_check_vote_neg(self):
-        reset_servers()
         vote = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [1, 0, 0, 1]])
         ss_vote_partitions = util.partition_and_secret_share_vote(vote, local_servers)
         res = 0
@@ -153,8 +153,8 @@ class TestCommunication(unittest.TestCase):
             res = (res + server_util.create_sum_of_row(ss_partition)) % util.get_prime()
         self.assertFalse(server_util.check_rows_and_columns(res))
 
+
     def test_row_sum(self):
-        reset_servers()
         r1 = (np.array([0, 0, 0, 1]), 0, "row", 'c1')
         r2 = (np.array([0, 0, 1, 0]), 1, "row", 'c1')
         r3 = (np.array([0, 1, 0, 0]), 2, "row", 'c1')
@@ -164,7 +164,6 @@ class TestCommunication(unittest.TestCase):
 
 
     def test_neg_row_sum(self):
-        reset_servers()
         r1 = (np.array([1,1,1,1]),0,"row", 'c1')
         r2 = (np.array([0,0,0,1]),1,"row", 'c1')
         r3 = (np.array([1,1,1,1]),2,"row", 'c1')
@@ -175,29 +174,47 @@ class TestCommunication(unittest.TestCase):
     # TODO: add test that checks that server actually sorts away illegal votes
 
     def test_create_sum_of_row(self):
-        reset_servers()
         vote = client_util.create_vote([2, 1, 3, 4])
         summed_rows = server_util.create_sum_of_row(vote)
         for sum in summed_rows:
             self.assertEqual(1, sum)
 
     def test_create_sum_of_col_neg(self):
-        reset_servers()
         vote = client_util.create_vote([1, 1, 3, 4])
         summed_rows = server_util.create_sum_of_row(vote.T)
         self.assertNotEqual(1, summed_rows[0])
         self.assertEqual(2, summed_rows[0])
 
     def test_division_of_secret_shares(self):
-        reset_servers()
         to_send_to = client_util.divide_secret_shares()
         for i in range(len(local_servers)):
             partition_for_server = to_send_to[i]
             self.assertTrue((i not in partition_for_server))
             self.assertTrue((i+1) % len(local_servers) not in partition_for_server)
 
+    def test_single_vote(self):
+        client_util.send_vote([4, 2, 1, 3], 'c1', local_servers)
+        for s in local_servers:
+            response = util.get_url(s + 'check_votes')
+        for s in local_servers:
+            response = util.get_url(s + 'ensure_vote_agreement')
+        for server in local_servers:
+            util.get_url(server + 'add')
+        time.sleep(.5)
+        for s in local_servers:
+            response = util.get_url(s + 'compute_result')
+            result = np.rint(util.string_to_vote(response.text))
+            print(result)
+            self.assertTrue(np.array_equal(result, np.array([[0, 0, 0, 1],
+                                                             [0, 1, 0, 0],
+                                                             [1, 0, 0, 0],
+                                                             [0, 0, 1, 0]])))
+            self.assertTrue(response.ok)
+        for s in local_servers:
+            response = util.get_url(s + "verify_result")
+            self.assertTrue(response.ok)
+            
     def test_adding_votes(self):
-        reset_servers()
         client_util.send_vote([4, 2, 1, 3], 'c1', local_servers)
         client_util.send_vote([1, 2, 3, 4], 'c2', local_servers)
         # Bad vote
@@ -221,7 +238,6 @@ class TestCommunication(unittest.TestCase):
             self.assertTrue(response.ok)
 
     def test_receipt_freeness(self):
-        reset_servers()
         client_util.send_vote([4, 2, 1, 3], 'c1', local_servers)
         client_util.send_vote([1, 2, 3, 4], 'c1', local_servers)
         for s in local_servers:
@@ -241,7 +257,6 @@ class TestCommunication(unittest.TestCase):
             self.assertTrue(response.ok)
 
     def test_new_product(self):
-        reset_servers()
         client_util.send_vote([1,2], 'c1', local_servers)
         illegal_vote = np.array([[3,-2],[-2,3]])
         illegal_vote_partitions = util.partition_and_secret_share_vote(illegal_vote, local_servers)
@@ -342,6 +357,15 @@ class TestCheater(unittest.TestCase):
 
         time.sleep(3)
 
+    @classmethod
+    def setUp(cls):
+        reset_servers()
+
+    @classmethod
+    def tearDown(cls):
+        requests.get(baseurl4 + "shutdown")
+        time.sleep(0.5)
+        
     def test_row_sum(self):
         create_local_cheating_server(5003, [0, 1], 1)
         time.sleep(1)
@@ -350,8 +374,6 @@ class TestCheater(unittest.TestCase):
         for s in local_servers:
             response = util.get_url(s + 'check_votes')
         self.assertTrue(len(requests.get(mediator + "test/printcomplaints").text) > 0)
-        requests.get(baseurl4 + "shutdown")
-        time.sleep(0.5)
 
     def test_row_sum_neg(self):
         create_local_server(5003)
@@ -361,8 +383,6 @@ class TestCheater(unittest.TestCase):
         for s in local_servers:
             response = util.get_url(s + 'check_votes')
         self.assertTrue(len(requests.get(mediator + "test/printcomplaints").text) <= 2, msg=requests.get(mediator + "test/printcomplaints").text)
-        requests.get(baseurl4 + "shutdown")
-        time.sleep(0.5)
 
     @classmethod
     def tearDownClass(cls):

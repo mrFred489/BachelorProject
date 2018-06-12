@@ -125,7 +125,7 @@ def unpack_request(request, name):
     sig = bytes(list(map(int, request.form.getlist("signature"))))
     verified = verify(sig, request.form["data"], request.form["pub"])
     data = json.loads(request.form["data"])
-    verified = cryp.keys.get_public_key(data["sender"]) and verified
+    verified = cryp.keys.get_public_key(data["sender"].split(":")[-1]) and verified
     if not verified:
         print("not verified")
     return verified, data

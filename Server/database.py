@@ -298,6 +298,16 @@ def get_results(db_name: str):
     return res
 
 
+def get_results_count(db_name: str):
+    cur = get_cursor()
+    cur.execute('SELECT COUNT(*) FROM (SELECT DISTINCT matrix FROM "' + db_name + '/result") AS temp')
+    res = cur.fetchone()[0]
+    cur.close()
+    conn.commit()
+    return res
+
+
+
 def insert_zero_partition(matrix: np.ndarray, x: int, i: int, j: int, client_name: str, server: str, db_name: str):
     cur = get_cursor()
     matrix = util.vote_to_string(matrix)
