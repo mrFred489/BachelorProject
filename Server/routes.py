@@ -424,6 +424,7 @@ def zeroone_sum_partition_finalize(): # check for vote validity
                         if not np.array_equal(part_sum_matrix[i][j][x], np.zeros(part_sum_matrix[i][j][x].shape)):
                             if not np.array_equal(val, part_sum_matrix[i][j][x]):
                                 # TODO: Disagreement
+
                                 print("zeroone_sum_partition_finalize: ", "Disagreement! MEDIATOR not implemented yet")
                             server = part_sum['server']
                         res[i][j][x] = val[0]

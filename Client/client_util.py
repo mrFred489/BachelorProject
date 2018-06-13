@@ -49,31 +49,6 @@ def zero_sum_db_print(servers: list):
     for s in servers:
         util.post_url(data=dict(), url=s + '/z0print')
 
-def submit(client_name: str, vote: list, servers: list):
-    ### Parameters:
-    ### client_name: unique identifier for client
-    ### vote: a list consisting of matrices containing the different secret shared r_i-elements of the vote
-    ### servers: a list with all servers which the secrets should be distributed to
-
-    ### Returns: void. The purpose of the method is to distribute the matrix-shares between clients
-
-    secret_share_division = divide_secret_shares()
-    for j, division in enumerate(secret_share_division):
-        server_values = []
-        for vote_partition in division:
-            division.remove(vote_partition)
-            server_values.append(util.vote_to_string(vote[vote_partition]))
-        recipient = servers[j]
-        m = dict(client=client_name, id=division, round=1, server=recipient,
-                 vote=server_values, sender=client_name)
-        util.get_keys(client_name)
-        util.post_url(m, recipient + '/submit')
-
-
-def divide_secret_shares():
-    return [[2, 3, 4], [0, 3, 4], [0, 1, 4], [0, 1, 2], [1, 2, 3]]
-
-
 def get_total(urls: list):
     sums = []
     sums_check = []

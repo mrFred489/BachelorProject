@@ -56,40 +56,6 @@ class TestArithmetics(unittest.TestCase):
         res = (sum(secrets_1) + sum(secrets_2)) % util.get_prime()
         self.assertEqual(25, res)
 
-    def test_multiplication_x_minus_one(self):
-        secret = [20, 1, 91, 13, 4, 2, 27]
-        secret_real_sum = np.sum(secret) * (np.sum(secret) - np.array([[1]]))
-        secret_share_sums = []
-        for id in range(7):
-            secret_share_sums.append(server_util.index_zero_one_check(id, 7, secret))
-        self.assertEqual(round(sum(secret_share_sums)), secret_real_sum[0][0])
-
-    def test_matrix_local_zero_one_check(self):
-        vote = client_util.create_vote([1, 2, 3])
-        secrets = util.partition_and_secret_share_vote(vote, local_servers)
-        secrets_dict = dict()
-        for i, secret in enumerate(secrets):
-            secrets_dict[i] = secret
-        secret_share_sum = []
-        for id in range(len(local_servers)):
-            secret_share_sum.append(server_util.matrix_zero_one_check(id, len(local_servers), secrets_dict, "server" + str(id), "test1"))  # TODO: Korrekt client og my_name?
-        val = server_util.zero_one_check(secret_share_sum)
-        result = np.array_equal(val, np.zeros(val.shape))
-        self.assertTrue(result)
-
-    def test_matrix_local_zero_one_check_illegal(self):
-        vote = np.array([[1, -2, 2],[0, 1, 0],[0, 2, -1]])
-        secrets = util.partition_and_secret_share_vote(vote, local_servers)
-        secrets_dict = dict()
-        for i, secret in enumerate(secrets):
-            secrets_dict[i] = secret
-        secret_share_sum = []
-        for id in range(len(local_servers)):
-            secret_share_sum.append(server_util.matrix_zero_one_check(id, len(local_servers), secrets_dict))
-        val = server_util.zero_one_check(secret_share_sum)
-        result = np.array_equal(val, np.zeros(val.shape))
-        self.assertFalse(result)
-
     def test_signature(self):
         util.get_keys("")
         res = util.make_post_signature(dict(test="1234"))
@@ -183,35 +149,33 @@ class TestCommunication(unittest.TestCase):
         self.assertNotEqual(1, summed_rows[0])
         self.assertEqual(2, summed_rows[0])
 
-    def test_division_of_secret_shares(self):
-        to_send_to = client_util.divide_secret_shares()
-        for i in range(len(local_servers)):
-            partition_for_server = to_send_to[i]
-            self.assertTrue((i not in partition_for_server))
-            self.assertTrue((i+1) % len(local_servers) not in partition_for_server)
-
     def test_single_vote(self):
         client_util.send_vote([4, 2, 1, 3], 'c1', local_servers)
-        for s in local_servers:
-            response = util.get_url(s + '/check_votes')
-        for s in local_servers:
-            response = util.get_url(s + '/ensure_vote_agreement')
+        for server in local_servers:
+            util.get_url(server + "/zero_one_consistency")
+        time.sleep(1)
+        for server in local_servers:
+            util.get_url(server + "/sumdifferenceshareforzeroone")
+        time.sleep(1)
+        for server in local_servers:
+            util.get_url(server + '/check_votes')
+        time.sleep(1)
+        for server in local_servers:
+            util.get_url(server + '/ensure_vote_agreement')
+        time.sleep(1)
         for server in local_servers:
             util.get_url(server + '/add')
-        time.sleep(.5)
-        for s in local_servers:
-            response = util.get_url(s + '/compute_result')
-            result = np.rint(util.string_to_vote(response.text))
-            print(result)
-            self.assertTrue(np.array_equal(result, np.array([[0, 0, 0, 1],
-                                                             [0, 1, 0, 0],
-                                                             [1, 0, 0, 0],
-                                                             [0, 0, 1, 0]])),
-                            msg="wrong result: " + str(result))
-            self.assertTrue(response.ok, msg="server does not ok")
-        for s in local_servers:
-            response = util.get_url(s + "/verify_result")
-            self.assertTrue(response.ok, msg="Servers don't agree on result")
+        time.sleep(1)
+        for server in local_servers:
+            response = util.get_url(server + '/compute_result')
+            self.assertTrue(response.text=="ok")
+        time.sleep(1)
+        v = np.array([[0, 0, 0, 1],[0, 1, 0, 0],[1, 0, 0, 0],[0, 0, 1, 0]])
+        for server in local_servers:
+            response = util.get_url(server + '/verify_result')
+            result = util.string_to_vote(response.text)
+            self.assertTrue(np.array_equal(result, np.array(
+                [sum([v[i][j] * (1 / (j + 1)) for j in range(v.shape[0])]) for i in range(v.shape[1])])))
             
     def test_adding_votes(self):
         client_util.send_vote([4, 2, 1, 3], 'c1', local_servers)
@@ -248,21 +212,31 @@ class TestCommunication(unittest.TestCase):
     def test_receipt_freeness(self):
         client_util.send_vote([4, 2, 1, 3], 'c1', local_servers)
         client_util.send_vote([1, 2, 3, 4], 'c1', local_servers)
-        for s in local_servers:
-            response = util.get_url(s + '/check_votes')
-        for s in local_servers:
-            response = util.get_url(s + '/ensure_vote_agreement')
+        for server in local_servers:
+            util.get_url(server + "/zero_one_consistency")
+        time.sleep(1)
+        for server in local_servers:
+            util.get_url(server + "/sumdifferenceshareforzeroone")
+        time.sleep(1)
+        for server in local_servers:
+            util.get_url(server + '/check_votes')
+        time.sleep(1)
+        for server in local_servers:
+            util.get_url(server + '/ensure_vote_agreement')
+        time.sleep(1)
         for server in local_servers:
             util.get_url(server + '/add')
-        time.sleep(.5)
-        for s in local_servers:
-            response = util.get_url(s + '/compute_result')
-            result = np.rint(util.string_to_vote(response.text))
-            self.assertTrue(np.array_equal(result, np.array([[1, 0, 0, 0],
-                                                             [0, 1, 0, 0],
-                                                             [0, 0, 1, 0],
-                                                             [0, 0, 0, 1]])))
-            self.assertTrue(response.ok)
+        time.sleep(1)
+        for server in local_servers:
+            response = util.get_url(server + '/compute_result')
+            self.assertTrue(response.text=="ok")
+        time.sleep(1)
+        v = np.array([[1, 0, 0, 0],[0, 1, 0, 0],[0, 0, 1, 0],[0, 0, 0, 1]])
+        for server in local_servers:
+            response = util.get_url(server + '/verify_result')
+            result = util.string_to_vote(response.text)
+            self.assertTrue(np.array_equal(result, np.array(
+                [sum([v[i][j] * (1 / (j + 1)) for j in range(v.shape[0])]) for i in range(v.shape[1])])))
 
     def test_new_product(self):
         illegal_vote = np.array([[3,-2],[-2,3]])
