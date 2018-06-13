@@ -352,13 +352,12 @@ def sumdifferenceshareforzeroone():  # Verify servers have calculated the same
                         key = element[1]
                         server_util.complain_consistency(
                             util.Complaint(my_name, dict(
-                                diffs=diffs[3],
+                                diffs=util.vote_to_string(diffs[3]),
                                 key = key
-                            )), server_util.list_remove(util.servers,
+                            ), util.Protocol.sum_difference_zero_one), server_util.list_remove(util.servers,
                                                         [my_name, util.servers[x]]),
                             util.mediator, my_name
                         )
-                        # TODO: SEND TO MEDIATOR
                 if not equality:
                     # TODO: DO SOMETHING HERE
                     print("sumdifferenceshareforzeroone: ", "Disagreement. Some differences are not equal!")
@@ -442,18 +441,23 @@ def ensure_agreement():
     global communication_number
     illegal_votes = []
 
-    for server in servers:
-        illegal_votes.append(db.get_illegal_votes(server)[1][1])
+    illegal = db.get_illegal_votes(my_name)
+    sender_client_dict = defaultdict(list)
+    for sender, client in illegal:
+        sender_client_dict[sender].append(client)
+
+    illegal_votes.append([x[1] for x in db.get_illegal_votes(my_name)])
 
     to_be_deleted = set()
 
     # TODO: Brug verify_consistency til at verificere alting
-
-    agreed_illegal_votes = set(illegal_votes[0])
+    print("ensure_vote_agreement: senders:", str(sender_client_dict.keys()))
+    print("ensure_vote_agreement: values:", str(sender_client_dict.values()))
+    agreed_illegal_votes = set(sender_client_dict[my_name][0])
     disagreed_illegal_votes = set()
-    for i in range(len(servers)):
-        agreed_illegal_votes = agreed_illegal_votes.intersection(illegal_votes[i])
-        disagreed_illegal_votes = disagreed_illegal_votes.union(illegal_votes[i])
+    for server in servers:
+        agreed_illegal_votes = agreed_illegal_votes.intersection(sender_client_dict[server][0])
+        disagreed_illegal_votes = disagreed_illegal_votes.union(sender_client_dict[server][0])
     disagreed_illegal_votes = disagreed_illegal_votes.difference(agreed_illegal_votes)
     to_be_deleted = to_be_deleted.union(agreed_illegal_votes)
 
@@ -465,8 +469,15 @@ def ensure_agreement():
     # Send disagreed illegal votes to mediator
     if(len(disagreed_illegal_votes) > 0):
         communication_number += 1
-        server_util.send_illegal_votes_to_mediator(illegal_votes=list(disagreed_illegal_votes), server=my_name, url=mediator, name=my_name.split(":")[-1])
+        server_util.send_illegal_votes_to_mediator(
+            illegal_votes=list(disagreed_illegal_votes),
+            server=my_name, url=mediator, name=my_name.split(":")[-1])
 
+    server_util.complain_consistency(
+        util.Complaint(my_name, dict(disagreed = disagreed_illegal_votes),
+                       util.Protocol.ensure_vote_agreement, -1),
+        server_util.list_remove(util.servers, my_name), util.mediator, my_name
+    )
 
     return Response(status=200)
 
