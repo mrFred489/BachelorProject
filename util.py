@@ -27,9 +27,10 @@ servers = local_servers
 class Protocol(Enum):
     check_votes = 1
     sum_difference_zero_one = 2
-    zero_one_finalize = 3
-    ensure_vote_agreement = 4
-    compute_result = 5
+    sum_difference_zero_one_partition = 3
+    zero_one_finalize = 4
+    ensure_vote_agreement = 5
+    compute_result = 6
 
 
 class Complaint:

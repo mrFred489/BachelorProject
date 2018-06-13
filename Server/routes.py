@@ -310,8 +310,8 @@ def sumdifferenceshareforzeroone():  # Verify servers have calculated the same
                 for x in range(len(servers)):
                     differences = difference_matrix_list[i][j][x]
                     for difference in differences:
-                        server_difference_dict[difference[1] + ":" + difference[2]].append((difference[0], x, difference[3], difference))
-                        server_difference_x_dict[difference[1] + difference[2] + str(x)].append((difference[0], difference[3]))
+                        server_difference_dict[difference[1] + ";" + difference[2]].append((difference[0], x, difference[3], difference))
+                        server_difference_x_dict[difference[1] + ";" + difference[2] + ";" + str(x)].append((difference[0], difference[3]))
 
                 # SERVER PARTITION TESTS
                 server_difference_x_keys = server_difference_x_dict.keys()
@@ -325,7 +325,18 @@ def sumdifferenceshareforzeroone():  # Verify servers have calculated the same
                         if not np.array_equal(first_x_diff, first_x_diff):
                             # Disagreement in diff partitions
                             print("sumdifferenceshareforzeroone: ", "Disagreement in difference partitions")
-
+                            server_util.complain_consistency(
+                                util.Complaint(my_name, dict(
+                                    diff2 = diff_x_tuple,
+                                    diff1 = first_x_diff,
+                                    x = int(key.split(";")[-1])
+                                ),
+                                               util.Protocol.sum_difference_zero_one_partition,
+                                               key.split(";")[-1]),
+                                server_util.list_remove(util.servers,
+                                                        util.servers[int(key.split(";")[-1])]),
+                                util.mediator, my_name
+                            )
 
                 # DIFF TESTS
                 server_difference_keys = server_difference_dict.keys()
@@ -340,7 +351,8 @@ def sumdifferenceshareforzeroone():  # Verify servers have calculated the same
                         if x not in used_xs:
                             used_xs.add(x)
                             summed_diff = summed_diff + diff
-                    summed_diffs.append((summed_diff % util.get_prime(), server, key))
+                    summed_diffs.append((summed_diff % util.get_prime(),
+                                         server, key, server_difference_dict[key]))
                 equality = True
                 first_element = summed_diffs[0]
                 for element in summed_diffs[1:]:
@@ -351,10 +363,11 @@ def sumdifferenceshareforzeroone():  # Verify servers have calculated the same
                         key = element[1]
                         server_util.complain_consistency(
                             util.Complaint(my_name, dict(
-                                diffs=util.vote_to_string(diffs[3]),
+                                diffs=diffs,
                                 key = key
-                            ), util.Protocol.sum_difference_zero_one), server_util.list_remove(util.servers,
-                                                        [my_name, util.servers[x]]),
+                            ), util.Protocol.sum_difference_zero_one, x),
+                            server_util.list_remove(util.servers,
+                                                    [my_name, util.servers[x]]),
                             util.mediator, my_name
                         )
                 if not equality:
@@ -474,6 +487,7 @@ def ensure_agreement():
     agreed_illegal_votes = set(sender_client_dict[my_name][0])
     disagreed_illegal_votes = set()
     for server in servers:
+        print("ensure_vote_agreement: server:", server)
         agreed_illegal_votes = agreed_illegal_votes.intersection(sender_client_dict[server][0])
         disagreed_illegal_votes = disagreed_illegal_votes.union(sender_client_dict[server][0])
     disagreed_illegal_votes = disagreed_illegal_votes.difference(agreed_illegal_votes)
@@ -521,6 +535,27 @@ def messageinconsistency():
     verified, data = util.unpack_request(request, str(server_nr))
     if not verified:
         return make_response("Could not verify", 400)
+
+    # check_votes = 1
+    # sum_difference_zero_one = 2
+    # zero_one_finalize = 3
+    # ensure_vote_agreement = 4
+    # compute_result = 5
+
+    
+    complaint = data["complaint"]
+    if complaint.Protocol.value == 1:
+        pass
+    elif complaint.Protocol.value == 2:
+        pass
+    elif complaint.Protocol.value == 3:
+        pass
+    elif complaint.Protocol.value == 4:
+        pass
+    elif complaint.Protocol.value == 5:
+        pass
+    elif complaint.Protocol.value == 6:
+        pass
     
     # Modtager complaints fra andre servere
     # TODO: send relevant data to mediator

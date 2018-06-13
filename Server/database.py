@@ -133,6 +133,7 @@ else:
     # Create tables for the mediator
     cursor.execute('CREATE TABLE "http://127.0.0.1:5100/illegal"(sender TEXT, clients TEXT[])')
     cursor.execute('CREATE TABLE "http://127.0.0.1:5100/inconsistency"(sender TEXT, complaint TEXT, protocol INTEGER)')
+    cursor.execute('CREATE TABLE "http://127.0.0.1:5100/inconsistencyExtraData"(sender TEXT, complaint TEXT, protocol INTEGER, data TEXT)')
 
     cursor.close()
     conn.commit()
@@ -457,6 +458,27 @@ def get_mediator_inconsistency():
     return res
 
 
+def insert_mediator_inconsistency_extra_data(sender: str, complaint: util.Complaint, protocol: util.Protocol, data: dict):
+    complaint = util.vote_to_string(complaint)
+    data = util.vote_to_string(data)
+    cur = get_cursor()
+    cur.execute('INSERT INTO "' + mediator + '/inconsistencyExtraData' + '" (sender, complaint, protocol, data) VALUES (%s, %s, %s, %s)',(sender, complaint, protocol.value, data))
+    cur.close()
+    conn.commit()
+    return 1
+
+
+def get_mediator_inconsistency_extra_data():
+    cur = get_cursor()
+    cur.execute('SELECT sender, complaint, protocol, data FROM "' + mediator + '/inconsistencyExtraData' + '"')
+    res = []
+    for s, c, p, d in cur:
+        res.append((s, util.string_to_vote(c), util.Protocol(p), util.string_to_vote(d)))
+    cur.close()
+    conn.commit()
+    return res
+
+
 def reset(db_name: str):
     cur = get_cursor()
 
@@ -480,6 +502,7 @@ def reset_mediator():
     cur = get_cursor()
     cur.execute('DELETE FROM "' + mediator + '/illegal"')
     cur.execute('DELETE FROM "' + mediator + '/inconsistency"')
+    cur.execute('DELETE FROM "' + mediator + '/inconsistencyExtraData"')
     cur.close()
     conn.commit()
     return 1

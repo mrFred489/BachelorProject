@@ -103,7 +103,15 @@ def decide_validity():
     # ensure_vote_agreement = 4
     # compute_result = 5
 
-        
+
+@app.route("/extra_data", methods=["POST"])
+def extra_data():
+    verified, data = util.unpack_request(request, my_name)
+    if not verified:
+        return make_response("Could not verify", 400)
+    
+    pass
+    
 
 @app.route("/messageinconsistency", methods=["POST"])
 def message_inconsistency():

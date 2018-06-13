@@ -95,6 +95,10 @@ def send_illegal_votes_to_mediator(illegal_votes: list, server: str, url: str, n
     return util.post_url(data=dict(illegal_votes=illegal_votes, server=server, sender=name), url=url + "/votevalidity")
 
 
+def send_data_to_mediator(data: dict):
+    pass
+
+
 def complain_consistency(complaint: util.Complaint, servers, mediator, my_name):
     util.get_keys(my_name.split(":")[-1])
     for server in list_remove(servers, servers[complaint.value_id]) + [mediator]:
