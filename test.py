@@ -219,21 +219,35 @@ class TestCommunication(unittest.TestCase):
         # Bad vote
         client_util.send_vote([1, 1, 1, 1], 'c3', local_servers)
         client_util.send_vote([2, 2, 2, 2], 'c4', local_servers)
-        for s in local_servers:
-            response = util.get_url(s + '/check_votes')
-        for s in local_servers:
-            response = util.get_url(s + '/ensure_vote_agreement')
+        for server in local_servers:
+            util.get_url(server + "/zero_one_consistency")
+        time.sleep(1)
+        for server in local_servers:
+            util.get_url(server + "/sumdifferenceshareforzeroone")
+        time.sleep(1)
+        for server in local_servers:
+            util.get_url(server + '/check_votes')
+        time.sleep(1)
+        for server in local_servers:
+            util.get_url(server + '/ensure_vote_agreement')
+        time.sleep(1)
         for server in local_servers:
             util.get_url(server + '/add')
-        time.sleep(.5)
+        time.sleep(1)
+        for server in local_servers:
+            response = util.get_url(server + '/compute_result')
+            self.assertTrue(response.text=="ok")
+        time.sleep(1)
+        for server in local_servers:
+            response = util.get_url(server + '/verify_result')
+            result = util.string_to_vote(response.text)
+            self.assertTrue(np.array_equal(np.array([1.5,1.5]),result))
+        v = np.array([[1, 0, 0, 1],[0, 2, 0, 0],[1, 0, 1, 0],[0, 0, 1, 1]])
         for s in local_servers:
             response = util.get_url(s + '/compute_result')
             result = np.rint(util.string_to_vote(response.text))
             print(result)
-            self.assertTrue(np.array_equal(result, np.array([[1, 0, 0, 1],
-                                                             [0, 2, 0, 0],
-                                                             [1, 0, 1, 0],
-                                                             [0, 0, 1, 1]])))
+            self.assertTrue(np.array_equal(result, np.array([sum([v[i][j]*(1/(j + 1))  for j in range(v.shape[0])]) for i in range(v.shape[1])])))
             self.assertTrue(response.ok)
 
     def test_receipt_freeness(self):
@@ -284,15 +298,12 @@ class TestCommunication(unittest.TestCase):
         time.sleep(1)
         for server in local_servers:
             response = util.get_url(server + '/compute_result')
+            self.assertTrue(response.text=="ok")
         time.sleep(1)
-        for server in local_servers:
-            response = util.get_url(server + '/get_comms')
-            print(server, response.text)
         for server in local_servers:
             response = util.get_url(server + '/verify_result')
             result = util.string_to_vote(response.text)
-            print(server, result)
-        self.assertTrue(np.array_equal(np.array([1.5,1.5]),result))
+            self.assertTrue(np.array_equal(np.array([1.5,1.5]),result))
 
     # def test_many_votes(self):
     #     reset_servers()

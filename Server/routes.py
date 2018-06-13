@@ -345,7 +345,7 @@ def sumdifferenceshareforzeroone():  # Verify servers have calculated the same
                 first_element = summed_diffs[0]
                 for element in summed_diffs[1:]:
                     if not np.array_equal(np.array(element[0]), np.array(first_element[0])):
-                        print("sumdifferenceshareforzeroone: ", "Use mediator")
+                        print("sumdifferenceshareforzeroone:", "Use mediator")
                         equality = False
                         diffs = (element, first_element)
                         server = (element[1], first_element[1])
@@ -431,13 +431,9 @@ def zeroone_sum_partition_finalize(): # check for vote validity
                 res2[i][j] = sum(res[i][j])[0] % util.get_prime()
         sum_res = [sum(ij) for ij in res2]
         sum_res = np.mod(np.array(sum_res), util.get_prime())
-        print("SUM_RES:", sum_res)
         if not np.mod(np.sum(sum_res),util.get_prime()) == 0.0:
             # Illegal vote.
             illegal_votes.append(client)
-            print("zeroone_sum_partition_finalize: ", client, "is an illegal vote")
-        else:
-            print("zeroone_sum_partition_finalize: ", client, "is a legal vote")
     return illegal_votes
 
 
@@ -462,7 +458,6 @@ def ensure_agreement():
     to_be_deleted = to_be_deleted.union(agreed_illegal_votes)
 
     for client in to_be_deleted:
-        print("ensure_agreement: ", "removing vote", client)
         db.remove_vote(client, my_name)
 
 
@@ -599,7 +594,7 @@ def save_result():
 def verify_result():
     res_count = db.get_results_count(my_name)
     if res_count == 1:
-        return make_response(util.vote_to_string(db.get_results(db_name=my_name)[0]), 200)
+        return make_response(util.vote_to_string(db.get_results(db_name=my_name)[0][0]), 200)
     results = db.get_results(my_name)
     results_to_verify = [(x[0], 0, x[1]) for x in results]
     _, v1, v2 = server_util.verify_consistency(results_to_verify)
@@ -628,6 +623,14 @@ def illegal_vote():
     # print("illegal: ", "Got votes", bad_votes, "from server", server_name)
     db.insert_illegal_votes(bad_votes, server_name, my_name)
     return Response(status=200)
+
+@app.route("/malicious", methods=["GET"])
+def malicious():
+    global malicious_server, found_malicious_server
+    if not found_malicious_server:
+        return make_response("", 200)
+    else:
+        return make_response(malicious_server, 200)
 
 
 def create_local(port, cheat=False, cheating_ns=[], cheatid=0):
