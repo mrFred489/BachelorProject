@@ -130,6 +130,19 @@ else:
     cursor.execute(
         'CREATE TABLE "http://127.0.0.1:5004/summed_votes"(matrix TEXT, id INTEGER, client TEXT, server TEXT)')
 
+        # Create tables for summed diffs
+    cursor.execute(
+        'CREATE TABLE "http://127.0.0.1:5000/summed_diffs"(diffs TEXT, client TEXT, i INT, j INT, server TEXT)')
+    cursor.execute(
+        'CREATE TABLE "http://127.0.0.1:5001/summed_diffs"(diffs TEXT, client TEXT, i INT, j INT, server TEXT)')
+    cursor.execute(
+        'CREATE TABLE "http://127.0.0.1:5002/summed_diffs"(diffs TEXT, client TEXT, i INT, j INT, server TEXT)')
+    cursor.execute(
+        'CREATE TABLE "http://127.0.0.1:5003/summed_diffs"(diffs TEXT, client TEXT, i INT, j INT, server TEXT)')
+    cursor.execute(
+        'CREATE TABLE "http://127.0.0.1:5004/summed_diffs"(diffs TEXT, client TEXT, i INT, j INT, server TEXT)')
+
+
     # Create tables for the mediator
     cursor.execute('CREATE TABLE "http://127.0.0.1:5100/illegal"(sender TEXT, clients TEXT[])')
     cursor.execute('CREATE TABLE "http://127.0.0.1:5100/inconsistency"(sender TEXT, complaint TEXT, protocol INTEGER)')
@@ -276,6 +289,29 @@ def insert_summed_votes(matrix: np.ndarray, id: int, client_name: str, server: s
     conn.commit()
     return 1
 
+
+def insert_summed_diffs(diffs: list, client_name: str, i: int, j: int, server: str):
+    cur = get_cursor()
+    diffs = util.vote_to_string(diffs)
+    cur.execute('INSERT INTO "' + server + '/summed_diffs" (diffs, client, i, j, server) VALUES (%s, %s, %s, %s, %s)',
+                (diffs, client_name, i, j, server))
+    cur.close()
+    conn.commit()
+    return 1
+
+
+def get_summed_diffs(db_name: str):
+    cur = get_cursor()
+    cur.execute('SELECT diffs, client, i, j, server FROM "' + db_name + '/summed_diffs"')
+    res = []
+    for d, c, i, j, s in cur:
+        d = util.string_to_vote(d)
+        res.append((d, c, i, j, s))
+    cur.close()
+    conn.commit()
+    return res
+
+
 def insert_result(matrix: np.ndarray, server: str, db_name: str):
     cur = get_cursor()
     matrix = util.vote_to_string(matrix)
@@ -370,6 +406,19 @@ def get_zero_consistency_check(db_name: str):
     cur.close()
     conn.commit()
     return res
+
+
+def get_zero_consistency_check_alt(db_name: str):
+    cur = get_cursor()
+    cur.execute('SELECT diff, x, i, j, server_a, server_b, client, server FROM "' + db_name + '/zeroconsistency"')
+    res = []
+    for d, x, i, j, sa, sb, c, s in cur:
+        d = util.string_to_vote(d)
+        res.append((d, c, i, j, x, sa, sb, s))
+    cur.close()
+    conn.commit()
+    return res
+
 
 def insert_zero_check(matrix: np.ndarray, client_name: str, server: str, db_name: str):
     cur = get_cursor()
@@ -492,6 +541,7 @@ def reset(db_name: str):
     cur.execute('DELETE FROM "' + db_name + '/zerocheck"')
     cur.execute('DELETE FROM "' + db_name + '/illegal"')
     cur.execute('DELETE FROM "' + db_name + '/summed_votes"')
+    cur.execute('DELETE FROM "' + db_name + '/summed_diffs"')
 
 
     cur.close()

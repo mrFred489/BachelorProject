@@ -388,7 +388,7 @@ class TestSlow(unittest.TestCase):
             if not os.path.isfile("cryp/public{}.pem".format(n)):
                 util.get_keys(n)
 
-        for i in range(3):
+        for i in range(4):
             create_local_server(5000 + i)
         create_local_mediator(5100)
 

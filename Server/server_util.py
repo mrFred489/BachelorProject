@@ -12,6 +12,7 @@ def broadcast(data, servers, url):
 def list_remove(l: list, element):
     if not type(element) == list:
         element = [element]
+    element = set(element)
     temp = l.copy()
     for e in element:
         del temp[temp.index(e)]
@@ -95,13 +96,14 @@ def send_illegal_votes_to_mediator(illegal_votes: list, server: str, url: str, n
     return util.post_url(data=dict(illegal_votes=illegal_votes, server=server, sender=name), url=url + "/votevalidity")
 
 
-def send_data_to_mediator(data: dict):
-    pass
+def send_extra_data_to_mediator(data: dict, complaint, my_name):
+    util.get_keys(my_name.split(":")[-1])
+    util.post_url(dict(complaint=util.vote_to_string(complaint), data=util.vote_to_string(data), server=my_name, sender=my_name), util.mediator + "/extra_data")
 
 
 def complain_consistency(complaint: util.Complaint, servers, mediator, my_name):
     util.get_keys(my_name.split(":")[-1])
-    for server in list_remove(servers, servers[complaint.value_id]) + [mediator]:
+    for server in servers + [mediator]:
         util.post_url(dict(complaint=util.vote_to_string(complaint), server=my_name, sender=my_name), server + "/messageinconsistency")
 
 

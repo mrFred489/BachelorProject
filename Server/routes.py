@@ -212,8 +212,6 @@ def check_votes():
 
     illegal_votes = illegal_votes.union(zero_one_illegal_votes)
 
-    # TODO: Ensure agreement among servers regarding illegal_votes
-
     list_illegal_votes = list(illegal_votes)
 
 
@@ -322,14 +320,15 @@ def sumdifferenceshareforzeroone():  # Verify servers have calculated the same
                     for diff_x_tuple in diff_x_tuple_set:
                         diff_x = diff_x_tuple[0]
                         server_x = diff_x_tuple[1]
-                        if not np.array_equal(first_x_diff, first_x_diff):
+                        if not np.array_equal(first_x_diff, first_x_diff): # TODO: Hvad skal dette være? Lige nu er det den samme variabel to gange
                             # Disagreement in diff partitions
                             print("sumdifferenceshareforzeroone: ", "Disagreement in difference partitions")
                             server_util.complain_consistency(
                                 util.Complaint(my_name, dict(
                                     diff2 = diff_x_tuple,
                                     diff1 = first_x_diff,
-                                    x = int(key.split(";")[-1])
+                                    x = int(key.split(";")[-1]),
+                                    i = i, j = j, key = key, client=client
                                 ),
                                                util.Protocol.sum_difference_zero_one_partition,
                                                key.split(";")[-1]),
@@ -353,6 +352,7 @@ def sumdifferenceshareforzeroone():  # Verify servers have calculated the same
                             summed_diff = summed_diff + diff
                     summed_diffs.append((summed_diff % util.get_prime(),
                                          server, key, server_difference_dict[key]))
+                db.insert_summed_diffs(summed_diffs, client, i, j, my_name)
                 equality = True
                 first_element = summed_diffs[0]
                 for element in summed_diffs[1:]:
@@ -364,7 +364,7 @@ def sumdifferenceshareforzeroone():  # Verify servers have calculated the same
                         server_util.complain_consistency(
                             util.Complaint(my_name, dict(
                                 diffs=diffs,
-                                key = key
+                                key = key, i=i, j=j, client=client
                             ), util.Protocol.sum_difference_zero_one, x),
                             server_util.list_remove(util.servers,
                                                     [my_name, util.servers[x]]),
@@ -436,9 +436,11 @@ def zeroone_sum_partition_finalize(): # check for vote validity
                         part_sum_matrix = part_sum['matrix']
                         if not np.array_equal(part_sum_matrix[i][j][x], np.zeros(part_sum_matrix[i][j][x].shape)):
                             if not np.array_equal(val, part_sum_matrix[i][j][x]):
-                                # TODO: Disagreement
                                 server_util.complain_consistency(
-                                    util.Complaint(my_name, dict(),
+                                    util.Complaint(my_name, dict(
+                                        i = i, j = j, x = x, client=client,
+                                        part_sum = part_sum, val=val
+                                    ),
                                                    util.Protocol.zero_one_finalize, x),
                                     server_util.list_remove(util.servers,
                                                             [my_name, util.servers[x]]),
@@ -488,6 +490,7 @@ def ensure_agreement():
     print("ensure_vote_agreement: values:", str(sender_client_dict.values()))
     if sender_client_dict[my_name] == []:
         agreed_illegal_votes = set()
+        sender_client_dict[my_name] = [[]]
     else:
         agreed_illegal_votes = set(sender_client_dict[my_name][0])
     disagreed_illegal_votes = set()
@@ -543,24 +546,42 @@ def messageinconsistency():
 
     # check_votes = 1
     # sum_difference_zero_one = 2
-    # zero_one_finalize = 3
-    # ensure_vote_agreement = 4
-    # compute_result = 5
+    # sum_difference_zero_one_partition = 3
+    # zero_one_finalize = 4
+    # ensure_vote_agreement = 5
+    # compute_result = 6
 
     
-    complaint = data["complaint"]
-    if complaint.Protocol.value == 1:
+    complaint : util.Complaint = util.string_to_vote(data["complaint"])
+    relevant_data = []
+    if complaint.protocol.value == util.Protocol.check_votes:
+        if complaint.data["votes"][0][2] == "row":
+            my_data = db.get_rows(my_name)
+        else:
+            my_data = db.get_cols(my_name)
+        relevant_data = [x for x in my_data if x[1] == complaint.value_id]
+    elif complaint.protocol.value == util.Protocol.sum_difference_zero_one:
+        relevant_data = db.get_summed_diffs(my_name)
+        print("sum_difference_zero_one_complaint: relevant data", relevant_data[0])
+        relevant_data = [x for x in relevant_data
+                         if (x[2] == complaint["data"]["i"]
+                             and x[3] == complaint["data"]["j"]
+                             and x[1] == complaint["data"]["client"]) ]
+    elif complaint.protocol.value == util.Protocol.sum_difference_zero_one_partition:
+        my_data = db.get_zero_consistency_check_alt(my_name)
+        relevant_date = [x for x in my_data
+                         if (x[2] == complaint["data"]["i"]
+                             and x[3] == complaint["data"]["j"]
+                             and x[1] == complaint["data"]["client"]
+                             and x[4] == complaint["data"]["x"]) ]
+    elif complaint.protocol.value == util.Protocol.zero_one_finalize:
         pass
-    elif complaint.Protocol.value == 2:
+    elif complaint.protocol.value == util.Protocol.ensure_vote_agreement:
         pass
-    elif complaint.Protocol.value == 3:
+    elif complaint.protocol.value == util.Protocol.compute_result:
         pass
-    elif complaint.Protocol.value == 4:
-        pass
-    elif complaint.Protocol.value == 5:
-        pass
-    elif complaint.Protocol.value == 6:
-        pass
+
+    server_util.send_extra_data_to_mediator(relevant_data, complaint, my_name)
     
     # Modtager complaints fra andre servere
     # TODO: send relevant data to mediator
