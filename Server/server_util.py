@@ -141,7 +141,6 @@ def verify_sums(data, my_name):
                                 util.Protocol.check_votes,
                                 verify[1][1]),
                  list_remove(util.servers, my_name), util.mediator, my_name.split(":")[-1])
-    print("verify_sums: ", illegal_votes)
     return illegal_votes
 
 

@@ -274,21 +274,36 @@ class TestCommunication(unittest.TestCase):
             result = util.string_to_vote(response.text)
             self.assertTrue(np.array_equal(np.array([1.5,1.5]),result))
 
-    # def test_many_votes(self):
-    #     reset_servers()
-    #     for i in range(10):
-    #         client = 'c' + str(i)
-    #         client_util.send_vote([1, 2, 3, 4], client, local_servers)
-    #     for server in local_servers:
-    #         util.get_url(server + '/add')
-    #     for s in local_servers:
-    #         response = util.get_url(s + '/compute_result')
-    #         self.assertTrue(np.array_equal(util.string_to_vote(response.text), np.array([
-    #             [10, 0, 0, 0],
-    #             [0, 10, 0, 0],
-    #             [0, 0, 10, 0],
-    #             [0, 0, 0, 10]])))
-    #         self.assertTrue(response.ok)
+    def test_many_votes(self):
+        reset_servers()
+        for i in range(40):
+            client = 'c' + str(i)
+            client_util.send_vote([1, 2, 3, 4], client, local_servers)
+        for server in local_servers:
+            util.get_url(server + "/zero_one_consistency")
+        time.sleep(1)
+        for server in local_servers:
+            util.get_url(server + "/sumdifferenceshareforzeroone")
+        time.sleep(1)
+        for server in local_servers:
+            util.get_url(server + '/check_votes')
+        time.sleep(1)
+        for server in local_servers:
+            util.get_url(server + '/ensure_vote_agreement')
+        time.sleep(1)
+        for server in local_servers:
+            util.get_url(server + '/add')
+        time.sleep(1)
+        for server in local_servers:
+            response = util.get_url(server + '/compute_result')
+            self.assertTrue(response.text=="ok")
+        time.sleep(1)
+        v = np.array([[10, 0, 0, 0], [0, 10, 0, 0], [0, 0, 10, 0], [0, 0, 0, 10]])
+        for server in local_servers:
+            response = util.get_url(server + '/verify_result')
+            result = util.string_to_vote(response.text)
+            self.assertTrue(np.array_equal(result, np.array(
+                [sum([v[i][j] * (1 / (j + 1)) for j in range(v.shape[0])]) for i in range(v.shape[1])])))
 
     @classmethod
     def tearDownClass(cls):

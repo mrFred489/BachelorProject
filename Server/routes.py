@@ -412,7 +412,7 @@ def zeroone_sum_partition_finalize(): # check for vote validity
                             if not np.array_equal(val, part_sum_matrix[i][j][x]):
                                 # TODO: Disagreement
 
-                                print("zeroone_sum_partition_finalize: ", "Disagreement! MEDIATOR not implemented yet")
+                                print("zeroone_sum_partition_finalize: ", "Disagreement! MEDIATOR not implemented yet", client)
                             server = part_sum['server']
                         res[i][j][x] = val[0]
                 res2[i][j] = sum(res[i][j])[0] % util.get_prime()
@@ -494,10 +494,6 @@ def messageinconsistency():
 def add():
     global communication_number
     votes = db.round_one(my_name)
-    summed_votes = server_util.sum_votes(votes)
-    # TODO: Secret share summed votes
-
-    # TODO: EXLUDE CORRUPT SERVER FROM TAKING PART.
     legal_votes = [x for x in votes if x[4] != malicious_server]
 
     # ss_summed_votes = server_util.secret_share(summed_votes, servers)
