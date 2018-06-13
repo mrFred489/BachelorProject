@@ -372,7 +372,7 @@ class TestCheater(unittest.TestCase):
         client_util.send_vote([1, 2, 3, 4], 'c2', local_servers)
         for s in local_servers:
             response = util.get_url(s + '/check_votes')
-        self.assertTrue(len(requests.get(mediator + "/test/printcomplaints").text) > 0)
+        self.assertTrue(len(requests.get(mediator + "/test/printcomplaints").text) > 2)
 
     def test_row_sum_neg(self):
         create_local_server(5003)
@@ -400,6 +400,7 @@ class TestCheater(unittest.TestCase):
         for s in local_servers:
             response = util.get_url(s + "/verify_result")
             self.assertFalse(response.ok, msg="Servers don't agree on result, " + response.text)
+        self.assertTrue(len(requests.get(mediator + "/test/printcomplaints").text) > 2)
 
         
     @classmethod

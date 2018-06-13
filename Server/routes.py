@@ -251,8 +251,14 @@ def zero_one_partitions_consistency_check():  # Create differences for secret sh
                             if(y < z):
                                 difference = np.subtract(np.array(matrix_y), np.array(matrix_z))
                                 # broadcast_difference_share
-                                datas.append(dict(diff=util.vote_to_string(difference), x=x, i=i, j=j, server_a=server_y, server_b=server_z, server=my_name, client=client))
-                                db.insert_zero_consistency_check(diff=difference, x=x, i=i, j=j, server_a=server_y, server_b=server_z, server=my_name, client_name=client, db_name=my_name)
+                                datas.append(
+                                    dict(diff=util.vote_to_string(difference),
+                                         x=x, i=i, j=j, server_a=server_y, server_b=server_z,
+                                         server=my_name, client=client))
+                                db.insert_zero_consistency_check(
+                                    diff=difference, x=x, i=i, j=j,
+                                    server_a=server_y, server_b=server_z,
+                                    server=my_name, client_name=client, db_name=my_name)
         communication_number += 3
         server_util.broadcast(data=dict(datas=datas, server=my_name), servers=servers, url="/differenceshareforzeroone")
     return Response(status=200)
@@ -304,7 +310,7 @@ def sumdifferenceshareforzeroone():  # Verify servers have calculated the same
                 for x in range(len(servers)):
                     differences = difference_matrix_list[i][j][x]
                     for difference in differences:
-                        server_difference_dict[difference[1] + ":" + difference[2]].append((difference[0], x, difference[3]))
+                        server_difference_dict[difference[1] + ":" + difference[2]].append((difference[0], x, difference[3], difference))
                         server_difference_x_dict[difference[1] + difference[2] + str(x)].append((difference[0], difference[3]))
 
                 # SERVER PARTITION TESTS
@@ -341,9 +347,17 @@ def sumdifferenceshareforzeroone():  # Verify servers have calculated the same
                     if not np.array_equal(np.array(element[0]), np.array(first_element[0])):
                         print("sumdifferenceshareforzeroone: ", "Use mediator")
                         equality = False
-                        diffs = (element[0], first_element[0])
+                        diffs = (element, first_element)
                         server = (element[1], first_element[1])
-                        key = element[2]
+                        key = element[1]
+                        server_util.complain_consistency(
+                            util.Complaint(my_name, dict(
+                                diffs=diffs[3],
+                                key = key
+                            )), server_util.list_remove(util.servers,
+                                                        [my_name, util.servers[x]]),
+                            util.mediator, my_name
+                        )
                         # TODO: SEND TO MEDIATOR
                 if not equality:
                     # TODO: DO SOMETHING HERE
