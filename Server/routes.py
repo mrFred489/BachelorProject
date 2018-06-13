@@ -251,8 +251,14 @@ def zero_one_partitions_consistency_check():  # Create differences for secret sh
                             if(y < z):
                                 difference = np.subtract(np.array(matrix_y), np.array(matrix_z))
                                 # broadcast_difference_share
-                                datas.append(dict(diff=util.vote_to_string(difference), x=x, i=i, j=j, server_a=server_y, server_b=server_z, server=my_name, client=client))
-                                db.insert_zero_consistency_check(diff=difference, x=x, i=i, j=j, server_a=server_y, server_b=server_z, server=my_name, client_name=client, db_name=my_name)
+                                datas.append(
+                                    dict(diff=util.vote_to_string(difference),
+                                         x=x, i=i, j=j, server_a=server_y, server_b=server_z,
+                                         server=my_name, client=client))
+                                db.insert_zero_consistency_check(
+                                    diff=difference, x=x, i=i, j=j,
+                                    server_a=server_y, server_b=server_z,
+                                    server=my_name, client_name=client, db_name=my_name)
         communication_number += 3
         server_util.broadcast(data=dict(datas=datas, server=my_name), servers=servers, url="/differenceshareforzeroone")
     return Response(status=200)
@@ -304,7 +310,7 @@ def sumdifferenceshareforzeroone():  # Verify servers have calculated the same
                 for x in range(len(servers)):
                     differences = difference_matrix_list[i][j][x]
                     for difference in differences:
-                        server_difference_dict[difference[1] + ":" + difference[2]].append((difference[0], x, difference[3]))
+                        server_difference_dict[difference[1] + ":" + difference[2]].append((difference[0], x, difference[3], difference))
                         server_difference_x_dict[difference[1] + difference[2] + str(x)].append((difference[0], difference[3]))
 
                 # SERVER PARTITION TESTS
@@ -339,12 +345,18 @@ def sumdifferenceshareforzeroone():  # Verify servers have calculated the same
                 first_element = summed_diffs[0]
                 for element in summed_diffs[1:]:
                     if not np.array_equal(np.array(element[0]), np.array(first_element[0])):
-                        print("sumdifferenceshareforzeroone:", "Use mediator")
                         equality = False
-                        diffs = (element[0], first_element[0])
+                        diffs = (element, first_element)
                         server = (element[1], first_element[1])
-                        key = element[2]
-                        # TODO: SEND TO MEDIATOR
+                        key = element[1]
+                        server_util.complain_consistency(
+                            util.Complaint(my_name, dict(
+                                diffs=util.vote_to_string(diffs[3]),
+                                key = key
+                            ), util.Protocol.sum_difference_zero_one), server_util.list_remove(util.servers,
+                                                        [my_name, util.servers[x]]),
+                            util.mediator, my_name
+                        )
                 if not equality:
                     # TODO: DO SOMETHING HERE
                     print("sumdifferenceshareforzeroone: ", "Disagreement. Some differences are not equal!")
@@ -398,6 +410,7 @@ def zeroone_sum_partition_finalize(): # check for vote validity
     partition_sums_clients = partition_sums.keys()
     illegal_votes = []
     for client in partition_sums_clients:
+        is_breaking = False
         part_sums = list(partition_sums[client])
 
         res = [[[[0] for x in range(len(servers))] for j in range(len(servers))] for i in range(len(servers))]
@@ -411,11 +424,30 @@ def zeroone_sum_partition_finalize(): # check for vote validity
                         if not np.array_equal(part_sum_matrix[i][j][x], np.zeros(part_sum_matrix[i][j][x].shape)):
                             if not np.array_equal(val, part_sum_matrix[i][j][x]):
                                 # TODO: Disagreement
+                                server_util.complain_consistency(
+                                    util.Complaint(my_name, dict(),
+                                                   util.Protocol.zero_one_finalize, x),
+                                    server_util.list_remove(util.servers,
+                                                            [my_name, util.servers[x]]),
+                                    util.mediator, my_name
+                                )
+                                print("zeroone_sum_partition_finalize: ", "Disagreement! MEDIATOR not implemented yet")
+                                is_breaking = True
+                                break
 
                                 print("zeroone_sum_partition_finalize: ", "Disagreement! MEDIATOR not implemented yet", client)
                             server = part_sum['server']
                         res[i][j][x] = val[0]
+                    if is_breaking:
+                        break
+                if is_breaking:
+                    break
                 res2[i][j] = sum(res[i][j])[0] % util.get_prime()
+
+            if is_breaking:
+                break
+        if is_breaking:
+            continue
         sum_res = [sum(ij) for ij in res2]
         sum_res = np.mod(np.array(sum_res), util.get_prime())
         if not np.mod(np.sum(sum_res),util.get_prime()) == 0.0:
@@ -429,31 +461,36 @@ def ensure_agreement():
     global communication_number
     illegal_votes = []
 
-    for server in servers:
-        illegal_votes.append(db.get_illegal_votes(server)[1][1])
+    illegal = db.get_illegal_votes(my_name)
+    sender_client_dict = defaultdict(list)
+    for sender, client in illegal:
+        sender_client_dict[sender].append(client)
+
+    illegal_votes.append([x[1] for x in db.get_illegal_votes(my_name)])
 
     to_be_deleted = set()
 
     # TODO: Brug verify_consistency til at verificere alting
-
-    agreed_illegal_votes = set(illegal_votes[0])
+    print("ensure_vote_agreement: senders:", str(sender_client_dict.keys()))
+    print("ensure_vote_agreement: values:", str(sender_client_dict.values()))
+    agreed_illegal_votes = set(sender_client_dict[my_name][0])
     disagreed_illegal_votes = set()
-    for i in range(len(servers)):
-        agreed_illegal_votes = agreed_illegal_votes.intersection(illegal_votes[i])
-        disagreed_illegal_votes = disagreed_illegal_votes.union(illegal_votes[i])
+    for server in servers:
+        agreed_illegal_votes = agreed_illegal_votes.intersection(sender_client_dict[server][0])
+        disagreed_illegal_votes = disagreed_illegal_votes.union(sender_client_dict[server][0])
     disagreed_illegal_votes = disagreed_illegal_votes.difference(agreed_illegal_votes)
     to_be_deleted = to_be_deleted.union(agreed_illegal_votes)
 
     for client in to_be_deleted:
         db.remove_vote(client, my_name)
 
-
-    disagreed_illegal_votes = ["c3"]
-    # Send disagreed illegal votes to mediator
     if(len(disagreed_illegal_votes) > 0):
         communication_number += 1
-        server_util.send_illegal_votes_to_mediator(illegal_votes=list(disagreed_illegal_votes), server=my_name, url=mediator, name=my_name.split(":")[-1])
-
+        server_util.complain_consistency(
+            util.Complaint(my_name, dict(disagreed = disagreed_illegal_votes),
+                           util.Protocol.ensure_vote_agreement, -1),
+            server_util.list_remove(util.servers, my_name), util.mediator, my_name
+        )
 
     return Response(status=200)
 
@@ -486,6 +523,8 @@ def messageinconsistency():
     verified, data = util.unpack_request(request, str(server_nr))
     if not verified:
         return make_response("Could not verify", 400)
+
+    # Modtager complaints fra andre servere
     # TODO: send relevant data to mediator
     return make_response("delivered", 200)
 
@@ -535,9 +574,7 @@ def summed_votes():
 def compute_result():
     all_votes = db.round_two(my_name)
     legal_votes = [x for x in all_votes if x[3] != malicious_server]
-    # print("compute_results: ", "av", all_votes)
     s = server_util.calculate_result(legal_votes)
-    # Broadcast result to other servers. If disagreement, then send to mediator.
     if cheat_id == 5:
         print ("compute_result: cheating")
         s = cheat_util.col_row_cheat(s)
