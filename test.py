@@ -238,17 +238,12 @@ class TestCommunication(unittest.TestCase):
             response = util.get_url(server + '/compute_result')
             self.assertTrue(response.text=="ok")
         time.sleep(1)
+        v = np.array([[1, 0, 0, 1],[0, 2, 0, 0],[1, 0, 1, 0],[0, 0, 1, 1]])
         for server in local_servers:
             response = util.get_url(server + '/verify_result')
             result = util.string_to_vote(response.text)
-            self.assertTrue(np.array_equal(np.array([1.5,1.5]),result))
-        v = np.array([[1, 0, 0, 1],[0, 2, 0, 0],[1, 0, 1, 0],[0, 0, 1, 1]])
-        for s in local_servers:
-            response = util.get_url(s + '/compute_result')
-            result = np.rint(util.string_to_vote(response.text))
-            print(result)
-            self.assertTrue(np.array_equal(result, np.array([sum([v[i][j]*(1/(j + 1))  for j in range(v.shape[0])]) for i in range(v.shape[1])])))
-            self.assertTrue(response.ok)
+            self.assertTrue(np.array_equal(result, np.array(
+                [sum([v[i][j] * (1 / (j + 1)) for j in range(v.shape[0])]) for i in range(v.shape[1])])))
 
     def test_receipt_freeness(self):
         client_util.send_vote([4, 2, 1, 3], 'c1', local_servers)
