@@ -402,7 +402,6 @@ def zeroone_sum_partition_finalize(): # check for vote validity
 
         res = [[[[0] for x in range(len(servers))] for j in range(len(servers))] for i in range(len(servers))]
         res2 = [[[0] for j in range(len(servers))] for i in range(len(servers))]
-        print("zeroone_sum_partition_finalize: ", client, res2)
         for i in range(len(servers)):
             for j in range(len(servers)):
                 for x in range(len(servers)):
@@ -418,6 +417,7 @@ def zeroone_sum_partition_finalize(): # check for vote validity
                 res2[i][j] = sum(res[i][j])[0] % util.get_prime()
         sum_res = [sum(ij) for ij in res2]
         sum_res = np.mod(np.array(sum_res), util.get_prime())
+        print("SUM_RES:", sum_res)
         if not np.mod(np.sum(sum_res),util.get_prime()) == 0.0:
             # Illegal vote.
             illegal_votes.append(client)
@@ -541,24 +541,24 @@ def summed_votes():
 
 @app.route("/compute_result", methods=["GET"])
 def compute_result():
-    # TODO: EXCLUDE CORRUPT SERVERS FROM TAKING PART IN THIS.
-    # TODO:
     all_votes = db.round_two(my_name)
     legal_votes = [x for x in all_votes if x[3] != malicious_server]
     # print("compute_results: ", "av", all_votes)
     s = server_util.calculate_result(legal_votes)
-    # TODO: compare results, maybe send to mediator
     # Broadcast result to other servers. If disagreement, then send to mediator.
     if cheat_id == 5:
         print ("compute_result: cheating")
         s = cheat_util.col_row_cheat(s)
 
+    # Calculate Dowdall result.
+    dowdall_result = np.array([sum([s[i][j]*(1/(j + 1))  for j in range(s.shape[0])]) for i in range(s.shape[1])])
+
     server_util.broadcast(dict(
         server=my_name,
-        result=util.vote_to_string(s),
+        result=util.vote_to_string(dowdall_result),
         sender=my_name
     ), util.servers, "/save_result")
-    return make_response(util.vote_to_string(s), 200)  # Response(util.vote_to_string(s), status=200, mimetype='text/text')
+    return make_response("ok", 200)  # Response(util.vote_to_string(s), status=200, mimetype='text/text')
 
 
 @app.route("/save_result", methods=["POST"])
@@ -585,7 +585,7 @@ def save_result():
 def verify_result():
     res_count = db.get_results_count(my_name)
     if res_count == 1:
-        return make_response("ok", 200)
+        return make_response(util.vote_to_string(db.get_results(db_name=my_name)[0]), 200)
     results = db.get_results(my_name)
     results_to_verify = [(x[0], 0, x[1]) for x in results]
     _, v1, v2 = server_util.verify_consistency(results_to_verify)

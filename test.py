@@ -264,6 +264,9 @@ class TestCommunication(unittest.TestCase):
         illegal_vote = np.array([[2, -1], [-1, 2]])
         illegal_vote_partitions = util.partition_and_secret_share_vote(illegal_vote, local_servers)
         client_util.postvote("ic4", illegal_vote_partitions, local_servers)
+        illegal_vote = np.array([[0, 0], [0, 0]])
+        illegal_vote_partitions = util.partition_and_secret_share_vote(illegal_vote, local_servers)
+        client_util.postvote("ic5", illegal_vote_partitions, local_servers)
         for server in local_servers:
             util.get_url(server + "/zero_one_consistency")
         time.sleep(1)
@@ -281,13 +284,15 @@ class TestCommunication(unittest.TestCase):
         time.sleep(1)
         for server in local_servers:
             response = util.get_url(server + '/compute_result')
-            result = np.rint(util.string_to_vote(response.text))
-            print(server, result)
         time.sleep(1)
         for server in local_servers:
             response = util.get_url(server + '/get_comms')
             print(server, response.text)
-        self.assertTrue(np.array_equal(np.array([[1,1],[1,1]]),result))
+        for server in local_servers:
+            response = util.get_url(server + '/verify_result')
+            result = util.string_to_vote(response.text)
+            print(server, result)
+        self.assertTrue(np.array_equal(np.array([1.5,1.5]),result))
 
     # def test_many_votes(self):
     #     reset_servers()
