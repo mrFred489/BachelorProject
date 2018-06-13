@@ -483,15 +483,15 @@ def reset(db_name: str):
     cur = get_cursor()
 
     cur.execute('DELETE FROM "' + db_name + '"')
-    cur.execute('DELETE FROM "' + db_name + '/columns"')
+    cur.execute('DELETE FROM "' + db_name + '/result"')
     cur.execute('DELETE FROM "' + db_name + '/rows"')
-    cur.execute('DELETE FROM "' + db_name + '/zerocheck"')
-    cur.execute('DELETE FROM "' + db_name + '/zeropartitionsum"')
-    cur.execute('DELETE FROM "' + db_name + '/zeroconsistency"')
+    cur.execute('DELETE FROM "' + db_name + '/columns"')
     cur.execute('DELETE FROM "' + db_name + '/zeropartition"')
+    cur.execute('DELETE FROM "' + db_name + '/zeroconsistency"')
+    cur.execute('DELETE FROM "' + db_name + '/zeropartitionsum"')
+    cur.execute('DELETE FROM "' + db_name + '/zerocheck"')
     cur.execute('DELETE FROM "' + db_name + '/illegal"')
     cur.execute('DELETE FROM "' + db_name + '/summed_votes"')
-    cur.execute('DELETE FROM "' + db_name + '/result"')
 
 
     cur.close()

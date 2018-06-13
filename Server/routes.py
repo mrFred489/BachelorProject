@@ -447,6 +447,8 @@ def zeroone_sum_partition_finalize(): # check for vote validity
                                 print("zeroone_sum_partition_finalize: ", "Disagreement! MEDIATOR not implemented yet")
                                 is_breaking = True
                                 break
+
+                                print("zeroone_sum_partition_finalize: ", "Disagreement! MEDIATOR not implemented yet", client)
                             server = part_sum['server']
                         res[i][j][x] = val[0]
                     if is_breaking:
@@ -484,7 +486,10 @@ def ensure_agreement():
     # TODO: Brug verify_consistency til at verificere alting
     print("ensure_vote_agreement: senders:", str(sender_client_dict.keys()))
     print("ensure_vote_agreement: values:", str(sender_client_dict.values()))
-    agreed_illegal_votes = set(sender_client_dict[my_name][0])
+    if sender_client_dict[my_name] == []:
+        agreed_illegal_votes = set()
+    else:
+        agreed_illegal_votes = set(sender_client_dict[my_name][0])
     disagreed_illegal_votes = set()
     for server in servers:
         print("ensure_vote_agreement: server:", server)
@@ -566,10 +571,6 @@ def messageinconsistency():
 def add():
     global communication_number
     votes = db.round_one(my_name)
-    summed_votes = server_util.sum_votes(votes)
-    # TODO: Secret share summed votes
-
-    # TODO: EXLUDE CORRUPT SERVER FROM TAKING PART.
     legal_votes = [x for x in votes if x[4] != malicious_server]
 
     # ss_summed_votes = server_util.secret_share(summed_votes, servers)
