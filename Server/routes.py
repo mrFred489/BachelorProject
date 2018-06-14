@@ -525,6 +525,7 @@ def ensure_agreement():
     for client in to_be_deleted:
         db.remove_vote(client, my_name)
 
+    print(my_name, disagreed_illegal_votes)
     if(len(disagreed_illegal_votes) > 0):
         communication_number += 1
         server_util.complain_consistency(
