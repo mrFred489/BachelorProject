@@ -87,7 +87,6 @@ class TestCommunication(unittest.TestCase):
         reset_servers()
         time.sleep(0.5)
 
-
     @classmethod
     def tearDown(cls):
         for i in local_servers:
@@ -185,9 +184,9 @@ class TestCommunication(unittest.TestCase):
             
     def test_adding_votes(self):
         client_util.send_vote([4, 2, 1, 3], 'c1', local_servers)
-        client_util.send_vote([1, 2, 3, 4], 'c2', local_servers)
+        #client_util.send_vote([1, 2, 3, 4], 'c2', local_servers)
         # Bad vote
-        client_util.send_vote([1, 1, 1, 1], 'c3', local_servers)
+        #client_util.send_vote([1, 1, 1, 1], 'c3', local_servers)
         client_util.send_vote([2, 2, 2, 2], 'c4', local_servers)
         for server in local_servers:
             util.get_url(server + "/zero_one_consistency")
@@ -245,6 +244,7 @@ class TestCommunication(unittest.TestCase):
                 [sum([v[i][j] * (1 / (j + 1)) for j in range(v.shape[0])]) for i in range(v.shape[1])])))
 
     def test_new_product(self):
+        reset_servers()
         illegal_vote = np.array([[3,-2],[-2,3]])
         illegal_vote_partitions = util.partition_and_secret_share_vote(illegal_vote, local_servers)
         client_util.postvote("ic3", illegal_vote_partitions, local_servers)
@@ -281,6 +281,37 @@ class TestCommunication(unittest.TestCase):
             self.assertTrue(np.array_equal(np.array([1.5,1.5]),result))
 
 
+    # def test_many_votes(self):
+    #     reset_servers()
+    #     votes = 4
+    #     for i in range(votes):
+    #         client = 'c' + str(i)
+    #         client_util.send_vote([1, 2, 3, 4], client, local_servers)
+    #     for server in local_servers:
+    #         util.get_url(server + "/zero_one_consistency")
+    #     time.sleep(1)
+    #     for server in local_servers:
+    #         util.get_url(server + "/sumdifferenceshareforzeroone")
+    #     time.sleep(1)
+    #     for server in local_servers:
+    #         util.get_url(server + '/check_votes')
+    #     time.sleep(1)
+    #     for server in local_servers:
+    #         util.get_url(server + '/ensure_vote_agreement')
+    #     time.sleep(1)
+    #     for server in local_servers:
+    #         util.get_url(server + '/add')
+    #     time.sleep(1)
+    #     for server in local_servers:
+    #         response = util.get_url(server + '/compute_result')
+    #         self.assertTrue(response.text=="ok")
+    #     time.sleep(1)
+    #     v = np.array([[votes, 0, 0, 0], [0, votes, 0, 0], [0, 0, votes, 0], [0, 0, 0, votes]])
+    #     for server in local_servers:
+    #         response = util.get_url(server + '/verify_result')
+    #         result = util.string_to_vote(response.text)
+    #         self.assertTrue(np.array_equal(result, np.array(
+    #             [sum([v[i][j] * (1 / (j + 1)) for j in range(v.shape[0])]) for i in range(v.shape[1])])))
 
 
 
@@ -429,15 +460,15 @@ class TestSlow(unittest.TestCase):
             result = util.string_to_vote(response.text)
             self.assertTrue(np.array_equal(result, np.array(
                 [sum([v[i][j] * (1 / (j + 1)) for j in range(v.shape[0])]) for i in range(v.shape[1])])))
-        
+
     @classmethod
     def tearDownClass(cls):
         for i in local_servers:
             requests.get(i + "/shutdown")
         requests.get(mediator + "/shutdown")
         time.sleep(1)
-        
-        
+
+
 
 def reset_servers():
     for server in local_servers:
