@@ -453,8 +453,6 @@ class TestCheater(unittest.TestCase):
         time.sleep(20)
         self.assertTrue(len(requests.get(mediator + "/test/printcomplaints").text) > 1)
 
-        self.assertTrue(len(requests.get(mediator + "/test/printcomplaints").text) > 2)
-
     @classmethod
     def tearDownClass(cls):
         for i in local_servers[:-1]:
