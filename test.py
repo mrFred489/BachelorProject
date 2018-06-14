@@ -472,7 +472,6 @@ class TestCheater(unittest.TestCase):
         for server in local_servers:
             util.get_url(server + "/ensure_vote_agreement")
         time.sleep(20)
-        print(requests.get(mediator + "/test/printcomplaints").text)
         self.assertTrue(len(requests.get(mediator + "/test/printcomplaints").text) > 2)
 
     @classmethod

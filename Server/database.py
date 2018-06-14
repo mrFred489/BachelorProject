@@ -195,12 +195,12 @@ def get_cursor():
         cursor = conn.cursor()
         cursor.execute("SELECT 1")
     except psy.OperationalError as e:
-        print("Fangede psy.OperationalError:")
+        print("Caught psy.OperationalError:")
         print(e)
         get_conn()
         cursor = conn.cursor()
     except:
-        print("Fangede error")
+        print("Caught error")
         get_conn()
         cursor = conn.cursor()
     return cursor

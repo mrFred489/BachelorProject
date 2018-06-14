@@ -100,7 +100,6 @@ def handle_complaint(t, protocol, complaint):
                         and complaint.data["client"] == x[1].data["client"])]
         malicious_server = use_majority(relevant, complaint)
     elif complaint.protocol == util.Protocol.zero_one_finalize:
-        print("type of part_sum:", type(complaint.data["part_sum"]))
         relevant = [x[1] for x in other_complaints
                     if (x[0] != complaint.sender
                         and complaint.data["i"] == x[1].data["i"]
