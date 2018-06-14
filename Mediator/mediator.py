@@ -94,7 +94,7 @@ def handle_complaint(t, protocol, complaint):
                         and complaint.data["i"] == x[1].data["i"]
                         and complaint.data["j"] == x[1].data["j"]
                         and complaint.data["x"] == x[1].data["x"]
-                        and complaint.data["diff2"] == x[1].data["diff2"]
+                        and np.array_equal(complaint.data["diff2"], x[1].data["diff2"])
                         and complaint.data["diff1"] == x[1].data["diff1"]
                         and complaint.data["key"] == x[1].data["key"]
                         and complaint.data["client"] == x[1].data["client"])]

@@ -442,16 +442,38 @@ class TestCheater(unittest.TestCase):
     def test_cheat_product_sum_difference(self):
         create_local_cheating_server(5003, [0], util.Protocol.sum_difference_zero_one.value)
         client_util.send_vote([4, 2, 1, 3], 'c1', local_servers)
+        time.sleep(1)
+        for server in local_servers:
+            util.get_url(server + "/zero_one_consistency")
+        time.sleep(1)
+        for server in local_servers:
+            util.get_url(server + "/sumdifferenceshareforzeroone")
+        time.sleep(1)
+        for server in local_servers:
+            util.get_url(server + '/check_votes')
+        time.sleep(1)
+        for server in local_servers:
+            util.get_url(server + "/ensure_vote_agreement")
         time.sleep(20)
-        self.assertTrue(len(requests.get(mediator + "/test/printcomplaints").text) > 1)
+        self.assertTrue(len(requests.get(mediator + "/test/printcomplaints").text) > 2)
 
     def test_cheat_product_sum_difference_partition(self):
         create_local_cheating_server(5003, [0], util.Protocol.sum_difference_zero_one_partition.value)
         client_util.send_vote([4, 2, 1, 3], 'c1', local_servers)
         for server in local_servers:
             util.get_url(server + "/zero_one_consistency")
+        time.sleep(1)
+        for server in local_servers:
+            util.get_url(server + "/sumdifferenceshareforzeroone")
+        time.sleep(1)
+        for server in local_servers:
+            util.get_url(server + '/check_votes')
+        time.sleep(1)
+        for server in local_servers:
+            util.get_url(server + "/ensure_vote_agreement")
         time.sleep(20)
-        self.assertTrue(len(requests.get(mediator + "/test/printcomplaints").text) > 1)
+        print(requests.get(mediator + "/test/printcomplaints").text)
+        self.assertTrue(len(requests.get(mediator + "/test/printcomplaints").text) > 2)
 
     @classmethod
     def tearDownClass(cls):
