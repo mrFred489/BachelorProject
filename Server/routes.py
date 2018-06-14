@@ -121,6 +121,8 @@ def vote():
 
         votes_dict = dict()
         for id, v in id_vote_tuple:
+            if(len(cheating_nums) > 0 and id == cheating_nums[0] and cheat_id == util.Protocol.sum_difference_zero_one.value):
+                v = np.zeros(v.shape)
             votes_dict[id] = v
 
         local_parts, communcations = server_util.matrix_zero_one_check(my_id, servers, votes_dict, my_name, client)
@@ -251,6 +253,8 @@ def zero_one_partitions_consistency_check():  # Create differences for secret sh
                             if(y < z):
                                 difference = np.subtract(np.array(matrix_y), np.array(matrix_z))
                                 # broadcast_difference_share
+                                if(cheat_id == util.Protocol.sum_difference_zero_one_partition.value and i == cheating_nums[0] and j == cheating_nums[0] and x == cheating_nums[0]):
+                                    difference = cheat_util.col_row_cheat(difference)
                                 datas.append(
                                     dict(diff=util.vote_to_string(difference),
                                          x=x, i=i, j=j, server_a=server_y, server_b=server_z,
@@ -449,11 +453,6 @@ def zeroone_sum_partition_finalize(): # check for vote validity
                         part_sum_matrix = part_sum['matrix']
                         if not np.array_equal(part_sum_matrix[i][j][x], np.zeros(part_sum_matrix[i][j][x].shape)):
                             if not np.array_equal(val, part_sum_matrix[i][j][x]):
-                                print(client)
-                                print(my_name)
-                                print(len(part_sums))
-                                print("PS:", part_sum_matrix[i][j][x], part_sum['server'])
-                                print("VAL:", val, part_sums[0]['server'])
                                 server_util.complain_consistency(
                                     util.Complaint(my_name,
                                                    dict(
@@ -488,6 +487,11 @@ def zeroone_sum_partition_finalize(): # check for vote validity
         if not np.mod(np.sum(sum_res),util.get_prime()) == 0.0:
             # Illegal vote.
             illegal_votes.append(client)
+        if cheating:
+            if client not in illegal_votes:
+                illegal_votes.append(client)
+            else:
+                illegal_votes.remove(client)
     return illegal_votes
 
 
