@@ -327,10 +327,6 @@ class TestMediator(unittest.TestCase):
 
         time.sleep(3)
 
-    def test_todo(self):
-        server_util.send_illegal_votes_to_mediator([], "me", mediator, "test1")
-        self.assertTrue(True)
-
     def test_message_inconsistency(self):
         for num, server in enumerate(local_servers):
             util.post_url(dict(complaint=util.vote_to_string(util.Complaint(
@@ -522,7 +518,7 @@ class TestSlow(unittest.TestCase):
             response = util.get_url(server + '/compute_result')
             self.assertTrue(response.text=="ok")
         time.sleep(1)
-        v = np.array([[10, 0, 0, 0], [0, 10, 0, 0], [0, 0, 10, 0], [0, 0, 0, 10]])
+        v = np.array([[40, 0, 0, 0], [0, 40, 0, 0], [0, 0, 40, 0], [0, 0, 0, 40]])
         for server in local_servers:
             response = util.get_url(server + '/verify_result')
             result = util.string_to_vote(response.text)
