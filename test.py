@@ -394,7 +394,7 @@ class TestCheater(unittest.TestCase):
         self.assertTrue(len(requests.get(mediator + "/test/printcomplaints").text) <= 2, msg=requests.get(mediator + "/test/printcomplaints").text)
 
     def test_cheat_final_result(self):
-        create_local_cheating_server(5003, [0], 5)
+        create_local_cheating_server(5003, [0], util.Protocol.compute_result.value)
         client_util.send_vote([4, 2, 1, 3], 'c1', local_servers)
         client_util.send_vote([1, 2, 3, 4], 'c2', local_servers)
         for s in local_servers:
@@ -412,6 +412,27 @@ class TestCheater(unittest.TestCase):
             self.assertFalse(response.ok, msg="Servers don't agree on result, " + response.text)
         self.assertTrue(len(requests.get(mediator + "/test/printcomplaints").text) > 2)
 
+
+    def test_cheat_ensure_vote_agreement(self):
+        create_local_cheating_server(5003, [0], util.Protocol.ensure_vote_agreement.value)
+        client_util.send_vote([4, 2, 1, 3], 'c1', local_servers)
+        client_util.send_vote([1, 2, 3, 4], 'c2', local_servers)
+        for s in local_servers:
+            response = util.get_url(s + '/check_votes')
+        for s in local_servers:
+            response = util.get_url(s + '/ensure_vote_agreement')
+        for server in local_servers:
+            util.get_url(server + '/add')
+        time.sleep(.5)
+        for s in local_servers:
+            response = util.get_url(s + '/compute_result')
+        time.sleep(.5)
+        for s in local_servers:
+            response = util.get_url(s + "/verify_result")
+            self.assertFalse(response.ok, msg="Servers don't agree on result, " + response.text)
+        self.assertTrue(len(requests.get(mediator + "/test/printcomplaints").text) > 2)
+
+        
         
     @classmethod
     def tearDownClass(cls):

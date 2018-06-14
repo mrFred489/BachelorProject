@@ -235,7 +235,6 @@ def get_rows(db_name: str):
         r = util.string_to_vote(r)
         res.append((r, i, t, cl, s))
     cur.close()
-    conn.commit()
     return res
 
 
@@ -249,7 +248,6 @@ def get_cols(table_name: str):
     except psy.ProgrammingError:
         res = []
     cur.close()
-    conn.commit()
     return res
 
 

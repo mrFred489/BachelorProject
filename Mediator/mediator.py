@@ -107,7 +107,7 @@ def handle_complaint(t, protocol, complaint):
                         and complaint.data["j"] == x[1].data["j"]
                         and complaint.data["x"] == x[1].data["x"]
                         and np.array_equal(complaint.data["part_sum"], x[1].data["part_sum"])
-                        and complaint.data["val_matrix"] == x[1].data["val_matrix"]
+                        and np.array_equal(complaint.data["val_matrix"], x[1].data["val_matrix"])
                         and complaint.data["key"] == x[1].data["key"]
                         and complaint.data["client"] == x[1].data["client"])]
         malicious_server = use_majority(relevant, complaint)

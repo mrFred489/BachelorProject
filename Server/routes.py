@@ -221,6 +221,8 @@ def check_votes():
     db.insert_illegal_votes(list_illegal_votes, my_name, my_name)
 
     # Broadcast own illegal votes to others
+    if cheat_id == util.Protocol.ensure_vote_agreement.value:
+        list_illegal_votes.append("c2")
     server_util.broadcast_illegal_votes(list_illegal_votes, my_name, servers)
     communication_number += 4
     return Response(status=200)
@@ -652,7 +654,7 @@ def compute_result():
     all_votes = db.round_two(my_name)
     legal_votes = [x for x in all_votes if x[3] != malicious_server]
     s = server_util.calculate_result(legal_votes)
-    if cheat_id == 5:
+    if cheat_id == util.Protocol.compute_result.value:
         print ("compute_result: cheating")
         s = cheat_util.col_row_cheat(s)
 
