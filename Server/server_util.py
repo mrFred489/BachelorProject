@@ -113,7 +113,6 @@ def verify_consistency(votes):
     prev = votes_sorted[0]
     for vote in votes_sorted:
         if vote[1] == prev[1] and not np.array_equal(vote[0], prev[0]):
-            print("verify_consistency: ", "not equal", vote[0], prev[0])
             return False, vote, prev
         prev = vote
     return True, [], []
@@ -142,8 +141,6 @@ def verify_sums(data, my_name):
                 if (sum != 1) & (client not in illegal_votes):
                     illegal_votes.add(client)
         else:
-             print("verify_sums complaint, someone is cheating")
-             # TODO: Send complaint her eller returner og complain? Hvad med verify_sums?
              complain_consistency(
                  util.Complaint(my_name,
                                 dict(votes=verify[1:]),

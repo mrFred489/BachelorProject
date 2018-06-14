@@ -95,9 +95,7 @@ def vote():
         votes = []
         for num, v_ in enumerate(votes_):
             if num in cheating_nums and cheat_id == 1:
-                print ("vote: cheating")
                 votes.append(cheat_util.col_row_cheat(util.string_to_vote(v_)))
-                print ("vote: ", votes[-1])
             else:
                 votes.append(util.string_to_vote(v_))
 
@@ -659,7 +657,6 @@ def compute_result():
     legal_votes = [x for x in all_votes if x[3] != malicious_server]
     s = server_util.calculate_result(legal_votes)
     if cheat_id == util.Protocol.compute_result.value:
-        print ("compute_result: cheating")
         s = cheat_util.col_row_cheat(s)
 
     # Calculate Dowdall result.
