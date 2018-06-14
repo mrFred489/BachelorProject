@@ -26,7 +26,7 @@ else:
 
     def get_conn():
         global conn
-        conn = psy.connect(postgresql.dsn())
+        conn = psy.connect(**postgresql.dsn())
 
     # Create tables for votes
     cursor.execute(
@@ -164,6 +164,27 @@ else:
     atexit.register(cleanup)
 
 
+def db_execute(conn, query):
+    try:
+        cursor = conn.cursor()
+        cursor.execute(query)
+    except:
+        conn = psy.connect(**postgresql.dsn())
+        cursor = conn.cursor()
+        cursor.execute(query)
+    return cursor
+
+
+def db_execute_extra(conn, query, extra):
+    try:
+        cursor = conn.cursor()
+        cursor.execute(query, extra)
+    except:
+        conn = psy.connect(**postgresql.dsn())
+        cursor = conn.cursor()
+        cursor.execute(query, extra)
+    return cursor
+
 
 
 def get_cursor():
@@ -172,20 +193,19 @@ def get_cursor():
         cursor = conn.cursor()
         cursor.execute("SELECT 1")
     except psy.OperationalError as e:
-        print("Fangede psy.OperationalError")
+        print("Fangede psy.OperationalError:")
+        print(e)
         get_conn()
         cursor = conn.cursor()
     except:
         print("Fangede error")
         get_conn()
         cursor = conn.cursor()
-
     return cursor
 
 
 def round_one(db_name: str):
-    cur = get_cursor()
-    cur.execute('SELECT matrix, id, round, client, server FROM "' + db_name + '" WHERE round = 1')
+    cur = db_execute(conn, 'SELECT matrix, id, round, client, server FROM "' + db_name + '" WHERE round = 1')
     res = []
     for m, i, r, cl, s in cur:
         m = util.string_to_vote(m)
@@ -196,8 +216,7 @@ def round_one(db_name: str):
 
 
 def round_two(db_name: str):
-    cur = get_cursor()
-    cur.execute('SELECT matrix, id, client, server FROM "' + db_name + '/summed_votes"')
+    cur = db_execute(conn, 'SELECT matrix, id, client, server FROM "' + db_name + '/summed_votes"')
     res = []
     for m, i, cl, s in cur:
         m = util.string_to_vote(m)
@@ -208,8 +227,7 @@ def round_two(db_name: str):
 
 
 def get_rows(db_name: str):
-    cur = get_cursor()
-    cur.execute('SELECT row, id, type_, client, server FROM "' + db_name + '/rows"')
+    cur = db_execute(conn, 'SELECT row, id, type_, client, server FROM "' + db_name + '/rows"')
     res = []
     for r, i, t, cl, s in cur:
         r = util.string_to_vote(r)
@@ -220,23 +238,24 @@ def get_rows(db_name: str):
 
 
 def get_cols(table_name: str):
-    cur = get_cursor()
-    cur.execute('SELECT col, id, type_, client, server FROM "' + table_name + '/columns"')
+    cur = db_execute(conn, 'SELECT col, id, type_, client, server FROM "' + table_name + '/columns"')
     res = []
-    for c, i, t, cl, s in cur:
-        c = util.string_to_vote(c)
-        res.append((c, i, t, cl, s))
+    try:
+        for (c, i, t, cl, s) in cur:
+            c = util.string_to_vote(c)
+            res.append((c, i, t, cl, s))
+    except psy.ProgrammingError:
+        res = []
     cur.close()
     conn.commit()
     return res
 
 
 def insert_row(row: np.ndarray, id: int, type_: str, client_name, server, my_name):
-    cur = get_cursor()
     row = util.vote_to_string(row)
-    cur.execute('SELECT row FROM "' + my_name + '/rows" WHERE id = ' + str(id) + ' AND client = \'' + str(client_name) + '\' AND server = \'' + str(server) + '\'')
+    cur = db_execute(conn, 'SELECT row FROM "' + my_name + '/rows" WHERE id = ' + str(id) + ' AND client = \'' + str(client_name) + '\' AND server = \'' + str(server) + '\'')
     if len(cur.fetchall()) == 0:
-        cur.execute('INSERT INTO "' + my_name + '/rows" (row, id, type_, client, server) VALUES (%s, %s, %s, %s, %s)',
+        cur = db_execute_extra(conn, 'INSERT INTO "' + my_name + '/rows" (row, id, type_, client, server) VALUES (%s, %s, %s, %s, %s)',
                     (row, id, type_, client_name, server))
     else:
         cur.execute('UPDATE "' + my_name + '/rows" SET row = \'' + row + '\' WHERE id = ' + str(
@@ -247,31 +266,29 @@ def insert_row(row: np.ndarray, id: int, type_: str, client_name, server, my_nam
 
 
 def insert_col(col: np.ndarray, id: int, type_: str, client_name, server, my_name):
-    cur = get_cursor()
     col = util.vote_to_string(col)
-    cur.execute('SELECT col FROM "' + my_name + '/columns" WHERE id = ' + str(id) + ' AND client = \'' + str(client_name) + '\' AND server = \'' + str(server) + '\'')
+    cur = db_execute(conn, 'SELECT col FROM "' + my_name + '/columns" WHERE id = ' + str(id) + ' AND client = \'' + str(client_name) + '\' AND server = \'' + str(server) + '\'')
     if len(cur.fetchall()) == 0:
-        cur.execute('INSERT INTO "' + my_name + '/columns" (col, id, type_, client, server) VALUES (%s, %s, %s, %s, %s)',
+        cur = db_execute_extra(conn, 'INSERT INTO "' + my_name + '/columns" (col, id, type_, client, server) VALUES (%s, %s, %s, %s, %s)',
                     (col, id, type_, client_name, server))
     else:
-        cur.execute('UPDATE "' + my_name + '/columns" SET col = \'' + col + '\' WHERE id = ' + str(id) + ' AND client = \'' + str(client_name) + '\' AND server = \'' + str(server) + '\'')
+        cur = db_execute(conn, 'UPDATE "' + my_name + '/columns" SET col = \'' + col + '\' WHERE id = ' + str(id) + ' AND client = \'' + str(client_name) + '\' AND server = \'' + str(server) + '\'')
     cur.close()
     conn.commit()
     return 1
 
 
 def insert_vote(matrix: np.ndarray, id: int, round: int, client_name: str, server: str, db_name: str):
-    cur = get_cursor()
     matrix = util.vote_to_string(matrix)
-    cur.execute('SELECT matrix FROM "' + db_name + '" WHERE id = ' + str(id)
+    cur = db_execute(conn, 'SELECT matrix FROM "' + db_name + '" WHERE id = ' + str(id)
                 + ' AND client = \'' + str(client_name)
                 + '\' AND server = \'' + str(server)
                 + '\' AND round = ' + str(round))
     if len(cur.fetchall()) == 0:
-        cur.execute('INSERT INTO "' + db_name + '" (matrix, id, round, client, server) VALUES (%s, %s, %s, %s, %s)',
+        cur = db_execute_extra(conn, 'INSERT INTO "' + db_name + '" (matrix, id, round, client, server) VALUES (%s, %s, %s, %s, %s)',
                 (matrix, id, round, client_name, server))
     else:
-        cur.execute('UPDATE "' + db_name + '" SET matrix = \'' + matrix
+        cur = db_execute(conn, 'UPDATE "' + db_name + '" SET matrix = \'' + matrix
                     + '\' WHERE id = ' + str(id)
                     + ' AND client = \'' + str(client_name)
                     + '\' AND server = \'' + str(server)
@@ -282,17 +299,15 @@ def insert_vote(matrix: np.ndarray, id: int, round: int, client_name: str, serve
 
 
 def remove_vote(client_name: str, db_name: str):
-    cur = get_cursor()
-    cur.execute('DELETE FROM "' + db_name + '" WHERE client = \'' + str(client_name) + '\'')
+    cur = db_execute(conn, 'DELETE FROM "' + db_name + '" WHERE client = \'' + str(client_name) + '\'')
     cur.close()
     conn.commit()
     return 1
 
 
 def insert_summed_votes(matrix: np.ndarray, id: int, client_name: str, server: str, db_name: str):
-    cur = get_cursor()
     matrix = util.vote_to_string(matrix)
-    cur.execute('INSERT INTO "' + db_name + '/summed_votes" (matrix, id, client, server) VALUES (%s, %s, %s, %s)',
+    cur = db_execute_extra(conn, 'INSERT INTO "' + db_name + '/summed_votes" (matrix, id, client, server) VALUES (%s, %s, %s, %s)',
                 (matrix, id, client_name, server))
     cur.close()
     conn.commit()
@@ -300,9 +315,8 @@ def insert_summed_votes(matrix: np.ndarray, id: int, client_name: str, server: s
 
 
 def insert_summed_diffs(diffs: list, client_name: str, i: int, j: int, server: str):
-    cur = get_cursor()
     diffs = util.vote_to_string(diffs)
-    cur.execute('INSERT INTO "' + server + '/summed_diffs" (diffs, client, i, j, server) VALUES (%s, %s, %s, %s, %s)',
+    cur = db_execute_extra(conn, 'INSERT INTO "' + server + '/summed_diffs" (diffs, client, i, j, server) VALUES (%s, %s, %s, %s, %s)',
                 (diffs, client_name, i, j, server))
     cur.close()
     conn.commit()
@@ -310,8 +324,7 @@ def insert_summed_diffs(diffs: list, client_name: str, i: int, j: int, server: s
 
 
 def get_summed_diffs(db_name: str):
-    cur = get_cursor()
-    cur.execute('SELECT diffs, client, i, j, server FROM "' + db_name + '/summed_diffs"')
+    cur = db_execute(conn, 'SELECT diffs, client, i, j, server FROM "' + db_name + '/summed_diffs"')
     res = []
     for d, c, i, j, s in cur:
         d = util.string_to_vote(d)
@@ -322,9 +335,8 @@ def get_summed_diffs(db_name: str):
 
 
 def insert_result(matrix: np.ndarray, server: str, db_name: str):
-    cur = get_cursor()
     matrix = util.vote_to_string(matrix)
-    cur.execute('INSERT INTO "' + db_name + '/result" (matrix, server) '
+    cur = db_execute_extra(conn, 'INSERT INTO "' + db_name + '/result" (matrix, server) '
                 + 'VALUES (%s, %s)',
                 (matrix, server))
     cur.close()
@@ -333,8 +345,7 @@ def insert_result(matrix: np.ndarray, server: str, db_name: str):
 
 
 def get_results(db_name: str):
-    cur = get_cursor()
-    cur.execute('SELECT matrix, server FROM "' + db_name + '/result"')
+    cur = db_execute(conn, 'SELECT matrix, server FROM "' + db_name + '/result"')
     res = []
     for m, s in cur:
         m = util.string_to_vote(m)
@@ -345,8 +356,7 @@ def get_results(db_name: str):
 
 
 def get_results_count(db_name: str):
-    cur = get_cursor()
-    cur.execute('SELECT COUNT(*) FROM (SELECT DISTINCT matrix FROM "' + db_name + '/result") AS temp')
+    cur = db_execute(conn, 'SELECT COUNT(*) FROM (SELECT DISTINCT matrix FROM "' + db_name + '/result") AS temp')
     res = cur.fetchone()[0]
     cur.close()
     conn.commit()
@@ -355,19 +365,18 @@ def get_results_count(db_name: str):
 
 
 def insert_zero_partition(matrix: np.ndarray, x: int, i: int, j: int, client_name: str, server: str, db_name: str):
-    cur = get_cursor()
     matrix = util.vote_to_string(matrix)
-    cur.execute('SELECT matrix FROM "' + db_name + '/zeropartition" WHERE client = \'' + str(client_name)
+    cur = db_execute(conn, 'SELECT matrix FROM "' + db_name + '/zeropartition" WHERE client = \'' + str(client_name)
                 + '\' AND x = \'' + str(x)
                 + '\' AND i = \'' + str(i)
                 + '\' AND j = \'' + str(j)
                 + '\' AND server = \'' + str(server) + '\'')
     if len(cur.fetchall()) == 0:
-        cur.execute(
+        cur = db_execute_extra(conn, 
             'INSERT INTO "' + db_name + '/zeropartition" (matrix, client, server, x, i, j) VALUES (%s, %s, %s, %s, %s, %s)',
             (matrix, client_name, server, x, i, j))
     else:
-        cur.execute('UPDATE "' + db_name + '/zeropartition" SET matrix = \'' + matrix
+        cur = db_execute(conn, 'UPDATE "' + db_name + '/zeropartition" SET matrix = \'' + matrix
                     + '\' WHERE client = \'' + str(client_name)
                     + '\' AND server = \'' + str(server)
                     + '\' AND x = \'' + str(x)
@@ -378,8 +387,7 @@ def insert_zero_partition(matrix: np.ndarray, x: int, i: int, j: int, client_nam
     return 1
 
 def get_zero_partitions(db_name: str):
-    cur = get_cursor()
-    cur.execute('SELECT matrix, client, server, x, i, j FROM "' + db_name + '/zeropartition"')
+    cur = db_execute(conn, 'SELECT matrix, client, server, x, i, j FROM "' + db_name + '/zeropartition"')
     res = defaultdict(list)
     for m, c, s, x, i, j in cur:
         res[c]
@@ -390,17 +398,15 @@ def get_zero_partitions(db_name: str):
     return res
 
 def insert_zero_partition_sum(matrix: np.ndarray, server: str, client: str, db_name: str):
-    cur = get_cursor()
     matrix = util.vote_to_string(matrix)
-    cur.execute('INSERT INTO "' + db_name + '/zeropartitionsum" (matrix, client, server) VALUES (%s, %s, %s)',
+    cur = db_execute_extra(conn, 'INSERT INTO "' + db_name + '/zeropartitionsum" (matrix, client, server) VALUES (%s, %s, %s)',
                 (matrix, client, server))
     cur.close()
     conn.commit()
     return 1
 
 def get_zero_partition_sum(db_name):
-    cur = get_cursor()
-    cur.execute('SELECT matrix, client, server FROM "' + db_name + '/zeropartitionsum"')
+    cur = db_execute(conn, 'SELECT matrix, client, server FROM "' + db_name + '/zeropartitionsum"')
     res = defaultdict(list)
     for m, c, s in cur:
         res[c]
@@ -412,17 +418,15 @@ def get_zero_partition_sum(db_name):
 
 
 def insert_zero_consistency_check(diff: np.ndarray, x: int, i: int, j:int, server_a: str, server_b: str, client_name: str, server: str, db_name: str):
-    cur = get_cursor()
     diff = util.vote_to_string(diff)
-    cur.execute('INSERT INTO "' + db_name + '/zeroconsistency" (diff, x, i, j, server_a, server_b, client, server) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)',
+    cur = db_execute_extra(conn, 'INSERT INTO "' + db_name + '/zeroconsistency" (diff, x, i, j, server_a, server_b, client, server) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)',
                 (diff, x, i, j, server_a, server_b, client_name, server))
     cur.close()
     conn.commit()
     return 1
 
 def get_zero_consistency_check(db_name: str):
-    cur = get_cursor()
-    cur.execute('SELECT diff, x, i, j, server_a, server_b, client, server FROM "' + db_name + '/zeroconsistency"')
+    cur = db_execute(conn, 'SELECT diff, x, i, j, server_a, server_b, client, server FROM "' + db_name + '/zeroconsistency"')
     res = defaultdict(list)
     for d, x, i, j, sa, sb, c, s in cur:
         d = util.string_to_vote(d)
@@ -433,8 +437,7 @@ def get_zero_consistency_check(db_name: str):
 
 
 def get_zero_consistency_check_alt(db_name: str):
-    cur = get_cursor()
-    cur.execute('SELECT diff, x, i, j, server_a, server_b, client, server FROM "' + db_name + '/zeroconsistency"')
+    cur = db_execute(conn, 'SELECT diff, x, i, j, server_a, server_b, client, server FROM "' + db_name + '/zeroconsistency"')
     res = []
     for d, x, i, j, sa, sb, c, s in cur:
         d = util.string_to_vote(d)
@@ -445,15 +448,14 @@ def get_zero_consistency_check_alt(db_name: str):
 
 
 def insert_zero_check(matrix: np.ndarray, client_name: str, server: str, db_name: str):
-    cur = get_cursor()
     matrix = util.vote_to_string(matrix)
-    cur.execute('SELECT matrix FROM "' + db_name + '/zerocheck" WHERE client = \'' + str(
+    cur = db_execute(conn, 'SELECT matrix FROM "' + db_name + '/zerocheck" WHERE client = \'' + str(
         client_name) + '\' AND server = \'' + str(server) + '\'')
     if len(cur.fetchall()) == 0:
-        cur.execute('INSERT INTO "' + db_name + '/zerocheck' + '" (matrix, client, server) VALUES (%s, %s, %s)',
+        cur = db_execute_extra(conn, 'INSERT INTO "' + db_name + '/zerocheck' + '" (matrix, client, server) VALUES (%s, %s, %s)',
                     (matrix, client_name, server))
     else:
-        cur.execute(
+        cur = db_execute(conn, 
             'UPDATE "' + db_name + '/zerocheck" SET matrix = \'' + matrix + '\' WHERE client = \'' + str(
                 client_name) + '\' AND server = \'' + str(server) + '\'')
     cur.close()
@@ -462,8 +464,7 @@ def insert_zero_check(matrix: np.ndarray, client_name: str, server: str, db_name
 
 
 def get_zero_check(db_name: str):
-    cur = get_cursor()
-    cur.execute('SELECT matrix, client, server FROM "' + db_name + '/zerocheck' + '"')
+    cur = db_execute(conn, 'SELECT matrix, client, server FROM "' + db_name + '/zerocheck' + '"')
     res = []
     for m, c, s in cur:
         m = util.string_to_vote(m)
@@ -473,8 +474,7 @@ def get_zero_check(db_name: str):
     return res
 
 def insert_illegal_votes(clients: list, sender: str, db_name: str):
-    cur = get_cursor()
-    cur.execute('INSERT INTO "' + db_name + '/illegal' + '" (sender, clients) VALUES (%s, %s)',
+    cur = db_execute_extra(conn, 'INSERT INTO "' + db_name + '/illegal' + '" (sender, clients) VALUES (%s, %s)',
                 (sender, clients))
     cur.close()
     conn.commit()
@@ -482,17 +482,13 @@ def insert_illegal_votes(clients: list, sender: str, db_name: str):
 
 
 def get_illegal_votes(db_name: str):
-    cur = get_cursor()
-    cur.execute('SELECT sender, clients FROM "' + db_name + '/illegal' + '"')
+    cur = db_execute(conn, 'SELECT sender, clients FROM "' + db_name + '/illegal' + '"')
     res = []
-    if cursor.rowcount == 0:
-        print("get_illegal_votes: cur", cur)
-        return res
-    print("get_illegal_votes: cur", cur)
-    print("get_illegal_votes: cur.rowcount", cur.rowcount)
-
-    for i in cur:
-        res.append(i)
+    try:
+        for i in cur:
+            res.append(i)
+    except psy.ProgrammingError:
+        res = []
     cur.close()
     conn.commit()
     return res
@@ -501,8 +497,7 @@ def get_illegal_votes(db_name: str):
 
 
 def insert_mediator_illegal_votes(clients: list, sender: str):
-    cur = get_cursor()
-    cur.execute('INSERT INTO "' + mediator + '/illegal' + '" (sender, clients) VALUES (%s, %s)',
+    cur = db_execute_extra(conn, 'INSERT INTO "' + mediator + '/illegal' + '" (sender, clients) VALUES (%s, %s)',
                 (sender, clients))
     cur.close()
     conn.commit()
@@ -510,8 +505,7 @@ def insert_mediator_illegal_votes(clients: list, sender: str):
 
 
 def get_mediator_illegal_votes():
-    cur = get_cursor()
-    cur.execute('SELECT sender, clients FROM "' + mediator + '/illegal' + '"')
+    cur = db_execute(conn, 'SELECT sender, clients FROM "' + mediator + '/illegal' + '"')
     res = []
     for i in cur:
         res.append(i)
@@ -524,16 +518,14 @@ def get_mediator_illegal_votes():
 
 def insert_mediator_inconsistency(sender: str, complaint: util.Complaint, protocol: util.Protocol):
     complaint = util.vote_to_string(complaint)
-    cur = get_cursor()
-    cur.execute('INSERT INTO "' + mediator + '/inconsistency' + '" (sender, complaint, protocol) VALUES (%s, %s, %s)',(sender, complaint, protocol.value))
+    cur = db_execute_extra(conn, 'INSERT INTO "' + mediator + '/inconsistency' + '" (sender, complaint, protocol) VALUES (%s, %s, %s)',(sender, complaint, protocol.value))
     cur.close()
     conn.commit()
     return 1
 
 
 def get_mediator_inconsistency():
-    cur = get_cursor()
-    cur.execute('SELECT sender, complaint, protocol FROM "' + mediator + '/inconsistency' + '"')
+    cur = db_execute(conn, 'SELECT sender, complaint, protocol FROM "' + mediator + '/inconsistency' + '"')
     res = []
     for s, c, p in cur:
         res.append((s, util.string_to_vote(c), util.Protocol(int(p))))
@@ -543,8 +535,7 @@ def get_mediator_inconsistency():
 
 
 def get_mediator_inconsistency_for_protocol(protocol):
-    cur = get_cursor()
-    cur.execute('SELECT sender, complaint, protocol FROM "' + mediator + '/inconsistency' + '" where protocol = \'' + str(protocol.value) + '\'')
+    cur = db_execute(conn, 'SELECT sender, complaint, protocol FROM "' + mediator + '/inconsistency' + '" where protocol = \'' + str(protocol.value) + '\'')
     res = []
     for s, c, p in cur:
         res.append((s, util.string_to_vote(c), util.Protocol(int(p))))
@@ -559,16 +550,14 @@ def insert_mediator_inconsistency_extra_data(sender: str, complaint: util.Compla
     print("insert_mediator_inconsistency_extra_data: protocol:", protocol)
     complaint = util.vote_to_string(complaint)
     data = util.vote_to_string(data)
-    cur = get_cursor()
-    cur.execute('INSERT INTO "' + mediator + '/inconsistency_extra_data' + '" (sender, complaint, protocol, data) VALUES (%s, %s, %s, %s)',(sender, complaint, protocol.value, data))
+    cur = db_execute_extra(conn, 'INSERT INTO "' + mediator + '/inconsistency_extra_data' + '" (sender, complaint, protocol, data) VALUES (%s, %s, %s, %s)',(sender, complaint, protocol.value, data))
     cur.close()
     conn.commit()
     return 1
 
 
 def get_mediator_inconsistency_extra_data():
-    cur = get_cursor()
-    cur.execute('SELECT sender, complaint, protocol, data FROM "' + mediator + '/inconsistency_extra_data' + '"')
+    cur = db_execute(conn, 'SELECT sender, complaint, protocol, data FROM "' + mediator + '/inconsistency_extra_data' + '"')
     res = []
     for s, c, p, d in cur:
         res.append((s, util.string_to_vote(c), util.Protocol(int(p)), util.string_to_vote(d)))
@@ -578,9 +567,8 @@ def get_mediator_inconsistency_extra_data():
 
 
 def get_mediator_inconsistency_extra_data_for_protocol(protocol):
-    cur = get_cursor()
     print("get_mediator_inconsistency_extra_data_for_protocol: protocol:", protocol)
-    cur.execute('SELECT sender, complaint, protocol, data FROM "' + mediator + '/inconsistency_extra_data' + '" where protocol=\'' + str(protocol.value) + '\'')
+    cur = db_execute(conn, 'SELECT sender, complaint, protocol, data FROM "' + mediator + '/inconsistency_extra_data' + '" where protocol=\'' + str(protocol.value) + '\'')
     res = []
     for s, c, p, d in cur:
         res.append((s, util.string_to_vote(c), util.Protocol(int(p)), util.string_to_vote(d)))
@@ -590,19 +578,18 @@ def get_mediator_inconsistency_extra_data_for_protocol(protocol):
 
 
 def reset(db_name: str):
-    cur = get_cursor()
 
-    cur.execute('DELETE FROM "' + db_name + '"')
-    cur.execute('DELETE FROM "' + db_name + '/result"')
-    cur.execute('DELETE FROM "' + db_name + '/rows"')
-    cur.execute('DELETE FROM "' + db_name + '/columns"')
-    cur.execute('DELETE FROM "' + db_name + '/zeropartition"')
-    cur.execute('DELETE FROM "' + db_name + '/zeroconsistency"')
-    cur.execute('DELETE FROM "' + db_name + '/zeropartitionsum"')
-    cur.execute('DELETE FROM "' + db_name + '/zerocheck"')
-    cur.execute('DELETE FROM "' + db_name + '/illegal"')
-    cur.execute('DELETE FROM "' + db_name + '/summed_votes"')
-    cur.execute('DELETE FROM "' + db_name + '/summed_diffs"')
+    cur = db_execute(conn, 'DELETE FROM "' + db_name + '"')
+    cur = db_execute(conn, 'DELETE FROM "' + db_name + '/result"')
+    cur = db_execute(conn, 'DELETE FROM "' + db_name + '/rows"')
+    cur = db_execute(conn, 'DELETE FROM "' + db_name + '/columns"')
+    cur = db_execute(conn, 'DELETE FROM "' + db_name + '/zeropartition"')
+    cur = db_execute(conn, 'DELETE FROM "' + db_name + '/zeroconsistency"')
+    cur = db_execute(conn, 'DELETE FROM "' + db_name + '/zeropartitionsum"')
+    cur = db_execute(conn, 'DELETE FROM "' + db_name + '/zerocheck"')
+    cur = db_execute(conn, 'DELETE FROM "' + db_name + '/illegal"')
+    cur = db_execute(conn, 'DELETE FROM "' + db_name + '/summed_votes"')
+    cur = db_execute(conn, 'DELETE FROM "' + db_name + '/summed_diffs"')
 
 
     cur.close()

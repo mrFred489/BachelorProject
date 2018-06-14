@@ -53,9 +53,7 @@ def use_majority(relevant, complaint):
         temp = server_util.list_remove(util.servers, i)
         if temp != []:
             malicious_server = temp[0]
-        print("complaint godkendt, der er en adversary:", malicious_server)
     else:
-        print("adversary er {}".format(complaint.sender))
         malicious_server = complaint.sender
     return malicious_server
 
@@ -118,10 +116,16 @@ def handle_complaint(t, protocol, complaint):
         pass
 
     answer_complaint(complaint, malicious_server, votes_for_deletion)
+    locks[protocol.value-1] = False
+
+
+@app.route("/fix_complaints", methods=["POST"])
+def fix_complaints():
+    complaints = db.get_mediator_inconsistency()
+    for i in complaints:
+        pass
+        
     
-    # semaphore
-
-
 
 def shutdown_server():
     func = request.environ.get('werkzeug.server.shutdown')

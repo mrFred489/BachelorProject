@@ -366,7 +366,7 @@ class TestCheater(unittest.TestCase):
     @classmethod
     def tearDown(cls):
         requests.get(baseurl4 + "/shutdown")
-        time.sleep(0.5)
+        time.sleep(0.1)
         
     def test_row_sum(self):
         create_local_cheating_server(5003, [0, 1], 1)
@@ -376,6 +376,7 @@ class TestCheater(unittest.TestCase):
         for s in local_servers:
             response = util.get_url(s + '/check_votes')
         self.assertTrue(len(requests.get(mediator + "/test/printcomplaints").text) > 2)
+        time.sleep(10)
 
     def test_row_sum_neg(self):
         create_local_server(5003)
