@@ -222,7 +222,7 @@ def check_votes():
 
     # Broadcast own illegal votes to others
     server_util.broadcast_illegal_votes(list_illegal_votes, my_name, servers)
-    communication_number += 3
+    communication_number += 4
     return Response(status=200)
 
 
@@ -257,7 +257,7 @@ def zero_one_partitions_consistency_check():  # Create differences for secret sh
                                     diff=difference, x=x, i=i, j=j,
                                     server_a=server_y, server_b=server_z,
                                     server=my_name, client_name=client, db_name=my_name)
-        communication_number += 3
+        communication_number += 4
         server_util.broadcast(data=dict(datas=datas, server=my_name), servers=servers, url="/differenceshareforzeroone")
     return Response(status=200)
 
@@ -292,7 +292,6 @@ def differenceshareforzeroone():
 def sumdifferenceshareforzeroone():  # Verify servers have calculated the same
     difference_dict = db.get_zero_consistency_check(my_name)
     difference_dict_clients = difference_dict.keys()
-    disagreed_clients = []
     for client in difference_dict_clients:
         difference_matrix_list = [[[[] for h in range(len(servers))] for j in range(len(servers))] for i in range(len(servers))]
         for difference in difference_dict[client]:
@@ -314,28 +313,35 @@ def sumdifferenceshareforzeroone():  # Verify servers have calculated the same
                 # SERVER PARTITION TESTS
                 server_difference_x_keys = server_difference_x_dict.keys()
                 for key in server_difference_x_keys:
-                    first_x_diff = server_difference_x_dict[key][0][0]
-                    first_x_server = server_difference_x_dict[key][0][1]
-                    diff_x_tuple_set = server_difference_x_dict[key][1:]
+                    first = 0
+                    first_x_tuple = server_difference_x_dict[key][first]
+                    first_x_diff = first_x_tuple[0]
+                    first_x_server = first_x_tuple[1]
+                    while first + 1 < len(server_difference_x_dict[key]) and np.array_equal(first_x_diff, np.zeros(first_x_diff.shape)):
+                        first += 1
+                        first_x_tuple = server_difference_x_dict[key][first]
+                        first_x_diff = first_x_tuple[0]
+                        first_x_server = first_x_tuple[1]
+                    diff_x_tuple_set = server_difference_x_dict[key][first:]
                     for diff_x_tuple in diff_x_tuple_set:
                         diff_x = diff_x_tuple[0]
-                        server_x = diff_x_tuple[1]
-                        if not np.array_equal(first_x_diff, first_x_diff): # TODO: Hvad skal dette være? Lige nu er det den samme variabel to gange
-                            # Disagreement in diff partitions
-                            print("sumdifferenceshareforzeroone: ", "Disagreement in difference partitions")
-                            server_util.complain_consistency(
-                                util.Complaint(my_name, dict(
-                                    diff2 = diff_x_tuple,
-                                    diff1 = first_x_diff,
-                                    x = int(key.split(";")[-1]),
-                                    i = i, j = j, key = key, client=client
-                                ),
-                                               util.Protocol.sum_difference_zero_one_partition,
-                                               key.split(";")[-1]),
-                                server_util.list_remove(util.servers,
-                                                        util.servers[int(key.split(";")[-1])]),
-                                util.mediator, my_name
-                            )
+                        if not np.array_equal(diff_x, np.zeros(diff_x.shape)):
+                            if not np.array_equal(diff_x, first_x_diff): # TODO: Hvad skal dette være? Lige nu er det den samme variabel to gange
+                                # Disagreement in diff partitions
+                                print("sumdifferenceshareforzeroone: ", "Disagreement in difference partitions")
+                                server_util.complain_consistency(
+                                    util.Complaint(my_name, dict(
+                                        diff2 = diff_x_tuple,
+                                        diff1 = first_x_tuple,
+                                        x = int(key.split(";")[-1]),
+                                        i = i, j = j, key = key, client=client
+                                    ),
+                                                   util.Protocol.sum_difference_zero_one_partition,
+                                                   key.split(";")[-1]),
+                                    server_util.list_remove(util.servers,
+                                                            util.servers[int(key.split(";")[-1])]),
+                                    util.mediator, my_name
+                                )
 
                 # DIFF TESTS
                 server_difference_keys = server_difference_dict.keys()
@@ -354,22 +360,29 @@ def sumdifferenceshareforzeroone():  # Verify servers have calculated the same
                                          server, key, server_difference_dict[key]))
                 db.insert_summed_diffs(summed_diffs, client, i, j, my_name)
                 equality = True
-                first_element = summed_diffs[0]
-                for element in summed_diffs[1:]:
+                first = 0
+                first_element = summed_diffs[first]
+                while first + 1 < len(summed_diffs) and np.array_equal(first_element[0],np.zeros(first_element[0].shape)):
+                    first += 1
+                    first_element = summed_diffs[first]
+                for element in summed_diffs[first:]:
                     if not np.array_equal(np.array(element[0]), np.array(first_element[0])):
-                        equality = False
-                        diffs = (element, first_element)
-                        server = (element[1], first_element[1])
-                        key = element[1]
-                        server_util.complain_consistency(
-                            util.Complaint(my_name, dict(
-                                diffs=diffs,
-                                key = key, i=i, j=j, client=client
-                            ), util.Protocol.sum_difference_zero_one, x),
-                            server_util.list_remove(util.servers,
-                                                    [my_name, util.servers[x]]),
-                            util.mediator, my_name
-                        )
+                        if not np.array_equal(element[0], np.zeros(element[0])):
+                            print("el", element[0])
+                            print("fel", first_element[0])
+                            equality = False
+                            diffs = (element, first_element)
+                            server = (element[1], first_element[1])
+                            key = element[1]
+                            server_util.complain_consistency(
+                                util.Complaint(my_name, dict(
+                                    diffs=diffs,
+                                    key = key, i=i, j=j, client=client
+                                ), util.Protocol.sum_difference_zero_one, x),
+                                server_util.list_remove(util.servers,
+                                                        [my_name, util.servers[x]]),
+                                util.mediator, my_name
+                            )
                 if not equality:
                     # TODO: DO SOMETHING HERE
                     print("sumdifferenceshareforzeroone: ", "Disagreement. Some differences are not equal!")
@@ -394,10 +407,9 @@ def sum_product_zero_one_check():
             if (i, j, x) not in used_parts:
                 used_parts.add((i, j, x))
                 sum_partition_array[i][j][x] = np.mod(np.add(sum_partition_array[i][j][x], matrix),util.get_prime())
-        communication_number += 3
+        communication_number += 4
         server_util.broadcast(data=dict(sum_matrix=util.vote_to_string(sum_partition_array), server=my_name, client=c), servers=servers, url="/zeroone_sum_partition")
         db.insert_zero_partition_sum(matrix=sum_partition_array, server=my_name, client=c, db_name=my_name)
-
 
 @app.route("/zeroone_sum_partition", methods=["POST"])
 def sum_product_receive():
@@ -411,7 +423,8 @@ def sum_product_receive():
         server_ = data['server']
 
         # Save on database
-        db.insert_zero_partition_sum(matrix=sum_matrix_, client=client_, server=server_, db_name=my_name)
+        if not server_ == my_name:
+            db.insert_zero_partition_sum(matrix=sum_matrix_, client=client_, server=server_, db_name=my_name)
     except TypeError as e:
         print("zeroone_sum_partition: ", "ERROR")
 
@@ -425,17 +438,21 @@ def zeroone_sum_partition_finalize(): # check for vote validity
     for client in partition_sums_clients:
         is_breaking = False
         part_sums = list(partition_sums[client])
-
+        print("LENGTH:", len(part_sums))
         res = [[[[0] for x in range(len(servers))] for j in range(len(servers))] for i in range(len(servers))]
         res2 = [[[0] for j in range(len(servers))] for i in range(len(servers))]
         for i in range(len(servers)):
             for j in range(len(servers)):
                 for x in range(len(servers)):
                     val = part_sums[0]['matrix'][i][j][x]
+                    print("VAL:", val)
                     for part_sum in part_sums[1:]:
                         part_sum_matrix = part_sum['matrix']
+                        print("PSM:", part_sum_matrix[i][j][x])
                         if not np.array_equal(part_sum_matrix[i][j][x], np.zeros(part_sum_matrix[i][j][x].shape)):
                             if not np.array_equal(val, part_sum_matrix[i][j][x]):
+                                print("PS:", part_sum_matrix[i][j][x], part_sum['server'])
+                                print("VAL:", val, part_sums[0]['server'])
                                 server_util.complain_consistency(
                                     util.Complaint(my_name, dict(
                                         i = i, j = j, x = x, client=client,
@@ -446,11 +463,10 @@ def zeroone_sum_partition_finalize(): # check for vote validity
                                                             [my_name, util.servers[x]]),
                                     util.mediator, my_name
                                 )
-                                print("zeroone_sum_partition_finalize: ", "Disagreement! MEDIATOR not implemented yet")
-                                is_breaking = True
-                                break
+                                is_breaking = False
+                                print("zeroone_sum_partition_finalize: ", client)
+                                #break
 
-                                print("zeroone_sum_partition_finalize: ", "Disagreement! MEDIATOR not implemented yet", client)
                             server = part_sum['server']
                         res[i][j][x] = val[0]
                     if is_breaking:
@@ -631,6 +647,7 @@ def summed_votes():
 
 @app.route("/compute_result", methods=["GET"])
 def compute_result():
+    global communication_number
     all_votes = db.round_two(my_name)
     legal_votes = [x for x in all_votes if x[3] != malicious_server]
     s = server_util.calculate_result(legal_votes)
@@ -641,6 +658,7 @@ def compute_result():
     # Calculate Dowdall result.
     dowdall_result = np.array([sum([s[i][j]*(1/(j + 1))  for j in range(s.shape[0])]) for i in range(s.shape[1])])
 
+    communication_number += 3
     server_util.broadcast(dict(
         server=my_name,
         result=util.vote_to_string(dowdall_result),
