@@ -89,10 +89,11 @@ class TestCommunication(unittest.TestCase):
 
     @classmethod
     def tearDown(cls):
+        time.sleep(10)
         for i in local_servers:
             requests.get(i + "/shutdown")
         requests.get(mediator + "/shutdown")
-        time.sleep(1)
+
 
     def test_vote_format(self):
         vote = client_util.create_vote([4, 2, 1, 3])
@@ -338,9 +339,15 @@ class TestMediator(unittest.TestCase):
         time.sleep(0.2)
         print(requests.get(mediator + "/test/printcomplaints"))
 
+    @classmethod
+    def tearDown(cls):
+        time.sleep(10)
 
+
+        
     @classmethod
     def tearDownClass(cls):
+        time.sleep(10)
         requests.get(mediator + "/shutdown")
 
 
@@ -364,8 +371,8 @@ class TestCheater(unittest.TestCase):
 
     @classmethod
     def tearDown(cls):
+        time.sleep(10)
         requests.get(baseurl4 + "/shutdown")
-        time.sleep(0.1)
         
     def test_row_sum(self):
         create_local_cheating_server(5003, [0, 1], 1)

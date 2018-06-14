@@ -164,9 +164,10 @@ else:
     atexit.register(cleanup)
 
 
-def db_execute(conn, query):
+def db_execute(cnn, query):
+    global conn
     try:
-        cursor = conn.cursor()
+        cursor = cnn.cursor()
         cursor.execute(query)
     except:
         conn = psy.connect(**postgresql.dsn())
@@ -175,9 +176,10 @@ def db_execute(conn, query):
     return cursor
 
 
-def db_execute_extra(conn, query, extra):
+def db_execute_extra(cnn, query, extra):
+    global conn
     try:
-        cursor = conn.cursor()
+        cursor = cnn.cursor()
         cursor.execute(query, extra)
     except:
         conn = psy.connect(**postgresql.dsn())

@@ -249,3 +249,10 @@ def list_of_nparray_in_list(l1, l2):
         ret &= nparray_in_list(i, l2)
     return ret
         
+
+def list_equal(l1, l2):
+    if len(l1) != len(l2):
+        return False
+    for i in range(l1):
+        pass
+    return True

@@ -49,8 +49,8 @@ def answer_complaint(complaint, malicious_server, votes_for_deletion):
 def use_majority(relevant, complaint):
     if len(relevant) > 1:
         temp = server_util.list_remove(util.servers, util.servers[complaint.value_id])
-    for i in set(relevant + [util.servers[complaint.value_id], complaint.sender]):
-        temp = server_util.list_remove(util.servers, i)
+        for i in set(relevant + [util.servers[complaint.value_id], complaint.sender]):
+            temp = server_util.list_remove(util.servers, i)
         if temp != []:
             malicious_server = temp[0]
     else:
@@ -100,6 +100,7 @@ def handle_complaint(t, protocol, complaint):
                         and complaint.data["client"] == x[1].data["client"])]
         malicious_server = use_majority(relevant, complaint)
     elif complaint.protocol == util.Protocol.zero_one_finalize:
+        print("type of part_sum:", type(complaint.data["part_sum"]))
         relevant = [x[1] for x in other_complaints
                     if (x[0] != complaint.sender
                         and complaint.data["i"] == x[1].data["i"]
@@ -111,21 +112,27 @@ def handle_complaint(t, protocol, complaint):
                         and complaint.data["client"] == x[1].data["client"])]
         malicious_server = use_majority(relevant, complaint)
     elif complaint.protocol == util.Protocol.ensure_vote_agreement:
-        pass
+        majority_senders = set()
+        majority_senders.add(complaint.sender)
+        for c in other_complaints:
+            if c[0] in list(majority_senders):
+                continue
+            if complaint.data["disagreed_illegal_votes"] == c[1].data["disagreed_illegal_votes"]:
+                majority_senders.add(c[0])
+        malicious_server = use_majority(list(majority_senders), complaint)
     elif complaint.protocol == util.Protocol.compute_result:
-        pass
+        majority_senders = set()
+        majority_senders.add(complaint.sender)
+        for c in other_complaints:
+            if c[0] in majority_senders:
+                continue
+            if np.array_equal(complaint.data["results"], c[1].data["results"]):
+                majority_senders.add(c[0])
+        malicious_server = use_majority(list(majority_senders), complaint)
 
     answer_complaint(complaint, malicious_server, votes_for_deletion)
     locks[protocol.value-1] = False
 
-
-@app.route("/fix_complaints", methods=["POST"])
-def fix_complaints():
-    complaints = db.get_mediator_inconsistency()
-    for i in complaints:
-        pass
-        
-    
 
 def shutdown_server():
     func = request.environ.get('werkzeug.server.shutdown')

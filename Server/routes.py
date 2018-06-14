@@ -698,7 +698,7 @@ def verify_result():
     _, v1, v2 = server_util.verify_consistency(results_to_verify)
     server_util.complain_consistency(
         util.Complaint(my_name,
-                       dict(votes=[v1, v2]),
+                       dict(results=results),
                        util.Protocol.compute_result,
                        -1),
         server_util.list_remove(util.servers, my_name), util.mediator, my_name)
