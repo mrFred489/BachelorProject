@@ -117,7 +117,7 @@ def handle_complaint(t, protocol, complaint):
         for c in other_complaints:
             if c[0] in list(majority_senders):
                 continue
-            if complaint.data["disagreed_illegal_votes"] == c[1].data["disagreed_illegal_votes"]:
+            if complaint.data["disagreed"] == c[1].data["disagreed"]:
                 majority_senders.add(c[0])
         malicious_server = use_majority(list(majority_senders), complaint)
     elif complaint.protocol == util.Protocol.compute_result:
