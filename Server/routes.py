@@ -367,9 +367,10 @@ def sumdifferenceshareforzeroone():  # Verify servers have calculated the same
                     first_element = summed_diffs[first]
                 for element in summed_diffs[first:]:
                     if not np.array_equal(np.array(element[0]), np.array(first_element[0])):
-                        if not np.array_equal(element[0], np.zeros(element[0])):
-                            print("el", element[0])
-                            print("fel", first_element[0])
+                        if not np.array_equal(element[0], np.zeros(element[0].shape)):
+                            print(my_name)
+                            print("el", element[0], element[1])
+                            print("fel", first_element[0], element[1])
                             equality = False
                             diffs = (element, first_element)
                             server = (element[1], first_element[1])
@@ -409,7 +410,6 @@ def sum_product_zero_one_check():
                 sum_partition_array[i][j][x] = np.mod(np.add(sum_partition_array[i][j][x], matrix),util.get_prime())
         communication_number += 4
         server_util.broadcast(data=dict(sum_matrix=util.vote_to_string(sum_partition_array), server=my_name, client=c), servers=servers, url="/zeroone_sum_partition")
-        db.insert_zero_partition_sum(matrix=sum_partition_array, server=my_name, client=c, db_name=my_name)
 
 @app.route("/zeroone_sum_partition", methods=["POST"])
 def sum_product_receive():
@@ -423,8 +423,7 @@ def sum_product_receive():
         server_ = data['server']
 
         # Save on database
-        if not server_ == my_name:
-            db.insert_zero_partition_sum(matrix=sum_matrix_, client=client_, server=server_, db_name=my_name)
+        db.insert_zero_partition_sum(matrix=sum_matrix_, client=client_, server=server_, db_name=my_name)
     except TypeError as e:
         print("zeroone_sum_partition: ", "ERROR")
 
@@ -438,19 +437,19 @@ def zeroone_sum_partition_finalize(): # check for vote validity
     for client in partition_sums_clients:
         is_breaking = False
         part_sums = list(partition_sums[client])
-        print("LENGTH:", len(part_sums))
         res = [[[[0] for x in range(len(servers))] for j in range(len(servers))] for i in range(len(servers))]
         res2 = [[[0] for j in range(len(servers))] for i in range(len(servers))]
         for i in range(len(servers)):
             for j in range(len(servers)):
                 for x in range(len(servers)):
                     val = part_sums[0]['matrix'][i][j][x]
-                    print("VAL:", val)
                     for part_sum in part_sums[1:]:
                         part_sum_matrix = part_sum['matrix']
-                        print("PSM:", part_sum_matrix[i][j][x])
                         if not np.array_equal(part_sum_matrix[i][j][x], np.zeros(part_sum_matrix[i][j][x].shape)):
                             if not np.array_equal(val, part_sum_matrix[i][j][x]):
+                                print(client)
+                                print(my_name)
+                                print(len(part_sums))
                                 print("PS:", part_sum_matrix[i][j][x], part_sum['server'])
                                 print("VAL:", val, part_sums[0]['server'])
                                 server_util.complain_consistency(
@@ -502,8 +501,6 @@ def ensure_agreement():
     to_be_deleted = set()
 
     # TODO: Brug verify_consistency til at verificere alting
-    print("ensure_vote_agreement: senders:", str(sender_client_dict.keys()))
-    print("ensure_vote_agreement: values:", str(sender_client_dict.values()))
     if sender_client_dict[my_name] == []:
         agreed_illegal_votes = set()
         sender_client_dict[my_name] = [[]]
@@ -511,7 +508,6 @@ def ensure_agreement():
         agreed_illegal_votes = set(sender_client_dict[my_name][0])
     disagreed_illegal_votes = set()
     for server in servers:
-        print("ensure_vote_agreement: server:", server)
         agreed_illegal_votes = agreed_illegal_votes.intersection(sender_client_dict[server][0])
         disagreed_illegal_votes = disagreed_illegal_votes.union(sender_client_dict[server][0])
     disagreed_illegal_votes = disagreed_illegal_votes.difference(agreed_illegal_votes)

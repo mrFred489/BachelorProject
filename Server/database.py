@@ -348,8 +348,22 @@ def get_results_count(db_name: str):
 def insert_zero_partition(matrix: np.ndarray, x: int, i: int, j: int, client_name: str, server: str, db_name: str):
     cur = get_cursor()
     matrix = util.vote_to_string(matrix)
-    cur.execute('INSERT INTO "' + db_name + '/zeropartition" (matrix, client, server, x, i, j) VALUES (%s, %s, %s, %s, %s, %s)',
+    cur.execute('SELECT matrix FROM "' + db_name + '/zeropartition" WHERE client = \'' + str(client_name)
+                + '\' AND x = \'' + str(x)
+                + '\' AND i = \'' + str(i)
+                + '\' AND j = \'' + str(j)
+                + '\' AND server = \'' + str(server) + '\'')
+    if len(cur.fetchall()) == 0:
+        cur.execute(
+            'INSERT INTO "' + db_name + '/zeropartition" (matrix, client, server, x, i, j) VALUES (%s, %s, %s, %s, %s, %s)',
             (matrix, client_name, server, x, i, j))
+    else:
+        cur.execute('UPDATE "' + db_name + '/zeropartition" SET matrix = \'' + matrix
+                    + '\' WHERE client = \'' + str(client_name)
+                    + '\' AND server = \'' + str(server)
+                    + '\' AND x = \'' + str(x)
+                    + '\' AND i = \'' + str(i)
+                    + '\' AND j = \'' + str(j) + '\'')
     cur.close()
     conn.commit()
     return 1
