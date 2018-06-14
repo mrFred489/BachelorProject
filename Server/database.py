@@ -487,10 +487,10 @@ def get_illegal_votes(db_name: str):
     try:
         for i in cur:
             res.append(i)
+        cur.close()
+
     except psy.ProgrammingError:
         res = []
-    cur.close()
-    conn.commit()
     return res
 
 
@@ -510,7 +510,6 @@ def get_mediator_illegal_votes():
     for i in cur:
         res.append(i)
     cur.close()
-    conn.commit()
     return res
 
 
@@ -527,23 +526,13 @@ def insert_mediator_inconsistency(sender: str, complaint: util.Complaint, protoc
 def get_mediator_inconsistency():
     cur = db_execute(conn, 'SELECT sender, complaint, protocol FROM "' + mediator + '/inconsistency' + '"')
     res = []
-    for s, c, p in cur:
-        res.append((s, util.string_to_vote(c), util.Protocol(int(p))))
+    try: 
+        for s, c, p in cur:
+            res.append((s, util.string_to_vote(c), util.Protocol(int(p))))
+    except psy.ProgrammingError:
+        res = []
     cur.close()
-    conn.commit()
     return res
-
-
-def get_mediator_inconsistency_for_protocol(protocol):
-    cur = db_execute(conn, 'SELECT sender, complaint, protocol FROM "' + mediator + '/inconsistency' + '" where protocol = \'' + str(protocol.value) + '\'')
-    res = []
-    for s, c, p in cur:
-        res.append((s, util.string_to_vote(c), util.Protocol(int(p))))
-    cur.close()
-    conn.commit()
-    return res
-
-
 
 
 def insert_mediator_inconsistency_extra_data(sender: str, complaint: util.Complaint, protocol: util.Protocol, data: dict):
@@ -557,16 +546,6 @@ def insert_mediator_inconsistency_extra_data(sender: str, complaint: util.Compla
 
 def get_mediator_inconsistency_extra_data():
     cur = db_execute(conn, 'SELECT sender, complaint, protocol, data FROM "' + mediator + '/inconsistency_extra_data' + '"')
-    res = []
-    for s, c, p, d in cur:
-        res.append((s, util.string_to_vote(c), util.Protocol(int(p)), util.string_to_vote(d)))
-    cur.close()
-    conn.commit()
-    return res
-
-
-def get_mediator_inconsistency_extra_data_for_protocol(protocol):
-    cur = db_execute(conn, 'SELECT sender, complaint, protocol, data FROM "' + mediator + '/inconsistency_extra_data' + '" where protocol=\'' + str(protocol.value) + '\'')
     res = []
     for s, c, p, d in cur:
         res.append((s, util.string_to_vote(c), util.Protocol(int(p)), util.string_to_vote(d)))
