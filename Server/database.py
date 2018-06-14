@@ -527,8 +527,11 @@ def insert_mediator_inconsistency(sender: str, complaint: util.Complaint, protoc
 def get_mediator_inconsistency():
     cur = db_execute(conn, 'SELECT sender, complaint, protocol FROM "' + mediator + '/inconsistency' + '"')
     res = []
-    for s, c, p in cur:
-        res.append((s, util.string_to_vote(c), util.Protocol(int(p))))
+    try: 
+        for s, c, p in cur:
+            res.append((s, util.string_to_vote(c), util.Protocol(int(p))))
+    except psy.ProgrammingError:
+        res = []
     cur.close()
     conn.commit()
     return res
