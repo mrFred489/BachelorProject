@@ -547,7 +547,6 @@ def get_mediator_inconsistency_for_protocol(protocol):
 
 
 def insert_mediator_inconsistency_extra_data(sender: str, complaint: util.Complaint, protocol: util.Protocol, data: dict):
-    print("insert_mediator_inconsistency_extra_data: protocol:", protocol)
     complaint = util.vote_to_string(complaint)
     data = util.vote_to_string(data)
     cur = db_execute_extra(conn, 'INSERT INTO "' + mediator + '/inconsistency_extra_data' + '" (sender, complaint, protocol, data) VALUES (%s, %s, %s, %s)',(sender, complaint, protocol.value, data))
@@ -567,7 +566,6 @@ def get_mediator_inconsistency_extra_data():
 
 
 def get_mediator_inconsistency_extra_data_for_protocol(protocol):
-    print("get_mediator_inconsistency_extra_data_for_protocol: protocol:", protocol)
     cur = db_execute(conn, 'SELECT sender, complaint, protocol, data FROM "' + mediator + '/inconsistency_extra_data' + '" where protocol=\'' + str(protocol.value) + '\'')
     res = []
     for s, c, p, d in cur:
