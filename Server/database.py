@@ -24,6 +24,9 @@ else:
     cursor = conn.cursor()
     mediator = "http://127.0.0.1:5100"
 
+    def get_conn():
+        global conn
+        conn = psy.connect(postgresql.dsn())
 
     # Create tables for votes
     cursor.execute(
@@ -145,16 +148,14 @@ else:
 
     # Create tables for the mediator
     cursor.execute('CREATE TABLE "http://127.0.0.1:5100/illegal"(sender TEXT, clients TEXT[])')
-    cursor.execute('CREATE TABLE "http://127.0.0.1:5100/inconsistency"(sender TEXT, complaint TEXT, protocol INTEGER)')
-    cursor.execute('CREATE TABLE "http://127.0.0.1:5100/inconsistencyExtraData"(sender TEXT, complaint TEXT, protocol INTEGER, data TEXT)')
+    cursor.execute('CREATE TABLE "http://127.0.0.1:5100/inconsistency"(sender TEXT, complaint TEXT, protocol TEXT)')
+    cursor.execute('CREATE TABLE "http://127.0.0.1:5100/inconsistency_extra_data"(sender TEXT, complaint TEXT, protocol TEXT, data TEXT)')
 
     cursor.close()
     conn.commit()
     print("DATABASES UP AND RUNNING\n")
 
-    def get_conn():
-        global conn
-        conn = psy.connect(postgresql.dsn())
+
 
     def cleanup():
         print("cleanup")
@@ -163,14 +164,22 @@ else:
     atexit.register(cleanup)
 
 
+
+
 def get_cursor():
     global conn
     try:
         cursor = conn.cursor()
-        cursor.execute("select 1;")
-    except psy.OperationalError:
+        cursor.execute("SELECT 1")
+    except psy.OperationalError as e:
+        print("Fangede psy.OperationalError")
         get_conn()
         cursor = conn.cursor()
+    except:
+        print("Fangede error")
+        get_conn()
+        cursor = conn.cursor()
+
     return cursor
 
 
@@ -387,6 +396,7 @@ def get_zero_partition_sum(db_name):
     conn.commit()
     return res
 
+
 def insert_zero_consistency_check(diff: np.ndarray, x: int, i: int, j:int, server_a: str, server_b: str, client_name: str, server: str, db_name: str):
     cur = get_cursor()
     diff = util.vote_to_string(diff)
@@ -461,11 +471,20 @@ def get_illegal_votes(db_name: str):
     cur = get_cursor()
     cur.execute('SELECT sender, clients FROM "' + db_name + '/illegal' + '"')
     res = []
+    if cursor.rowcount == 0:
+        print("get_illegal_votes: cur", cur)
+        return res
+    print("get_illegal_votes: cur", cur)
+    print("get_illegal_votes: cur.rowcount", cur.rowcount)
+
     for i in cur:
         res.append(i)
     cur.close()
     conn.commit()
     return res
+
+
+
 
 def insert_mediator_illegal_votes(clients: list, sender: str):
     cur = get_cursor()
@@ -487,6 +506,8 @@ def get_mediator_illegal_votes():
     return res
 
 
+
+
 def insert_mediator_inconsistency(sender: str, complaint: util.Complaint, protocol: util.Protocol):
     complaint = util.vote_to_string(complaint)
     cur = get_cursor()
@@ -501,17 +522,31 @@ def get_mediator_inconsistency():
     cur.execute('SELECT sender, complaint, protocol FROM "' + mediator + '/inconsistency' + '"')
     res = []
     for s, c, p in cur:
-        res.append((s, util.string_to_vote(c), util.Protocol(p)))
+        res.append((s, util.string_to_vote(c), util.Protocol(int(p))))
     cur.close()
     conn.commit()
     return res
 
 
+def get_mediator_inconsistency_for_protocol(protocol):
+    cur = get_cursor()
+    cur.execute('SELECT sender, complaint, protocol FROM "' + mediator + '/inconsistency' + '" where protocol = \'' + str(protocol.value) + '\'')
+    res = []
+    for s, c, p in cur:
+        res.append((s, util.string_to_vote(c), util.Protocol(int(p))))
+    cur.close()
+    conn.commit()
+    return res
+
+
+
+
 def insert_mediator_inconsistency_extra_data(sender: str, complaint: util.Complaint, protocol: util.Protocol, data: dict):
+    print("insert_mediator_inconsistency_extra_data: protocol:", protocol)
     complaint = util.vote_to_string(complaint)
     data = util.vote_to_string(data)
     cur = get_cursor()
-    cur.execute('INSERT INTO "' + mediator + '/inconsistencyExtraData' + '" (sender, complaint, protocol, data) VALUES (%s, %s, %s, %s)',(sender, complaint, protocol.value, data))
+    cur.execute('INSERT INTO "' + mediator + '/inconsistency_extra_data' + '" (sender, complaint, protocol, data) VALUES (%s, %s, %s, %s)',(sender, complaint, protocol.value, data))
     cur.close()
     conn.commit()
     return 1
@@ -519,10 +554,22 @@ def insert_mediator_inconsistency_extra_data(sender: str, complaint: util.Compla
 
 def get_mediator_inconsistency_extra_data():
     cur = get_cursor()
-    cur.execute('SELECT sender, complaint, protocol, data FROM "' + mediator + '/inconsistencyExtraData' + '"')
+    cur.execute('SELECT sender, complaint, protocol, data FROM "' + mediator + '/inconsistency_extra_data' + '"')
     res = []
     for s, c, p, d in cur:
-        res.append((s, util.string_to_vote(c), util.Protocol(p), util.string_to_vote(d)))
+        res.append((s, util.string_to_vote(c), util.Protocol(int(p)), util.string_to_vote(d)))
+    cur.close()
+    conn.commit()
+    return res
+
+
+def get_mediator_inconsistency_extra_data_for_protocol(protocol):
+    cur = get_cursor()
+    print("get_mediator_inconsistency_extra_data_for_protocol: protocol:", protocol)
+    cur.execute('SELECT sender, complaint, protocol, data FROM "' + mediator + '/inconsistency_extra_data' + '" where protocol=\'' + str(protocol.value) + '\'')
+    res = []
+    for s, c, p, d in cur:
+        res.append((s, util.string_to_vote(c), util.Protocol(int(p)), util.string_to_vote(d)))
     cur.close()
     conn.commit()
     return res
@@ -552,7 +599,7 @@ def reset_mediator():
     cur = get_cursor()
     cur.execute('DELETE FROM "' + mediator + '/illegal"')
     cur.execute('DELETE FROM "' + mediator + '/inconsistency"')
-    cur.execute('DELETE FROM "' + mediator + '/inconsistencyExtraData"')
+    cur.execute('DELETE FROM "' + mediator + '/inconsistency_extra_data"')
     cur.close()
     conn.commit()
     return 1

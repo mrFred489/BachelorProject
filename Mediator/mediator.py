@@ -4,6 +4,9 @@ import util
 from Server import database as db
 import multiprocessing as mp
 import time
+import threading
+from Server import server_util
+import numpy as np
 
 
 app = Flask(__name__)
@@ -28,8 +31,94 @@ def timer(t, protocol, complaint):
     pr.start()
 
 
+locks = [False for _ in range(6)]
+
+semaphore = threading.Semaphore()
+
+
+def answer_complaint(complaint, malicious_server, votes_for_deletion):
+    for server in util.servers:
+        util.post_url(dict(
+            complaint=util.vote_to_string(complaint),
+            malicious_server=malicious_server,
+            sender=my_name,
+            votes_for_deletion=votes_for_deletion
+        ),server + "/mediator_answer_votes")
+
+
+def use_majority(relevant, complaint):
+    if len(relevant) > 1:
+        temp = server_util.list_remove(util.servers, util.servers[complaint.value_id])
+    for i in set(relevant + [util.servers[complaint.value_id], complaint.sender]):
+        temp = server_util.list_remove(util.servers, i)
+        if temp != []:
+            malicious_server = temp[0]
+        print("complaint godkendt, der er en adversary:", malicious_server)
+    else:
+        print("adversary er {}".format(complaint.sender))
+        malicious_server = complaint.sender
+    return malicious_server
+
+
+        
 def handle_complaint(t, protocol, complaint):
     time.sleep(t)
+    semaphore.acquire()
+    if locks[protocol.value-1]:
+        semaphore.release()
+        return
+    locks[protocol.value-1] = True
+    semaphore.release
+    # extra_data = db.get_mediator_inconsistency_extra_data_for_protocol(protocol)
+    other_complaints = [x for x in db.get_mediator_inconsistency() if x[2] == protocol]
+    malicious_server = ""
+    votes_for_deletion = ""
+    if complaint.protocol == util.Protocol.check_votes:
+        votes = complaint.data["votes"]
+        relevant = [x[1] for x in other_complaints
+                    if (x[0] != complaint.sender
+                        and server_util.nparray_in_list(x[1].data["votes"][0], votes)
+                        and server_util.nparray_in_list(x[1].data["votes"][1], votes))]
+        malicious_server = use_majority(relevant, complaint)
+    elif complaint.protocol == util.Protocol.sum_difference_zero_one:
+        diffs = complaint.data["diffs"]
+        relevant = [x[1] for x in other_complaints
+                    if (x[0] != complaint.sender
+                        and server_util.list_of_nparray_in_list(x[1].data["diffs"], diffs)
+                        and complaint.data["i"] == x[1].data["i"]
+                        and complaint.data["j"] == x[1].data["j"]
+                        and complaint.data["key"] == x[1].data["key"]
+                        and complaint.data["client"] == x[1].data["client"])]
+        malicious_server = use_majority(relevant, complaint)
+    elif complaint.protocol == util.Protocol.sum_difference_zero_one_partition:
+        relevant = [x[1] for x in other_complaints
+                    if (x[0] != complaint.sender
+                        and complaint.data["i"] == x[1].data["i"]
+                        and complaint.data["j"] == x[1].data["j"]
+                        and complaint.data["x"] == x[1].data["x"]
+                        and complaint.data["diff2"] == x[1].data["diff2"]
+                        and complaint.data["diff1"] == x[1].data["diff1"]
+                        and complaint.data["key"] == x[1].data["key"]
+                        and complaint.data["client"] == x[1].data["client"])]
+        malicious_server = use_majority(relevant, complaint)
+    elif complaint.protocol == util.Protocol.zero_one_finalize:
+        relevant = [x[1] for x in other_complaints
+                    if (x[0] != complaint.sender
+                        and complaint.data["i"] == x[1].data["i"]
+                        and complaint.data["j"] == x[1].data["j"]
+                        and complaint.data["x"] == x[1].data["x"]
+                        and np.array_equal(complaint.data["part_sum"], x[1].data["part_sum"])
+                        and complaint.data["val_matrix"] == x[1].data["val_matrix"]
+                        and complaint.data["key"] == x[1].data["key"]
+                        and complaint.data["client"] == x[1].data["client"])]
+        malicious_server = use_majority(relevant, complaint)
+    elif complaint.protocol == util.Protocol.ensure_vote_agreement:
+        pass
+    elif complaint.protocol == util.Protocol.compute_result:
+        pass
+
+    answer_complaint(complaint, malicious_server, votes_for_deletion)
+    
     # semaphore
 
 
@@ -110,6 +199,8 @@ def extra_data():
     verified, data = util.unpack_request(request, my_name)
     if not verified:
         return make_response("Could not verify", 400)
+    complaint = util.string_to_vote(data["complaint"])
+    db.insert_mediator_inconsistency_extra_data(data["sender"], complaint, complaint.protocol, data["data"])
     return make_response("ok", 200)
 
     
@@ -122,7 +213,7 @@ def message_inconsistency():
     complaint: util.Complaint = util.string_to_vote(data["complaint"])
     
     db.insert_mediator_inconsistency(complaint.sender, complaint, complaint.protocol)
-    
+    timer(5, complaint.protocol, complaint)
     return make_response("Done", 200)
 
 

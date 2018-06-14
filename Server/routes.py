@@ -324,12 +324,13 @@ def sumdifferenceshareforzeroone():  # Verify servers have calculated the same
                             # Disagreement in diff partitions
                             print("sumdifferenceshareforzeroone: ", "Disagreement in difference partitions")
                             server_util.complain_consistency(
-                                util.Complaint(my_name, dict(
-                                    diff2 = diff_x_tuple,
-                                    diff1 = first_x_diff,
-                                    x = int(key.split(";")[-1]),
-                                    i = i, j = j, key = key, client=client
-                                ),
+                                util.Complaint(my_name,
+                                               dict(
+                                                   diff2 = diff_x_tuple,
+                                                   diff1 = first_x_diff,
+                                                   x = int(key.split(";")[-1]),
+                                                   i = i, j = j, key = key, client=client
+                                               ),
                                                util.Protocol.sum_difference_zero_one_partition,
                                                key.split(";")[-1]),
                                 server_util.list_remove(util.servers,
@@ -437,16 +438,18 @@ def zeroone_sum_partition_finalize(): # check for vote validity
                         if not np.array_equal(part_sum_matrix[i][j][x], np.zeros(part_sum_matrix[i][j][x].shape)):
                             if not np.array_equal(val, part_sum_matrix[i][j][x]):
                                 server_util.complain_consistency(
-                                    util.Complaint(my_name, dict(
-                                        i = i, j = j, x = x, client=client,
-                                        part_sum = part_sum, val=val
-                                    ),
+                                    util.Complaint(my_name,
+                                                   dict(
+                                                       i = i, j = j, x = x, client=client,
+                                                       part_sum = part_sum, val=val,
+                                                       val_matrix=part_sums[0]['matrix'],
+                                                       part_sum_matrix=part_sum_matrix
+                                                   ),
                                                    util.Protocol.zero_one_finalize, x),
                                     server_util.list_remove(util.servers,
                                                             [my_name, util.servers[x]]),
                                     util.mediator, my_name
                                 )
-                                print("zeroone_sum_partition_finalize: ", "Disagreement! MEDIATOR not implemented yet")
                                 is_breaking = True
                                 break
 
@@ -486,8 +489,6 @@ def ensure_agreement():
     to_be_deleted = set()
 
     # TODO: Brug verify_consistency til at verificere alting
-    print("ensure_vote_agreement: senders:", str(sender_client_dict.keys()))
-    print("ensure_vote_agreement: values:", str(sender_client_dict.values()))
     if sender_client_dict[my_name] == []:
         agreed_illegal_votes = set()
         sender_client_dict[my_name] = [[]]
@@ -495,7 +496,6 @@ def ensure_agreement():
         agreed_illegal_votes = set(sender_client_dict[my_name][0])
     disagreed_illegal_votes = set()
     for server in servers:
-        print("ensure_vote_agreement: server:", server)
         agreed_illegal_votes = agreed_illegal_votes.intersection(sender_client_dict[server][0])
         disagreed_illegal_votes = disagreed_illegal_votes.union(sender_client_dict[server][0])
     disagreed_illegal_votes = disagreed_illegal_votes.difference(agreed_illegal_votes)
@@ -554,32 +554,34 @@ def messageinconsistency():
     
     complaint : util.Complaint = util.string_to_vote(data["complaint"])
     relevant_data = []
-    if complaint.protocol.value == util.Protocol.check_votes:
+    if complaint.protocol == util.Protocol.check_votes:
         if complaint.data["votes"][0][2] == "row":
             my_data = db.get_rows(my_name)
         else:
             my_data = db.get_cols(my_name)
         relevant_data = [x for x in my_data if x[1] == complaint.value_id]
-    elif complaint.protocol.value == util.Protocol.sum_difference_zero_one:
+    elif complaint.protocol == util.Protocol.sum_difference_zero_one:
         relevant_data = db.get_summed_diffs(my_name)
-        print("sum_difference_zero_one_complaint: relevant data", relevant_data[0])
         relevant_data = [x for x in relevant_data
-                         if (x[2] == complaint["data"]["i"]
-                             and x[3] == complaint["data"]["j"]
-                             and x[1] == complaint["data"]["client"]) ]
-    elif complaint.protocol.value == util.Protocol.sum_difference_zero_one_partition:
+                         if (x[2] == complaint.data["i"]
+                             and x[3] == complaint.data["j"]
+                             and x[1] == complaint.data["client"]) ]
+    elif complaint.protocol == util.Protocol.sum_difference_zero_one_partition:
         my_data = db.get_zero_consistency_check_alt(my_name)
-        relevant_date = [x for x in my_data
-                         if (x[2] == complaint["data"]["i"]
-                             and x[3] == complaint["data"]["j"]
-                             and x[1] == complaint["data"]["client"]
-                             and x[4] == complaint["data"]["x"]) ]
-    elif complaint.protocol.value == util.Protocol.zero_one_finalize:
-        pass
-    elif complaint.protocol.value == util.Protocol.ensure_vote_agreement:
-        pass
-    elif complaint.protocol.value == util.Protocol.compute_result:
-        pass
+        relevant_data = [x for x in my_data
+                         if (x[2] == complaint.data["i"]
+                             and x[3] == complaint.data["j"]
+                             and x[1] == complaint.data["client"]
+                             and x[4] == complaint.data["x"]) ]
+    elif complaint.protocol == util.Protocol.zero_one_finalize:
+        partition_sums = db.get_zero_partition_sum(my_name)
+        relevant_data = partition_sums[complaint.data["client"]]
+    elif complaint.protocol == util.Protocol.ensure_vote_agreement:
+        relevant_data = db.get_illegal_votes(my_name)
+    elif complaint.protocol == util.Protocol.compute_result:
+        all_votes = db.round_two(my_name)
+        relevant_data = [x for x in all_votes if x[3] != malicious_server]
+
 
     server_util.send_extra_data_to_mediator(relevant_data, complaint, my_name)
     
@@ -640,13 +642,13 @@ def compute_result():
 
     # Calculate Dowdall result.
     dowdall_result = np.array([sum([s[i][j]*(1/(j + 1))  for j in range(s.shape[0])]) for i in range(s.shape[1])])
-
+    db.insert_result(dowdall_result, my_name, my_name)
     server_util.broadcast(dict(
         server=my_name,
         result=util.vote_to_string(dowdall_result),
         sender=my_name
     ), util.servers, "/save_result")
-    return make_response("ok", 200)  # Response(util.vote_to_string(s), status=200, mimetype='text/text')
+    return make_response("ok", 200)  
 
 
 @app.route("/save_result", methods=["POST"])

@@ -72,7 +72,7 @@ class TestArithmetics(unittest.TestCase):
 class TestCommunication(unittest.TestCase):
 
     @classmethod
-    def setUpClass(cls):
+    def setUp(cls):
         for n in test_keys_necessary:
             if not os.path.isfile("cryp/public{}.pem".format(n)):
                 util.get_keys(n)
@@ -84,10 +84,16 @@ class TestCommunication(unittest.TestCase):
 
         time.sleep(3)
 
-    @classmethod
-    def setUp(cls):
         reset_servers()
-        time.sleep(0.1)
+        time.sleep(0.5)
+
+
+    @classmethod
+    def tearDown(cls):
+        for i in local_servers:
+            requests.get(i + "/shutdown")
+        requests.get(mediator + "/shutdown")
+        time.sleep(1)
 
     def test_vote_format(self):
         vote = client_util.create_vote([4, 2, 1, 3])
@@ -276,12 +282,7 @@ class TestCommunication(unittest.TestCase):
 
 
 
-    @classmethod
-    def tearDownClass(cls):
-        for i in local_servers:
-            requests.get(i + "/shutdown")
-        requests.get(mediator + "/shutdown")
-        time.sleep(1)
+
 
 
 class TestMediator(unittest.TestCase):

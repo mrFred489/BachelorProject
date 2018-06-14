@@ -234,3 +234,18 @@ def zero_one_illegal_check(values):
             illegal_votes.add(key)
 
     return illegal_votes
+
+
+def nparray_in_list(arr, l):
+    ret = True
+    for i in l:
+        ret &= np.array_equal(i, arr)
+    return ret
+
+
+def list_of_nparray_in_list(l1, l2):
+    ret = True
+    for i in l1:
+        ret &= nparray_in_list(i, l2)
+    return ret
+        
